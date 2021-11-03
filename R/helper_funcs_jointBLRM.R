@@ -821,8 +821,28 @@ input_out_jointBLRM <- function(
   mtd.enforce.mono1.b,
   mtd.enforce.mono2.b,
   mtd.enforce.combi.a,
-  mtd.enforce.combi.b
+  mtd.enforce.combi.b,
 
+  backfill.mono1.a,
+  backfill.mono1.b,
+  backfill.mono2.a,
+  backfill.mono2.b,
+  backfill.combi.a,
+  backfill.combi.b,
+
+  backfill.size.mono1.a,
+  backfill.size.mono1.b,
+  backfill.size.mono2.a,
+  backfill.size.mono2.b,
+  backfill.size.combi.a,
+  backfill.size.combi.b,
+
+  backfill.prob.mono1.a,
+  backfill.prob.mono1.b,
+  backfill.prob.mono2.a,
+  backfill.prob.mono2.b,
+  backfill.prob.combi.a,
+  backfill.prob.combi.b
 ){
   nrow <- 7
   n.str <- c("seed", "dosing.intervals", "esc.rule", "esc.comp.max", "dose.ref1", "dose.ref2", "saturating")
@@ -842,59 +862,65 @@ input_out_jointBLRM <- function(
   }
 
   if(active.mono1.a){
-    nrow <- nrow + 12
+    nrow <- nrow + 12 + 3
     n.str <- c(n.str, "start.dose.mono1.a", "esc.step.mono1.a", "esc.constrain.mono1.a", "max.n.mono1.a", "cohort.size.mono1.a", "cohort.prob.mono1.a",
                "mtd.decision.mono1.a$target.prob","mtd.decision.mono1.a$pat.at.mtd","mtd.decision.mono1.a$min.pat",
-               "mtd.decision.mono1.a$min.dlt", "mtd.decision.mono1.a$rule", "mtd.enforce.mono1.a")
-    ncol <- max(ncol, length(cohort.size.mono1.a))
+               "mtd.decision.mono1.a$min.dlt", "mtd.decision.mono1.a$rule", "mtd.enforce.mono1.a",
+               "backfill.mono1.a", "backfill.size.mono1.a", "backfill.prob.mono1.a")
+    ncol <- max(ncol, length(cohort.size.mono1.a), length(backfill.size.mono1.a))
   }
 
 
   if(active.mono1.b){
-    nrow <- nrow + 12
+    nrow <- nrow + 12 + 3
     n.str <- c(n.str, "start.dose.mono1.b", "esc.step.mono1.b","esc.constrain.mono1.b", "max.n.mono1.b", "cohort.size.mono1.b", "cohort.prob.mono1.b",
                "mtd.decision.mono1.b$target.prob","mtd.decision.mono1.b$pat.at.mtd","mtd.decision.mono1.b$min.pat",
-               "mtd.decision.mono1.b$min.dlt", "mtd.decision.mono1.b$rule", "mtd.enforce.mono1.b")
-    ncol <- max(ncol, length(cohort.size.mono1.b))
+               "mtd.decision.mono1.b$min.dlt", "mtd.decision.mono1.b$rule", "mtd.enforce.mono1.b",
+               "backfill.mono1.b", "backfill.size.mono1.b", "backfill.prob.mono1.b")
+    ncol <- max(ncol, length(cohort.size.mono1.b), length(backfill.size.mono1.b))
   }
 
   if(active.mono2.a){
-    nrow <- nrow + 12
+    nrow <- nrow + 12 + 3
     n.str <- c(n.str, "start.dose.mono2.a", "esc.step.mono2.a", "esc.constrain.mono2.a","max.n.mono2.a", "cohort.size.mono2.a", "cohort.prob.mono2.a",
                "mtd.decision.mono2.a$target.prob","mtd.decision.mono2.a$pat.at.mtd","mtd.decision.mono2.a$min.pat",
-               "mtd.decision.mono2.a$min.dlt", "mtd.decision.mono2.a$rule", "mtd.enforce.mono2.a")
-    ncol <- max(ncol, length(cohort.size.mono2.a))
+               "mtd.decision.mono2.a$min.dlt", "mtd.decision.mono2.a$rule", "mtd.enforce.mono2.a",
+               "backfill.mono2.a", "backfill.size.mono2.a", "backfill.prob.mono2.a")
+    ncol <- max(ncol, length(cohort.size.mono2.a), length(backfill.size.mono2.a))
   }
 
   if(active.mono2.b){
-    nrow <- nrow + 12
+    nrow <- nrow + 12 + 3
     n.str <- c(n.str, "start.dose.mono2.b", "esc.step.mono2.b","esc.constrain.mono2.b", "max.n.mono2.b", "cohort.size.mono2.b", "cohort.prob.mono2.b",
                "mtd.decision.mono2.b$target.prob","mtd.decision.mono2.b$pat.at.mtd","mtd.decision.mono2.b$min.pat",
-               "mtd.decision.mono2.b$min.dlt", "mtd.decision.mono2.b$rule", "mtd.enforce.mono2.b")
-    ncol <- max(ncol, length(cohort.size.mono2.b))
+               "mtd.decision.mono2.b$min.dlt", "mtd.decision.mono2.b$rule", "mtd.enforce.mono2.b",
+               "backfill.mono2.b", "backfill.size.mono2.b", "backfill.prob.mono2.b")
+    ncol <- max(ncol, length(cohort.size.mono2.b), length(backfill.size.mono2.b))
   }
 
   if(active.combi.a){
-    nrow <- nrow + 15
+    nrow <- nrow + 15 + 3
     n.str <- c(n.str, "start.dose.combi.a1","start.dose.combi.a2",
                "esc.step.combi.a1","esc.step.combi.a2",
                "esc.constrain.combi.a1","esc.constrain.combi.a2", "max.n.combi.a",
                "cohort.size.combi.a", "cohort.prob.combi.a",
                "mtd.decision.combi.a$target.prob","mtd.decision.combi.a$pat.at.mtd","mtd.decision.combi.a$min.pat",
-               "mtd.decision.combi.a$min.dlt", "mtd.decision.combi.a$rule", "mtd.enforce.combi.a")
-    ncol <- max(ncol, length(cohort.size.combi.a))
+               "mtd.decision.combi.a$min.dlt", "mtd.decision.combi.a$rule", "mtd.enforce.combi.a",
+               "backfill.combi.a", "backfill.size.combi.a", "backfill.prob.combi.a")
+    ncol <- max(ncol, length(cohort.size.combi.a), length(backfill.size.combi.a))
   }
 
   if(active.combi.b){
-    nrow <- nrow + 15
+    nrow <- nrow + 15 + 3
     n.str <- c(n.str, "start.dose.combi.b1","start.dose.combi.b2",
                "esc.step.combi.b1","esc.step.combi.b2",
                "esc.constrain.combi.b1","esc.constrain.combi.b2","max.n.combi.b",
                "cohort.size.combi.b", "cohort.prob.combi.b",
                "mtd.decision.combi.b$target.prob","mtd.decision.combi.b$pat.at.mtd","mtd.decision.combi.b$min.pat",
-               "mtd.decision.combi.b$min.dlt", "mtd.decision.combi.b$rule", "mtd.enforce.combi.b")
+               "mtd.decision.combi.b$min.dlt", "mtd.decision.combi.b$rule", "mtd.enforce.combi.b",
+               "backfill.combi.b", "backfill.size.combi.b", "backfill.prob.combi.b")
 
-    ncol <- max(ncol, length(cohort.size.combi.b))
+    ncol <- max(ncol, length(cohort.size.combi.b), length(backfill.size.combi.b))
   }
 
   res <- matrix("-", nrow=nrow, ncol=ncol)
@@ -932,6 +958,7 @@ input_out_jointBLRM <- function(
 
   if(active.mono1.a){
     len <- length(cohort.size.mono1.a)
+    len2 <- length(backfill.size.mono1.a)
     res[curr, 1] <- start.dose.mono1.a
     res[curr+1, 1] <- esc.step.mono1.a
     res[curr+2, 1] <- esc.constrain.mono1.a
@@ -944,11 +971,15 @@ input_out_jointBLRM <- function(
     res[curr+9, 1] <- decision.mono1.a$MIN.DLT
     res[curr+10, 1] <- decision.mono1.a$RULE
     res[curr+11, 1] <- mtd.enforce.mono1.a
-    curr <- curr + 12
+    res[curr+12, 1] <- backfill.mono1.a
+    res[curr+13, 1:len2] <- backfill.size.mono1.a
+    res[curr+14, 1:len2] <- backfill.prob.mono1.a
+    curr <- curr + 12 + 3
   }
 
   if(active.mono1.b){
     len <- length(cohort.size.mono1.b)
+    len2 <- length(backfill.size.mono1.b)
     res[curr, 1] <- start.dose.mono1.b
     res[curr+1, 1] <- esc.step.mono1.b
     res[curr+2, 1] <- esc.constrain.mono1.b
@@ -961,11 +992,15 @@ input_out_jointBLRM <- function(
     res[curr+9, 1] <- decision.mono1.b$MIN.DLT
     res[curr+10, 1] <- decision.mono1.b$RULE
     res[curr+11, 1] <- mtd.enforce.mono1.b
-    curr <- curr + 12
+    res[curr+12, 1] <- backfill.mono1.b
+    res[curr+13, 1:len2] <- backfill.size.mono1.b
+    res[curr+14, 1:len2] <- backfill.prob.mono1.b
+    curr <- curr + 12 + 3
   }
 
   if(active.mono2.a){
     len <- length(cohort.size.mono2.a)
+    len2 <- length(backfill.size.mono2.a)
     res[curr, 1] <- start.dose.mono2.a
     res[curr+1, 1] <- esc.step.mono2.a
     res[curr+2, 1] <- esc.constrain.mono2.a
@@ -978,11 +1013,15 @@ input_out_jointBLRM <- function(
     res[curr+9, 1] <- decision.mono2.a$MIN.DLT
     res[curr+10, 1] <- decision.mono2.a$RULE
     res[curr+11, 1] <- mtd.enforce.mono2.a
-    curr <- curr + 12
+    res[curr+12, 1] <- backfill.mono2.a
+    res[curr+13, 1:len2] <- backfill.size.mono2.a
+    res[curr+14, 1:len2] <- backfill.prob.mono2.a
+    curr <- curr + 12 + 3
   }
 
   if(active.mono2.b){
     len <- length(cohort.size.mono2.b)
+    len2 <- length(backfill.size.mono2.b)
     res[curr, 1] <- start.dose.mono2.b
     res[curr+1, 1] <- esc.step.mono2.b
     res[curr+2, 1] <- esc.constrain.mono2.b
@@ -995,12 +1034,16 @@ input_out_jointBLRM <- function(
     res[curr+9, 1] <- decision.mono2.b$MIN.DLT
     res[curr+10, 1] <- decision.mono2.b$RULE
     res[curr+11, 1] <- mtd.enforce.mono2.b
-    curr <- curr + 12
+    res[curr+12, 1] <- backfill.mono2.b
+    res[curr+13, 1:len2] <- backfill.size.mono2.b
+    res[curr+14, 1:len2] <- backfill.prob.mono2.b
+    curr <- curr + 12 + 3
   }
 
 
   if(active.combi.a){
     len <- length(cohort.size.combi.a)
+    len2 <- length(backfill.size.combi.a)
     res[curr, 1] <- start.dose.combi.a1
     res[curr+1, 1] <- start.dose.combi.a2
     res[curr+2, 1] <- esc.step.combi.a1
@@ -1016,11 +1059,15 @@ input_out_jointBLRM <- function(
     res[curr+12, 1] <- decision.combi.a$MIN.DLT
     res[curr+13, 1] <- decision.combi.a$RULE
     res[curr+14, 1] <- mtd.enforce.combi.a
-    curr <- curr + 15
+    res[curr+15, 1] <- backfill.combi.a
+    res[curr+16, 1:len2] <- backfill.size.combi.a
+    res[curr+17, 1:len2] <- backfill.prob.combi.a
+    curr <- curr + 15 + 3
   }
 
   if(active.combi.b){
     len <- length(cohort.size.combi.b)
+    len2 <- length(backfill.size.combi.b)
     res[curr, 1] <- start.dose.combi.b1
     res[curr+1, 1] <- start.dose.combi.b2
     res[curr+2, 1] <- esc.step.combi.b1
@@ -1036,7 +1083,10 @@ input_out_jointBLRM <- function(
     res[curr+12, 1] <- decision.combi.b$MIN.DLT
     res[curr+13, 1] <- decision.combi.b$RULE
     res[curr+14, 1] <- mtd.enforce.combi.b
-    curr <- curr + 15
+    res[curr+15, 1] <- backfill.combi.b
+    res[curr+16, 1:len2] <- backfill.size.combi.b
+    res[curr+17, 1:len2] <- backfill.prob.combi.b
+    curr <- curr + 15 + 3
   }
 
   return(res)
