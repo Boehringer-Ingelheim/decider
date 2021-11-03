@@ -116,6 +116,26 @@ sim_jointBLRM(
    mtd.enforce.mono2.b = mtd.enforce,
    mtd.enforce.combi.a = mtd.enforce,
    mtd.enforce.combi.b = mtd.enforce,
+   backfill.mono1.a = FALSE,
+   backfill.mono1.b = FALSE,
+   backfill.mono2.a = FALSE,
+   backfill.mono2.b = FALSE,
+   backfill.combi.a = FALSE,
+   backfill.combi.b = FALSE,
+   backfill.size = c(3),
+   backfill.prob = NULL,
+   backfill.size.mono1.a = backfill.size,
+   backfill.size.mono1.b = backfill.size,
+   backfill.size.mono2.a = backfill.size,
+   backfill.size.mono2.b = backfill.size,
+   backfill.size.combi.a = backfill.size,
+   backfill.size.combi.b = backfill.size,
+   backfill.prob.mono1.a = backfill.prob,
+   backfill.prob.mono1.b = backfill.prob,
+   backfill.prob.mono2.a = backfill.prob,
+   backfill.prob.mono2.b = backfill.prob,
+   backfill.prob.combi.a = backfill.prob,
+   backfill.prob.combi.b = backfill.prob,
    n.studies = 1,
    n.cores = 1,
    seed = sample.int(.Machine$integer.max, 1),
@@ -446,6 +466,13 @@ To set the escalation rule only for a specific trial, use the trial-specific var
 
 \item{mtd.enforce.mono1.b, mtd.enforce.mono2.b, mtd.enforce.combi.b}{Same as \code{mtd.enforce.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.}
+
+\item{backfill.mono1.a, backfill.mono2.a, backfill.combi.a, backfill.mono1.b, backfill.mono2.b, backfill.combi.b}{Optional logicals, indicating whether back-fill cohorts are simulated for the trial.}
+
+\item{backfill.size, backfill.size.mono1.a, backfill.size.mono2.a, backfill.size.combi.a, backfill.size.mono1.b, backfill.size.mono2.b, backfill.size.combi.b}{Optional numericals, provide the size of simulated back-fill cohorts. Interpreted in the same fashion as \code{cohort.size}.}
+
+\item{backfill.prob, backfill.prob.mono1.a, backfill.prob.mono2.a, backfill.prob.combi.a, backfill.prob.mono1.b, backfill.prob.mono2.b, backfill.prob.combi.b}{Optional numericals, provide the probabilities if multiple possible back-fill cohort sizes are given.
+Interpreted in the same fashion as \code{cohort.prob}.}
 
 \item{n.studies}{Positive integer that specifies the number of studies to be simulated, defaults to \code{1}. Due to the long simulation time, it is recommended
 to first try lower numbers to obtain an estimation of the run-time for larger numbers of studies. Typically, about 1000 studies are recommended to obtain

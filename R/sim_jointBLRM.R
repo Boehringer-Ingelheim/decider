@@ -835,7 +835,7 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     c(backfill.mono1.a,backfill.mono1.b,backfill.mono2.a,backfill.mono2.b,
       backfill.combi.a,backfill.combi.b)
   )){
-    stop("The arguments `backfill.mono1.a`, `backfill.mono1.b`, `backfill.mono2.a`,\n"
+    stop("The arguments `backfill.mono1.a`, `backfill.mono1.b`, `backfill.mono2.a`,\n",
          "`backfill.mono2.b`, `backfill.combi.a`, `backfill.combi.b` must be logical.")
   }
   #--------------------------------------------
