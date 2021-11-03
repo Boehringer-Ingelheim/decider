@@ -3571,7 +3571,28 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       mtd.enforce.mono2.a = mtd.enforce.mono2.a,
       mtd.enforce.mono2.b = mtd.enforce.mono2.b,
       mtd.enforce.combi.a = mtd.enforce.combi.a,
-      mtd.enforce.combi.b = mtd.enforce.combi.b
+      mtd.enforce.combi.b = mtd.enforce.combi.b,
+
+      backfill.mono1.a = backfill.mono1.a,
+      backfill.mono1.b = backfill.mono1.b,
+      backfill.size.mono1.a = backfill.size.mono1.a,
+      backfill.size.mono1.b = backfill.size.mono1.b,
+      backfill.prob.mono1.a = backfill.prob.mono1.a,
+      backfill.prob.mono1.b = backfill.prob.mono1.b,
+      backfill.mono2.a = backfill.mono2.a,
+      backfill.mono2.b = backfill.mono2.b,
+      backfill.size.mono2.a = backfill.size.mono2.a,
+      backfill.size.mono2.b = backfill.size.mono2.b,
+      backfill.prob.mono2.a = backfill.prob.mono2.a,
+      backfill.prob.mono2.b = backfill.prob.mono2.b,
+      backfill.combi.a = backfill.combi.a,
+      backfill.combi.b = backfill.combi.b,
+      backfill.size.combi.a = backfill.size.combi.a,
+      backfill.size.combi.b = backfill.size.combi.b,
+      backfill.prob.combi.a = backfill.prob.combi.a,
+      backfill.prob.combi.b = backfill.prob.combi.b
+
+
     )
 
     #write the input parameters and simulation options into the output list.
