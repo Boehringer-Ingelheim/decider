@@ -1,0 +1,10 @@
+^OncoBLRM\.Rproj$
+^\.Rproj\.user$
+^\.travis\.yml$
+^LICENSE\.md$
+^vignettes/evaluate_prior_specifications_jointBLRM\.Rmd\.orig$
+^figure$
+^src/.*\.o$
+^doc$
+^Meta$
+[.]o$

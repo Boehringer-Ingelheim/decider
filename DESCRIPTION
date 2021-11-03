@@ -1,0 +1,67 @@
+Package: OncoBLRM
+Title: Simulation of and Tools for Dose-Finding Trials guided by Bayesian Logistic Regression Models
+Version: 0.0.0.9004
+Authors@R: 
+    c(person(given = "Boehringer Ingelheim",
+           family = "Pharma GmbH & Co. KG",
+           role = c("cph"),
+           email = "no-email-available@no-domain.com")
+      ,person(given = "Daniela",
+           family = "Maier",
+           role = c("aut"),
+           email = "daniela_2.maier@boehringer-ingelheim.com")
+      ,person(given = "Lukas",
+           family = "Schroeter",
+           role = c("aut", "cre"),
+           email = "lukas.schroeter@boehringer-ingelheim.com"))
+Description: Provides functions that allow to compute posterior distributions of 
+  Bayesian logistic regression models (BLRMs) for monotherapy and combination 
+  therapy dose-finding trials and summarizing them via dosing 
+  intervals. Data scenarios can be evaluated and trial simulations can be 
+  conducted for multiple variants of the BLRM. Most importantly, functions are 
+  provided to aid BLRM-based dose finding for monotherapy (Neuenschwander et al. 
+  (2008) <doi:10.1002/sim.3230>) and combination therapy trials (Neuenschwander 
+  et al. (2014) <doi:10.1201/b17965>). Further, functions to evaluate a joint 
+  BLRM for monotherapy and combination therapy (Neuenschwander et al. (2016) 
+  <doi:10.1080/19466315.2016.1174149>), and BLRMs with additional binary 
+  covariate are included in the package. All Bayesian models are evaluated using
+  the 'Stan' modeling language via the package 'rstan', refer to Stan 
+  Development Team (2020) <https://mc-stan.org>.
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Biarch: true
+Depends: 
+    R (>= 3.4.0)
+Imports: 
+    methods,
+    stats,
+    grDevices,
+    parallel,
+    foreach,
+    doParallel,
+    openxlsx,
+    gridExtra,
+    scales,
+    ggplot2,
+    openssl,
+    flock,
+    Rcpp (>= 0.12.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    rstantools (>= 2.1.1),
+    RBesT (>= 1.6-1)
+LinkingTo: 
+    BH (>= 1.66.0),
+    Rcpp (>= 0.12.0),
+    RcppEigen (>= 0.3.3.3.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    StanHeaders (>= 2.18.0)
+SystemRequirements: GNU make
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr
