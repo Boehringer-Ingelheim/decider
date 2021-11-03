@@ -161,6 +161,26 @@
 #'    mtd.enforce.mono2.b = mtd.enforce,
 #'    mtd.enforce.combi.a = mtd.enforce,
 #'    mtd.enforce.combi.b = mtd.enforce,
+#'    backfill.mono1.a = FALSE,
+#'    backfill.mono1.b = FALSE,
+#'    backfill.mono2.a = FALSE,
+#'    backfill.mono2.b = FALSE,
+#'    backfill.combi.a = FALSE,
+#'    backfill.combi.b = FALSE,
+#'    backfill.size = c(3),
+#'    backfill.prob = NULL,
+#'    backfill.size.mono1.a = backfill.size,
+#'    backfill.size.mono1.b = backfill.size,
+#'    backfill.size.mono2.a = backfill.size,
+#'    backfill.size.mono2.b = backfill.size,
+#'    backfill.size.combi.a = backfill.size,
+#'    backfill.size.combi.b = backfill.size,
+#'    backfill.prob.mono1.a = backfill.prob,
+#'    backfill.prob.mono1.b = backfill.prob,
+#'    backfill.prob.mono2.a = backfill.prob,
+#'    backfill.prob.mono2.b = backfill.prob,
+#'    backfill.prob.combi.a = backfill.prob,
+#'    backfill.prob.combi.b = backfill.prob,
 #'    n.studies = 1,
 #'    n.cores = 1,
 #'    seed = sample.int(.Machine$integer.max, 1),
@@ -468,6 +488,13 @@
 #'@param mtd.enforce.mono1.b,mtd.enforce.mono2.b,mtd.enforce.combi.b
 #'Same as \code{mtd.enforce.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param backfill.mono1.a,backfill.mono2.a,backfill.combi.a,backfill.mono1.b,backfill.mono2.b,backfill.combi.b
+#'Optional logicals, indicating whether back-fill cohorts are simulated for the trial.
+#'@param backfill.size,backfill.size.mono1.a,backfill.size.mono2.a,backfill.size.combi.a,backfill.size.mono1.b,backfill.size.mono2.b,backfill.size.combi.b
+#'Optional numericals, provide the size of simulated back-fill cohorts. Interpreted in the same fashion as \code{cohort.size}.
+#'@param backfill.prob,backfill.prob.mono1.a,backfill.prob.mono2.a,backfill.prob.combi.a,backfill.prob.mono1.b,backfill.prob.mono2.b,backfill.prob.combi.b
+#'Optional numericals, provide the probabilities if multiple possible back-fill cohort sizes are given.
+#'Interpreted in the same fashion as \code{cohort.prob}.
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}. Due to the long simulation time, it is recommended
 #'to first try lower numbers to obtain an estimation of the run-time for larger numbers of studies. Typically, about 1000 studies are recommended to obtain
 #'acceptably accurate simulation results.
@@ -721,6 +748,29 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                           mtd.enforce.combi.a = mtd.enforce,
                           mtd.enforce.combi.b = mtd.enforce,
 
+                          backfill.mono1.a = FALSE,
+                          backfill.mono1.b = FALSE,
+                          backfill.mono2.a = FALSE,
+                          backfill.mono2.b = FALSE,
+                          backfill.combi.a = FALSE,
+                          backfill.combi.b = FALSE,
+
+                          backfill.size = c(3),
+                          backfill.prob = NULL,
+                          backfill.size.mono1.a = backfill.size,
+                          backfill.size.mono1.b = backfill.size,
+                          backfill.size.mono2.a = backfill.size,
+                          backfill.size.mono2.b = backfill.size,
+                          backfill.size.combi.a = backfill.size,
+                          backfill.size.combi.b = backfill.size,
+
+                          backfill.prob.mono1.a = backfill.prob,
+                          backfill.prob.mono1.b = backfill.prob,
+                          backfill.prob.mono2.a = backfill.prob,
+                          backfill.prob.mono2.b = backfill.prob,
+                          backfill.prob.combi.a = backfill.prob,
+                          backfill.prob.combi.b = backfill.prob,
+
                           n.studies = 1,
                           n.cores = 1,
                           seed = sample.int(.Machine$integer.max, 1),
@@ -781,6 +831,13 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     stop("`clean.working.path` must be of type logical.")
   }
 
+  if(!is.logical(
+    c(backfill.mono1.a,backfill.mono1.b,backfill.mono2.a,backfill.mono2.b,
+      backfill.combi.a,backfill.combi.b)
+  )){
+    stop("The arguments `backfill.mono1.a`, `backfill.mono1.b`, `backfill.mono2.a`,\n"
+         "`backfill.mono2.b`, `backfill.combi.a`, `backfill.combi.b` must be logical.")
+  }
   #--------------------------------------------
   #Checks for integers and integer vectors
   #--------------------------------------------
@@ -939,6 +996,55 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     stop("Entries of `cohort.size.combi.b` must be at least 1.")
   }
 
+  #same for backfill.size
+  if(!is.wholenumber(backfill.size)){
+    stop("`backfill.size needs` to be an integer.")
+  }
+  if(!all(backfill.size>=1)){
+    stop("Entries of `backfill.size` must be at least 1.")
+  }
+
+  if(!is.wholenumber(backfill.size.mono1.a)){
+    stop("`backfill.size.mono1.a` needs to be an integer.")
+  }
+  if(!all(backfill.size.mono1.a>=1)){
+    stop("Entries of `backfill.size.mono1.a` must be at least 1.")
+  }
+
+  if(!is.wholenumber(backfill.size.mono1.b)){
+    stop("`backfill.size.mono1.b` needs to be an integer.")
+  }
+  if(!all(backfill.size.mono1.b>=1)){
+    stop("Entries of `backfill.size.mono1.b` must be at least 1.")
+  }
+
+  if(!is.wholenumber(backfill.size.mono2.a)){
+    stop("`backfill.size.mono2.a` needs to be an integer.")
+  }
+  if(!all(backfill.size.mono2.a>=1)){
+    stop("Entries of `backfill.size.mono2.a` must be at least 1.")
+  }
+
+  if(!is.wholenumber(backfill.size.mono2.b)){
+    stop("`backfill.size.mono2.b` needs to be an integer.")
+  }
+  if(!all(backfill.size.mono2.b>=1)){
+    stop("Entries of `backfill.size.mono2.b` must be at least 1.")
+  }
+
+  if(!is.wholenumber(backfill.size.combi.a)){
+    stop("`backfill.size.combi.a` needs to be an integer.")
+  }
+  if(!all(backfill.size.combi.a>=1)){
+    stop("Entries of `backfill.size.combi.a` must be at least 1.")
+  }
+
+  if(!is.wholenumber(backfill.size.combi.b)){
+    stop("`backfill.size.combi.b` needs to be an integer.")
+  }
+  if(!all(backfill.size.combi.b>=1)){
+    stop("Entries of `backfill.size.combi.b` must be at least 1.")
+  }
 
   if(!is.wholenumber(n.studies)){
     stop("`n.studies` needs to be an integer.")
@@ -1081,6 +1187,86 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
          "numbers larger than 0 and smaller or equal to 1.")
   }
 
+
+  #test for backfill probs
+  if(is.null(backfill.prob)){
+    backfill.prob <- rep(1/length(backfill.size), times = length(backfill.size))
+  }
+
+  if(is.null(backfill.prob.mono1.a)){
+    backfill.prob.mono1.a <- rep(1/length(backfill.size.mono1.a),
+                               times = length(backfill.size.mono1.a))
+  }
+
+  if(is.null(backfill.prob.mono1.b)){
+    backfill.prob.mono1.b <- rep(1/length(backfill.size.mono1.b),
+                               times = length(backfill.size.mono1.b))
+  }
+
+  if(is.null(backfill.prob.mono2.a)){
+    backfill.prob.mono2.a <- rep(1/length(backfill.size.mono2.a),
+                               times = length(backfill.size.mono2.a))
+  }
+
+  if(is.null(backfill.prob.mono2.b)){
+    backfill.prob.mono2.b <- rep(1/length(backfill.size.mono2.b),
+                               times = length(backfill.size.mono2.b))
+  }
+
+  if(is.null(backfill.prob.combi.a)){
+    backfill.prob.combi.a <- rep(1/length(backfill.size.combi.a),
+                               times = length(backfill.size.combi.a))
+  }
+
+  if(is.null(backfill.prob.combi.b)){
+    backfill.prob.combi.b <- rep(1/length(backfill.size.combi.b),
+                               times = length(backfill.size.combi.b))
+  }
+
+  if(!is.num(backfill.prob, len=length(backfill.size),
+             low=0, up=1, uB=T, lB=F)){
+    stop("`backfill.prob` must be of the same length as `backfill.size` and consist of \n",
+         "numbers larger than 0 and smaller or equal to 1.")
+  }
+
+  if(!is.num(backfill.prob.mono1.a, len=length(backfill.size.mono1.a),
+             low=0, up=1, uB=T, lB=F)){
+    stop("`backfill.prob.mono1.a` must be of the same length as `backfill.size.mono1.a` and consist of \n",
+         "numbers larger than 0 and smaller or equal to 1.")
+  }
+
+
+  if(!is.num(backfill.prob.mono1.b, len=length(backfill.size.mono1.b),
+             low=0, up=1, uB=T, lB=F)){
+    stop("`backfill.prob.mono1.b` must be of the same length as `backfill.size.mono1.b` and consist of \n",
+         "numbers larger than 0 and smaller or equal to 1.")
+  }
+
+  if(!is.num(backfill.prob.mono2.a, len=length(backfill.size.mono2.a),
+             low=0, up=1, uB=T, lB=F)){
+    stop("`backfill.prob.mono2.a` must be of the same length as `backfill.size.mono2.a` and consist of \n",
+         "numbers larger than 0 and smaller or equal to 1.")
+  }
+
+  if(!is.num(backfill.prob.mono2.b, len=length(backfill.size.mono2.b),
+             low=0, up=1, uB=T, lB=F)){
+    stop("`backfill.prob.mono2.b` must be of the same length as `backfill.size.mono2.b` and consist of \n",
+         "numbers larger than 0 and smaller or equal to 1.")
+  }
+
+  if(!is.num(backfill.prob.combi.a, len=length(backfill.size.combi.a),
+             low=0, up=1, uB=T, lB=F)){
+    stop("`backfill.prob.combi.a` must be of the same length as `backfill.size.combi.a` and consist of \n",
+         "numbers larger than 0 and smaller or equal to 1.")
+  }
+
+  if(!is.num(backfill.prob.combi.b, len=length(backfill.size.combi.b),
+             low=0, up=1, uB=T, lB=F)){
+    stop("`backfill.prob.combi.b` must be of the same length as `backfill.size.combi.b` and consist of \n",
+         "numbers larger than 0 and smaller or equal to 1.")
+  }
+
+  #tests for dosing intervals
   if(!is.num(dosing.intervals, low=0, up=1,
              lB=T, uB=T)){
     stop("`dosing.intervals` must contain entries between 0 and 1.")
