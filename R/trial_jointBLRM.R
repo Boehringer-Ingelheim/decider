@@ -897,6 +897,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
     #sample seed for MCMC call for each potential cohort
     mcmc_seeds <- sample.int(.Machine$integer.max, length(cohort.queue))
 
+
     #as long as one of the trials is active, has not found an MTD, has not
     #stopped due to EWOC, and has not run out of patients, simulate
     #the next cohort using the while loop.
@@ -1369,6 +1370,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                               curr.dose1=current.dose.mono.1,          ##
                                               curr.dose2=0,                       ##
 
+                                              check.prev.dose = backfill.mono1.a,
                                               dosing.intervals = dosing.intervals,
                                               ewoc = ewoc,
                                               chains = chains,
@@ -1411,8 +1413,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                 if(backfill.mono1.a){
                     prev.dose.mono1.a <- current.dose.mono.1
                     prev.dose.esc.mono1.a <- (current.dose.mono.1 < next.mono.dose.1)
-                    #ToDo
-                    #prev.dose.ewoc.mono1.a <- (curr.results$bf_check < 0.25)
+                    prev.dose.ewoc.mono1.a <- current.results$bf.check
                 }
 
                 #continue with the new doses
