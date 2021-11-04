@@ -40,6 +40,11 @@ main_jointBLRM <- function(dose1,
                            dose2.interest,
                            curr.dose1,
                            curr.dose2,
+
+                           #argument to check whether current dose
+                           #can be back-filled in next iteration
+                           check.prev.dose = FALSE,
+
                            dosing.intervals = c(0.16, 0.33, 0.6),
                            ewoc = 0.25,
                            chains,
@@ -108,22 +113,34 @@ main_jointBLRM <- function(dose1,
 
     #current target prob
     curr.ptar <- post_tox[curr.dose.name, 2]
+    #get next dose
+    next.d <- get_ewoc_dec_jointBLRM(
+      tox = post_tox,
+      curr.dose1=curr.dose1,
+      curr.dose2=curr.dose2,
+      type = type.interest,
+      mode = mode,
+      ewoc=ewoc,
+      comp.max=esc.comp.max,
+      esc.step1 = esc.step1,
+      esc.step2 = esc.step2,
+      max.next1 = max.next1,
+      max.next2 = max.next2)
+
+    #check whether current dose is still okay
+    #and could in theory be back-filled in
+    #next iteration
+    if(check.prev.dose){
+      bf.check <- (post_tox[curr.dose.name, 3] < ewoc)
+    }else{
+      bf.check <- FALSE
+    }
 
     #return decision and current target probability
     return(list(
-      "next.d"= get_ewoc_dec_jointBLRM(
-        tox = post_tox,
-        curr.dose1=curr.dose1,
-        curr.dose2=curr.dose2,
-        type = type.interest,
-        mode = mode,
-        ewoc=ewoc,
-        comp.max=esc.comp.max,
-        esc.step1 = esc.step1,
-        esc.step2 = esc.step2,
-        max.next1 = max.next1,
-        max.next2 = max.next2),
-      "curr.ptar" = curr.ptar)
+      "next.d"= next.d,
+      "curr.ptar" = curr.ptar,
+      "bf.check" = bf.check)
     )
   }else if(tolower(esc.rule)=="loss"){
     #---------------------
@@ -132,21 +149,34 @@ main_jointBLRM <- function(dose1,
 
     #current target prob
     curr.ptar <- post_tox[curr.dose.name, 2]
+    #get next dose
+    next.d <- get_loss_dec_jointBLRM(
+      tox=post_tox,
+      curr.dose1=curr.dose1,
+      curr.dose2=curr.dose2,
+      type = type.interest,
+      loss.weights=loss.weights,
+      comp.max=esc.comp.max,
+      esc.step1=esc.step1,
+      esc.step2=esc.step2,
+      max.next1 = max.next1,
+      max.next2 = max.next2)
+
+    #check whether current dose is still okay
+    #and could in theory be back-filled in
+    #next iteration
+    if(check.prev.dose){
+      bf.check <- (curr.dose1<next.d[1] & curr.dose2<=next.d[2]) |
+        (curr.dose1<=next.d[1] & curr.dose2<next.d[2])
+    }else{
+      bf.check <- FALSE
+    }
 
     #return decision and current target probability
     return(list(
-      "next.d" = get_loss_dec_jointBLRM(
-        tox=post_tox,
-        curr.dose1=curr.dose1,
-        curr.dose2=curr.dose2,
-        type = type.interest,
-        loss.weights=loss.weights,
-        comp.max=esc.comp.max,
-        esc.step1=esc.step1,
-        esc.step2=esc.step2,
-        max.next1 = max.next1,
-        max.next2 = max.next2),
-      "curr.ptar"=curr.ptar))
+      "next.d" = next.d,
+      "curr.ptar"=curr.ptar,
+      "bf.check" = bf.check))
 
   }else{
     #------------------------
@@ -155,21 +185,35 @@ main_jointBLRM <- function(dose1,
     #current target prob
     curr.ptar <- post_tox$result[curr.dose.name, 2]
 
+    #get next dose
+    next.d <- get_dloss_dec_jointBLRM(
+      tox=post_tox$result,
+      curr.dose1=curr.dose1,
+      curr.dose2=curr.dose2,
+      type = type.interest,
+      dynamic.weights=dynamic.weights,
+      refprobs=post_tox$refprobs,
+      comp.max=esc.comp.max,
+      esc.step1=esc.step1,
+      esc.step2=esc.step2,
+      max.next1 = max.next1,
+      max.next2 = max.next2)
+
+    #check whether current dose is still okay
+    #and could in theory be back-filled in
+    #next iteration
+    if(check.prev.dose){
+      bf.check <- (curr.dose1<next.d[1] & curr.dose2<=next.d[2]) |
+        (curr.dose1<=next.d[1] & curr.dose2<next.d[2])
+    }else{
+      bf.check <- FALSE
+    }
+
     #return decision and current target probability
     return(list(
-      "next.d" = get_dloss_dec_jointBLRM(
-        tox=post_tox$result,
-        curr.dose1=curr.dose1,
-        curr.dose2=curr.dose2,
-        type = type.interest,
-        dynamic.weights=dynamic.weights,
-        refprobs=post_tox$refprobs,
-        comp.max=esc.comp.max,
-        esc.step1=esc.step1,
-        esc.step2=esc.step2,
-        max.next1 = max.next1,
-        max.next2 = max.next2),
-      "curr.ptar" = curr.ptar))
+      "next.d" = next.d,
+      "curr.ptar" = curr.ptar,
+      "bf.check" = bf.check))
 
   }
 
