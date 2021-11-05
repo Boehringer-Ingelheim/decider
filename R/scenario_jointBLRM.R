@@ -1933,6 +1933,7 @@ scenario_list_jointBLRM <- function(
 
   res.list <- foreach(i = 1:n.scen,
                       .packages = c("OncoBLRM"),
+                      .export = c("stanmodels"),
                       .errorhandling = "pass",
                       .inorder = TRUE)%dopar%
     {
