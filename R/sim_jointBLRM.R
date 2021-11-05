@@ -181,6 +181,14 @@
 #'    backfill.prob.mono2.b = backfill.prob,
 #'    backfill.prob.combi.a = backfill.prob,
 #'    backfill.prob.combi.b = backfill.prob,
+#'    backfill.start.mono1.a = NULL,
+#'    backfill.start.mono1.b = NULL,
+#'    backfill.start.mono2.a = NULL,
+#'    backfill.start.mono2.b = NULL,
+#'    backfill.start.combi.a1 = NULL,
+#'    backfill.start.combi.a2 = NULL,
+#'    backfill.start.combi.b1 = NULL,
+#'    backfill.start.combi.b2 = NULL,
 #'    n.studies = 1,
 #'    n.cores = 1,
 #'    seed = sample.int(.Machine$integer.max, 1),
@@ -495,6 +503,9 @@
 #'@param backfill.prob,backfill.prob.mono1.a,backfill.prob.mono2.a,backfill.prob.combi.a,backfill.prob.mono1.b,backfill.prob.mono2.b,backfill.prob.combi.b
 #'Optional numericals, provide the probabilities if multiple possible back-fill cohort sizes are given.
 #'Interpreted in the same fashion as \code{cohort.prob}.
+#'@param backfill.start.mono1.a,backfill.start.mono1.b,backfill.start.mono2.a,backfill.start.mono2.b,backfill.start.combi.a1,backfill.start.combi.a2,backfill.start.combi.b1,backfill.start.combi.b2
+#'Optional numericals. Specify the first dose on which back-fill cohorts are enrolled. If not provided, the
+#'lowest available dose will be assumed to be the starting point of back-fill cohorts in the respective trial.
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}. Due to the long simulation time, it is recommended
 #'to first try lower numbers to obtain an estimation of the run-time for larger numbers of studies. Typically, about 1000 studies are recommended to obtain
 #'acceptably accurate simulation results.
@@ -771,6 +782,15 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                           backfill.prob.combi.a = backfill.prob,
                           backfill.prob.combi.b = backfill.prob,
 
+                          backfill.start.mono1.a = NULL,
+                          backfill.start.mono1.b = NULL,
+                          backfill.start.mono2.a = NULL,
+                          backfill.start.mono2.b = NULL,
+                          backfill.start.combi.a1 = NULL,
+                          backfill.start.combi.a2 = NULL,
+                          backfill.start.combi.b1 = NULL,
+                          backfill.start.combi.b2 = NULL,
+
                           n.studies = 1,
                           n.cores = 1,
                           seed = sample.int(.Machine$integer.max, 1),
@@ -1000,50 +1020,50 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
   if(!is.wholenumber(backfill.size)){
     stop("`backfill.size needs` to be an integer.")
   }
-  if(!all(backfill.size>=1)){
-    stop("Entries of `backfill.size` must be at least 1.")
+  if(!all(backfill.size>=0)){
+    stop("Entries of `backfill.size` must be at least 0.")
   }
 
   if(!is.wholenumber(backfill.size.mono1.a)){
     stop("`backfill.size.mono1.a` needs to be an integer.")
   }
-  if(!all(backfill.size.mono1.a>=1)){
-    stop("Entries of `backfill.size.mono1.a` must be at least 1.")
+  if(!all(backfill.size.mono1.a>=0)){
+    stop("Entries of `backfill.size.mono1.a` must be at least 0.")
   }
 
   if(!is.wholenumber(backfill.size.mono1.b)){
     stop("`backfill.size.mono1.b` needs to be an integer.")
   }
-  if(!all(backfill.size.mono1.b>=1)){
-    stop("Entries of `backfill.size.mono1.b` must be at least 1.")
+  if(!all(backfill.size.mono1.b>=0)){
+    stop("Entries of `backfill.size.mono1.b` must be at least 0.")
   }
 
   if(!is.wholenumber(backfill.size.mono2.a)){
     stop("`backfill.size.mono2.a` needs to be an integer.")
   }
-  if(!all(backfill.size.mono2.a>=1)){
-    stop("Entries of `backfill.size.mono2.a` must be at least 1.")
+  if(!all(backfill.size.mono2.a>=0)){
+    stop("Entries of `backfill.size.mono2.a` must be at least 0.")
   }
 
   if(!is.wholenumber(backfill.size.mono2.b)){
     stop("`backfill.size.mono2.b` needs to be an integer.")
   }
-  if(!all(backfill.size.mono2.b>=1)){
-    stop("Entries of `backfill.size.mono2.b` must be at least 1.")
+  if(!all(backfill.size.mono2.b>=0)){
+    stop("Entries of `backfill.size.mono2.b` must be at least 0.")
   }
 
   if(!is.wholenumber(backfill.size.combi.a)){
     stop("`backfill.size.combi.a` needs to be an integer.")
   }
-  if(!all(backfill.size.combi.a>=1)){
-    stop("Entries of `backfill.size.combi.a` must be at least 1.")
+  if(!all(backfill.size.combi.a>=0)){
+    stop("Entries of `backfill.size.combi.a` must be at least 0.")
   }
 
   if(!is.wholenumber(backfill.size.combi.b)){
     stop("`backfill.size.combi.b` needs to be an integer.")
   }
-  if(!all(backfill.size.combi.b>=1)){
-    stop("Entries of `backfill.size.combi.b` must be at least 1.")
+  if(!all(backfill.size.combi.b>=0)){
+    stop("Entries of `backfill.size.combi.b` must be at least 0.")
   }
 
   if(!is.wholenumber(n.studies)){
@@ -1896,6 +1916,133 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
   names(prior.tau) <- tolower(names(prior.tau))
   test.prior.tau(prior.tau)
 
+  #--------------------------------
+  #check backfill-starting doses
+  #--------------------------------
+  #set backfill start to first available dose if not given
+  if(is.null(backfill.start.mono1.a)){
+    backfill.start.mono1.a <- doses.mono1.a[1]
+  }
+
+  if(is.null(backfill.start.mono1.b)){
+    backfill.start.mono1.b <- doses.mono1.b[1]
+  }
+
+  if(is.null(backfill.start.mono2.a)){
+    backfill.start.mono2.a <- doses.mono2.a[1]
+  }
+
+  if(is.null(backfill.start.mono2.b)){
+    backfill.start.mono2.b <- doses.mono2.b[1]
+  }
+
+  if(is.null(backfill.start.combi.a1)){
+    backfill.start.combi.a1 <- doses.combi.a[1, 1]
+  }
+
+  if(is.null(backfill.start.combi.b1)){
+    backfill.start.combi.b1 <- doses.combi.b[1, 1]
+  }
+  if(is.null(backfill.start.combi.a2)){
+    backfill.start.combi.a2 <- doses.combi.a[2, 1]
+  }
+
+  if(is.null(backfill.start.combi.b2)){
+    backfill.start.combi.b2 <- doses.combi.b[2, 1]
+  }
+
+
+  #checks of backfill starting doses
+  if(backfill.mono1.a & active.mono1.a){
+    if(!is.numeric(backfill.start.mono1.a)){
+      stop("`backfill.start.mono1.a` must be numeric")
+    }
+    if(!length(backfill.start.mono1.a)==1){
+      stop("`backfill.start.mono1.a` must have length 1")
+    }
+    if(!backfill.start.mono1.a %in% doses.mono1.a){
+      stop("`backfill.start.mono1.a` must be an element of `doses.mono1.a`")
+    }
+  }
+
+  if(backfill.mono1.b & active.mono1.b){
+    if(!is.numeric(backfill.start.mono1.b)){
+      stop("`backfill.start.mono1.b` must be numeric")
+    }
+    if(!length(backfill.start.mono1.b)==1){
+      stop("`backfill.start.mono1.b` must have length 1")
+    }
+    if(!backfill.start.mono1.b %in% doses.mono1.b){
+      stop("`backfill.start.mono1.b` must be an element of `doses.mono1.b`")
+    }
+  }
+
+  if(backfill.mono2.a & active.mono2.a){
+    if(!is.numeric(backfill.start.mono2.a)){
+      stop("`backfill.start.mono2.a` must be numeric")
+    }
+    if(!length(backfill.start.mono2.a)==1){
+      stop("`backfill.start.mono2.a` must have length 1")
+    }
+    if(!backfill.start.mono2.a %in% doses.mono2.a){
+      stop("`backfill.start.mono2.a` must be an element of `doses.mono2.a`")
+    }
+  }
+
+  if(backfill.mono2.b & active.mono2.b){
+    if(!is.numeric(backfill.start.mono2.b)){
+      stop("`backfill.start.mono2.b` must be numeric")
+    }
+    if(!length(backfill.start.mono2.b)==1){
+      stop("`backfill.start.mono2.b` must have length 1")
+    }
+    if(!backfill.start.mono2.b %in% doses.mono2.b){
+      stop("`backfill.start.mono2.b` must be an element of `doses.mono2.b`")
+    }
+  }
+
+  if(backfill.combi.a & active.combi.a){
+    if(!is.numeric(backfill.start.combi.a1)){
+      stop("`backfill.start.combi.a1` must be numeric")
+    }
+    if(!length(backfill.start.combi.a1)==1){
+      stop("`backfill.start.combi.a1` must have length 1")
+    }
+    if(!is.numeric(backfill.start.combi.a2)){
+      stop("`backfill.start.combi.a2` must be numeric")
+    }
+    if(!length(backfill.start.combi.a2)==1){
+      stop("`backfill.start.combi.a2` must have length 1")
+    }
+    if(!length(which(
+      doses.combi.a[1, ]== backfill.start.combi.a1 &
+      doses.combi.a[2, ]== backfill.start.combi.a2
+    ))>0){
+      stop("`backfill.start.combi.a1` must be a dose given in `doses.combi.a`")
+    }
+  }
+
+  if(backfill.combi.b & active.combi.b){
+    if(!is.numeric(backfill.start.combi.b1)){
+      stop("`backfill.start.combi.b1` must be numeric")
+    }
+    if(!length(backfill.start.combi.b1)==1){
+      stop("`backfill.start.combi.b1` must have length 1")
+    }
+    if(!is.numeric(backfill.start.combi.b2)){
+      stop("`backfill.start.combi.b2` must be numeric")
+    }
+    if(!length(backfill.start.combi.b2)==1){
+      stop("`backfill.start.combi.b2` must have length 1")
+    }
+    if(!length(which(
+      doses.combi.b[1, ]== backfill.start.combi.b1 &
+      doses.combi.b[2, ]== backfill.start.combi.b2
+    ))>0){
+      stop("`backfill.start.combi.b1` must be a dose given in `doses.combi.b`")
+    }
+  }
+
   #------------------------------------------------------
   #Check historical data dyntax and consistency
   #------------------------------------------------------
@@ -2081,10 +2228,10 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
   if(n.cores>1){
     cl_foreach <- makeCluster(n.cores)
     registerDoParallel(cl_foreach)
-    message("\nParallel simulation with ", n.cores, " cores started.")
+    message("Parallel simulation with ", n.cores, " cores started.")
   }else{
     registerDoSEQ()
-    message("\nSequential simulation started.")
+    message("Sequential simulation started.")
   }
 
 
@@ -2226,6 +2373,14 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                                 backfill.size.combi.b = backfill.size.combi.b,
                                 backfill.prob.combi.a = backfill.prob.combi.a,
                                 backfill.prob.combi.b = backfill.prob.combi.b,
+                                backfill.start.mono1.a = backfill.start.mono1.a,
+                                backfill.start.mono1.b = backfill.start.mono1.b,
+                                backfill.start.mono2.a = backfill.start.mono2.a,
+                                backfill.start.mono2.b = backfill.start.mono2.b,
+                                backfill.start.combi.a1 = backfill.start.combi.a1,
+                                backfill.start.combi.a2 = backfill.start.combi.a2,
+                                backfill.start.combi.b1 = backfill.start.combi.b1,
+                                backfill.start.combi.b2 = backfill.start.combi.b2,
 
                                 working.path = working.path,
                                 file.name = file.name,
@@ -3609,9 +3764,15 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       backfill.size.combi.a = backfill.size.combi.a,
       backfill.size.combi.b = backfill.size.combi.b,
       backfill.prob.combi.a = backfill.prob.combi.a,
-      backfill.prob.combi.b = backfill.prob.combi.b
-
-
+      backfill.prob.combi.b = backfill.prob.combi.b,
+      backfill.start.mono1.a = backfill.start.mono1.a,
+      backfill.start.mono1.b = backfill.start.mono1.b,
+      backfill.start.mono2.a = backfill.start.mono2.a,
+      backfill.start.mono2.b = backfill.start.mono2.b,
+      backfill.start.combi.a1 = backfill.start.combi.a1,
+      backfill.start.combi.a2 = backfill.start.combi.a2,
+      backfill.start.combi.b1 = backfill.start.combi.b1,
+      backfill.start.combi.b2 = backfill.start.combi.b2
     )
 
     #write the input parameters and simulation options into the output list.

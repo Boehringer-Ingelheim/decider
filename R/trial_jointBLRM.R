@@ -136,6 +136,15 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                     backfill.prob.combi.a,
                                     backfill.prob.combi.b,
 
+                                    backfill.start.mono1.a = NULL,
+                                    backfill.start.mono1.b = NULL,
+                                    backfill.start.mono2.a = NULL,
+                                    backfill.start.mono2.b = NULL,
+                                    backfill.start.combi.a1 = NULL,
+                                    backfill.start.combi.a2 = NULL,
+                                    backfill.start.combi.b1 = NULL,
+                                    backfill.start.combi.b2 = NULL,
+
                                     working.path,
                                     file.name,
                                      chains = 3,
@@ -1279,7 +1288,9 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
             #check for back-fill cohort and simulate it if allowed
             if(backfill.mono1.a){
                 #if there is a previous dose level
-                if(prev.dose.mono1.a > 0){
+                #and if it is at least equal to the back-fill start dose
+                if(prev.dose.mono1.a > 0 &
+                   prev.dose.mono1.a + 2*.Machine$double.eps>=backfill.start.mono1.a){
                     #if it is actually contained in doses
                     idx.prev.dose.mono1.a <- which(doses.mono1.a==prev.dose.mono1.a)
                     if(!length(idx.prev.dose.mono1.a)==0){
@@ -1329,8 +1340,6 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                 }
 
                             }
-
-
                         }
                     }
                 }

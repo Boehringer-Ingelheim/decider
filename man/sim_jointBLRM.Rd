@@ -136,6 +136,14 @@ sim_jointBLRM(
    backfill.prob.mono2.b = backfill.prob,
    backfill.prob.combi.a = backfill.prob,
    backfill.prob.combi.b = backfill.prob,
+   backfill.start.mono1.a = NULL,
+   backfill.start.mono1.b = NULL,
+   backfill.start.mono2.a = NULL,
+   backfill.start.mono2.b = NULL,
+   backfill.start.combi.a1 = NULL,
+   backfill.start.combi.a2 = NULL,
+   backfill.start.combi.b1 = NULL,
+   backfill.start.combi.b2 = NULL,
    n.studies = 1,
    n.cores = 1,
    seed = sample.int(.Machine$integer.max, 1),
@@ -473,6 +481,9 @@ but for the second potentially simulated trial (suffix \code{.b}) of the respect
 
 \item{backfill.prob, backfill.prob.mono1.a, backfill.prob.mono2.a, backfill.prob.combi.a, backfill.prob.mono1.b, backfill.prob.mono2.b, backfill.prob.combi.b}{Optional numericals, provide the probabilities if multiple possible back-fill cohort sizes are given.
 Interpreted in the same fashion as \code{cohort.prob}.}
+
+\item{backfill.start.mono1.a, backfill.start.mono1.b, backfill.start.mono2.a, backfill.start.mono2.b, backfill.start.combi.a1, backfill.start.combi.a2, backfill.start.combi.b1, backfill.start.combi.b2}{Optional numericals. Specify the first dose on which back-fill cohorts are enrolled. If not provided, the
+lowest available dose will be assumed to be the starting point of back-fill cohorts in the respective trial.}
 
 \item{n.studies}{Positive integer that specifies the number of studies to be simulated, defaults to \code{1}. Due to the long simulation time, it is recommended
 to first try lower numbers to obtain an estimation of the run-time for larger numbers of studies. Typically, about 1000 studies are recommended to obtain
