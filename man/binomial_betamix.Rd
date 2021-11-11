@@ -89,7 +89,7 @@ Note that this is mostly required to ensure that the effective sample size as as
 by the ELIR method (Neuenschwander et al., 2020) is well-defined, which allows
 to calculate the effective sample size using \code{\link[RBesT:ess]{RBesT::ess}()}.}
 
-\item{...}{Optional further parameters given to \code{\link[rstan:sampling]{rstan::sampling}()}.}
+\item{...}{Optional further parameters given to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}.}
 
 \item{p.dlt}{Non-negative numerical between 0 and 1, provides the assumed true
 DLT rate of the dose of interest.}

@@ -494,46 +494,46 @@ than 1 is given, the function will process the simulations in parallel using the
 
 \item{seed}{Optional positive integer that specified the seed to be used for the simulation. The default is \code{sample.int(.Machine$integer.max, 1)}.
 Note that reproducibility can only be obtained when the function is executed on exactly the same computing architecture, using identical software versions
-(e.g. of the compiler, Stan, and R), and the same input specifications. This is due to the internal use of \code{\link[rstan:rstan-package]{rstan-package}} for MCMC sampling, which is
-only reproducible under these restrictions (refer to the Stan reference manual from \code{\link[rstan:rstan-package]{rstan-package}}'s \href{https://mc-stan.org}{homepage} for more detail).}
+(e.g. of the compiler, Stan, and R), and the same input specifications. This is due to the internal use of \code{\link[rstan:rstan]{rstan-package}} for MCMC sampling, which is
+only reproducible under these restrictions (refer to the Stan reference manual from \code{\link[rstan:rstan]{rstan-package}}'s \href{https://mc-stan.org}{homepage} for more detail).}
 
 \item{chains}{Optional positive integer that specifies the number of Markov chains to be used during MCMC sampling, defaults to \code{4}. The parameter is given to the method
-\code{\link[rstan:sampling]{rstan::sampling}()} from the package \code{\link[rstan:rstan-package]{rstan-package}}.}
+\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} from the package \code{\link[rstan:rstan]{rstan-package}}.}
 
 \item{iter}{Optional positive integer that specifies the total number of iterations per chain to be used during MCMC sampling, defaults to \code{6000}. The parameter is given to the method
-\code{\link[rstan:sampling]{rstan::sampling}()} from the package \code{\link[rstan:rstan-package]{rstan-package}}. Be aware that the first \code{warmup} iterations among the \code{iter}-many samples are discarded.
+\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} from the package \code{\link[rstan:rstan]{rstan-package}}. Be aware that the first \code{warmup} iterations among the \code{iter}-many samples are discarded.
 The function enforces \code{iter} to be at least \code{2000}, and further that \code{iter} is larger or equal than \code{warmup + 1000} (to ensure
 that at least 1000 samples from each chain are kept).}
 
 \item{warmup}{Optional positive integer that specifies the number of iterations per chain that are discarded from the total number of iterations, \code{iter}.
-Defaults to \code{1000}. The parameter is given to the method \code{\link[rstan:sampling]{rstan::sampling}()} from the package \code{\link[rstan:rstan-package]{rstan-package}}.
+Defaults to \code{1000}. The parameter is given to the method \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} from the package \code{\link[rstan:rstan]{rstan-package}}.
 The function enforces \code{warmup} to be at least \code{1000}, and further that \code{iter} is larger or equal than \code{warmup + 1000} (to ensure
 that at least 1000 samples from each chain are kept).}
 
-\item{adapt_delta}{Optional numerical that must be at least \code{0.8} and smaller than \code{1}, defaults to \code{0.9}. The parameter is given to the argument \code{control} of the \code{\link[rstan:sampling]{rstan::sampling}()}
-method from the package \code{\link[rstan:rstan-package]{rstan-package}}. Translates to target Metropolis acceptance probability during Hamiltonian Monte Carlo, respectively NUTS.
-Can be used to influence the \code{stepsize} Stan uses for leapfrog steps during the NUTS algorithm. See \code{\link[rstan:sampling]{rstan::sampling}()}, \code{\link[rstan:rstan-package]{rstan-package}} for details and further reading.
+\item{adapt_delta}{Optional numerical that must be at least \code{0.8} and smaller than \code{1}, defaults to \code{0.9}. The parameter is given to the argument \code{control} of the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
+method from the package \code{\link[rstan:rstan]{rstan-package}}. Translates to target Metropolis acceptance probability during Hamiltonian Monte Carlo, respectively NUTS.
+Can be used to influence the \code{stepsize} Stan uses for leapfrog steps during the NUTS algorithm. See \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}} for details and further reading.
 
 Note: Larger values than the default can be used to reduce the number of Stan warnings on "divergent transition", but will slow down sampling. The function will not
-permit to set \code{adapt_delta} to values below 0.8 (the \code{\link[rstan:rstan-package]{rstan-package}} default).}
+permit to set \code{adapt_delta} to values below 0.8 (the \code{\link[rstan:rstan]{rstan-package}} default).}
 
-\item{max_treedepth}{Optional integer that must be at least \code{10}, defaults to \code{15}. The parameter is given to the argument \code{control} of the \code{\link[rstan:sampling]{rstan::sampling}()}
-method from the package \code{\link[rstan:rstan-package]{rstan-package}}. This is a parameter of the NUTS algorithm. Roughly speaking, NUTS constructs
+\item{max_treedepth}{Optional integer that must be at least \code{10}, defaults to \code{15}. The parameter is given to the argument \code{control} of the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
+method from the package \code{\link[rstan:rstan]{rstan-package}}. This is a parameter of the NUTS algorithm. Roughly speaking, NUTS constructs
 a search tree when generating a new proposal, until a stopping criterion (the NUTS criterion) is satisfied or, alternatively, until
 the maximum depth of the search tree is reached (to avoid endless looping). The argument \code{max_treedepth} allows to control the latter.
 The maximum treedepth will also automatically constrain the maximum number of leapfrog steps, and should therefore not be below 10.
-See also \code{\link[rstan:sampling]{rstan::sampling}()} for details on \code{max_treedepth}.
+See also \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} for details on \code{max_treedepth}.
 
 Note: The default maximum treedepth of 15 should usually not be reached during sampling (and never was in tests, although this cannot be excluded in general), otherwise Stan will print a warning.
 In this case, it is recommended to increase its value.}
 
-\item{refresh}{Optional integer, defaults to \code{0}. The parameter is given to the \code{\link[rstan:sampling]{rstan::sampling}()}
-method from the package \code{\link[rstan:rstan-package]{rstan-package}} and controls the amount of intermediate output during calls to \code{\link[rstan:sampling]{rstan::sampling}()}.
+\item{refresh}{Optional integer, defaults to \code{0}. The parameter is given to the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
+method from the package \code{\link[rstan:rstan]{rstan-package}} and controls the amount of intermediate output during calls to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}.
 Only affects non-parallelized simulations (otherwise it only affects the output of each worker, which is discarded anyway). If a positive value is given, the number is
 interpreted as the number of samples after which intermediate progress is reported during MCMC sampling (e.g., when set to 1000, Stan prints a progress report every 1000 samples).
 If refresh is \code{0} (the default) or negative, no output will be printed during sampling. Changing the value of \code{refresh} does not
 affect the results of the simulation, although it is recommended to not change it to a positive number: the function can lead to many
-calls to \code{\link[rstan:sampling]{rstan::sampling}()} (multiple thousand when 1000 trials are simulated), so that intermediate output would
+calls to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} (multiple thousand when 1000 trials are simulated), so that intermediate output would
 not be helpful or interpretable in most settings anyway.}
 
 \item{file.name}{Optional character string that provides a name for potential output files. No output will be written if \code{file.name} or \code{path}
@@ -670,6 +670,6 @@ Zhou, H.,  Yuan, Y., & Nie, L. (2018). Accuracy, safety, and reliability of nove
 Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>.
 }
 \seealso{
-\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:sampling]{rstan::sampling}()},
-\code{\link[rstan:rstan-package]{rstan-package}}.
+\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+\code{\link[rstan:rstan]{rstan-package}}.
 }

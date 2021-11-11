@@ -212,9 +212,9 @@
 #'@param warmup Optional integer, number of warmup iterations discarded from total MCMC iterations per chain. Defaults to \code{1000}.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param chains Optional integer. Number of Markov chains constructed by Stan. Defaults to 4.
-#'@param refresh Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:sampling]{rstan::sampling}()}, defaults to \code{0}.
+#'@param refresh Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, defaults to \code{0}.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
-#'@param adapt_delta Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
+#'@param adapt_delta Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param max_treedepth Optional integer, defaults to 15.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
@@ -459,8 +459,8 @@
 #' @seealso \code{\link[OncoBLRM:scenario_list_covariate_jointBLRM]{scenario_list_covariate_jointBLRM}()},
 #' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
 #' \code{\link[OncoBLRM:scenario_list_jointBLRM]{scenario_list_jointBLRM}()},
-#' \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:sampling]{rstan::sampling}()},
-#' \code{\link[rstan:rstan-package]{rstan-package}},
+#' \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' \code{\link[rstan:rstan]{rstan-package}},
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 #'
 #'@md
@@ -1934,8 +1934,8 @@ scenario_covariate_jointBLRM <- function(
 #'
 #'
 #' @seealso \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
-#'  \code{\link[rstan:sampling]{rstan::sampling}()},
-#' \code{\link[rstan:rstan-package]{rstan-package}},
+#'  \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' \code{\link[rstan:rstan]{rstan-package}},
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 #' @export
 scenario_list_covariate_jointBLRM <- function(

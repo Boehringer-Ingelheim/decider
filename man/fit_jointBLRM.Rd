@@ -62,16 +62,16 @@ Same format as documented in \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_j
 \item{prior.tau}{Optional list that specifies the prior.
 Same format as documented in \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.}
 
-\item{...}{Additional optional arguments that are passed to \code{\link[rstan:sampling]{rstan::sampling}()}. These
+\item{...}{Additional optional arguments that are passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}. These
 include the settings for MCMC and the list of parameters which are returned in the stanfit object. Refer
-to the \code{\link[rstan:rstan-package]{rstan-package}} for an overview.}
+to the \code{\link[rstan:rstan]{rstan-package}} for an overview.}
 }
 \value{
 An object of class \code{\link[rstan:stanfit-class]{rstan::stanfit-class}} from the
-\code{\link[rstan:rstan-package]{rstan-package}}.
+\code{\link[rstan:rstan]{rstan-package}}.
 }
 \description{
-Call the \code{\link[rstan:sampling]{rstan::sampling}()} method for
+Call the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method for
 the joint BLRM to extract a \code{\link[rstan:stanfit-class]{rstan::stanfit-class}} object.
 Refer to \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for a
 documentation of the underlying model.
@@ -125,6 +125,6 @@ Statistics in Biopharmaceutical Research, 8(3), 345-354, \url{doi:10.1080/194663
 \seealso{
 \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
 \code{\link[OncoBLRM:get_pred_tox]{get_pred_tox}()}, \code{\link[OncoBLRM:get_MAP]{get_MAP}()},
-\code{\link[rstan:sampling]{rstan::sampling}()},
-\code{\link[rstan:stanfit-class]{rstan::stanfit-class}}, \code{\link[rstan:rstan-package]{rstan-package}}.
+\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+\code{\link[rstan:stanfit-class]{rstan::stanfit-class}}, \code{\link[rstan:rstan]{rstan-package}}.
 }

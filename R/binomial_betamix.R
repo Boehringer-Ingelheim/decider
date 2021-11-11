@@ -70,7 +70,7 @@
 #'Note that this is mostly required to ensure that the effective sample size as assessed
 #'by the ELIR method (Neuenschwander et al., 2020) is well-defined, which allows
 #'to calculate the effective sample size using \code{\link[RBesT:ess]{RBesT::ess}()}.
-#'@param ... Optional further parameters given to \code{\link[rstan:sampling]{rstan::sampling}()}.
+#'@param ... Optional further parameters given to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}.
 #'@returns For function \code{binomial_betamix()}: List with the entries
 #'\itemize{
 #'\item{\code{...$summary}:\cr

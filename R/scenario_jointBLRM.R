@@ -231,10 +231,10 @@
 #'@param plot.return Optional logical, defaults to \code{FALSE}. If set to \code{TRUE}, the functions return the created plots
 #'to R in the result list. In this case, the result list will have an additional entry, \code{...$plots}, which contains the posterior plots
 #'as a named list. The returned plots will be given as a list of \code{\link[ggplot2:ggplot]{ggplot2::ggplot}()} objects, which can be displayed in R
-#'via the \code{\link[ggplot2:plot.ggplot]{ggplot2::plot.ggplot}} method. Refer to the documentation of the \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}
+#'via the \code{\link[ggplot2:print.ggplot]{ggplot2::plot.ggplot}} method. Refer to the documentation of the \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}
 #'package for further detail.
 #'@param plot.file.format Optional character, defaults to \code{"pdf"}. Can either be \code{"pdf"}, \code{"jpeg"} or \code{"png"}. Specifies the file format
-#'of the created output plots (if plots are saved). Note that \code{"pdf"} will use \code{\link[grDevices:cairo_pdf]{grDevices::cairo_pdf}()}.
+#'of the created output plots (if plots are saved). Note that \code{"pdf"} will use \code{\link[grDevices:cairo]{grDevices::cairo_pdf}()}.
 #'@param plot.unit Optional character string, can be "in", "cm", or "mm". Provides the unit of measurements for \code{plot.width} and \code{plot.height}. Has only an effect if all of
 #' the parameters \code{plot.unit}, \code{plot.width}, and \code{plot.height} are defined. In this case, The output plots will be created with the
 #' specified width and length (interpreted in the given unit of measurement). If one of these parameters is missing, the default device size is used.
@@ -258,27 +258,27 @@
 #'of the \code{iter} many iterations, the first \code{warmup} many samples are not saved.
 #'@param warmup Optional integer, number of warmup iterations discarded from total MCMC iterations per chain. Defaults to \code{1000}.
 #'Note: Number of warmup iterations is counted towards \code{iter}, i.e. of the \code{iter} many iterations, the first \code{warmup} many samples
-#'are not saved. Refer to \code{\link[rstan:sampling]{rstan::sampling}()} from the \code{\link[rstan:rstan-package]{rstan-package}} package for details.
+#'are not saved. Refer to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} from the \code{\link[rstan:rstan]{rstan-package}} package for details.
 #'@param chains Optional integer. Number of Markov chains constructed by Stan. Defaults to 4.
-#'@param refresh Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:sampling]{rstan::sampling}()}, defaults to \code{0}. A positive value indicates that updates on sampling progress are
-#'printed every \code{refresh} many iterations. Set this to 0 to avoid output from Stan. Refer to \code{\link[rstan:sampling]{rstan::sampling}()} from the \code{\link[rstan:rstan-package]{rstan-package}} package for details.
-#'@param adapt_delta Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:sampling]{rstan::sampling}()} method in the \code{control} argument of Stan. Translates to target Metropolis
+#'@param refresh Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, defaults to \code{0}. A positive value indicates that updates on sampling progress are
+#'printed every \code{refresh} many iterations. Set this to 0 to avoid output from Stan. Refer to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} from the \code{\link[rstan:rstan]{rstan-package}} package for details.
+#'@param adapt_delta Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan. Translates to target Metropolis
 #'acceptance probability during Hamiltonian Monte Carlo, respectively NUTS.
-#'Can be used to influence the \code{stepsize} Stan uses for leapfrog steps during the NUTS algorithm. See \code{\link[rstan:sampling]{rstan::sampling}()}, \code{\link[rstan:rstan-package]{rstan-package}} for details.
+#'Can be used to influence the \code{stepsize} Stan uses for leapfrog steps during the NUTS algorithm. See \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}} for details.
 #'Note: One can increase the value of this parameter
 #'in order to reduce the number of Stan warnings on "divergent transition". Larger values than 0.95 will slow down sampling. The function will not
-#'permit to set \code{adapt_delta} to values below 0.8 (the \code{\link[rstan:rstan-package]{rstan-package}} default).
+#'permit to set \code{adapt_delta} to values below 0.8 (the \code{\link[rstan:rstan]{rstan-package}} default).
 #'@param max_treedepth Optional integer, defaults to 15. Should not be lower than 10. This is a parameter of the NUTS algorithm. Roughly speaking, NUTS constructs
 #'a search tree when generating a new proposal, until a stopping criterion (the NUTS criterion) is satisfied or, alternatively, until
 #'the maximum depth of the search tree is reached (to avoid endless looping). The argument \code{max_treedepth} allows to control the latter.
 #'The maximum treedepth will also automatically constrain the maximum number of leapfrog steps, and should therefore not be below 10.
-#'See also \code{\link[rstan:sampling]{rstan::sampling}()} for details on \code{max_treedepth}.
+#'See also \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} for details on \code{max_treedepth}.
 #'Note: The maximum treedepth should usually not be reached during sampling, otherwise Stan will print a warning.
 #'In this case, it is recommended to increase its value.
 #'@param seed Optional positive integer that specifies the seed to be used for the simulation. The default is \code{sample.int(.Machine$integer.max, 1)}.
 #'Note that reproducibility can only be obtained when the function is executed on exactly the same computing architecture, using identical software versions
-#'(e.g. of the compiler, Stan, and R), and the same input specifications. This is due to the internal use of \code{\link[rstan:rstan-package]{rstan-package}} for MCMC sampling, which is
-#'only reproducible under these restrictions (refer to the Stan reference manual from \code{\link[rstan:rstan-package]{rstan-package}}'s \href{https://mc-stan.org}{homepage} for more detail).
+#'(e.g. of the compiler, Stan, and R), and the same input specifications. This is due to the internal use of \code{\link[rstan:rstan]{rstan-package}} for MCMC sampling, which is
+#'only reproducible under these restrictions (refer to the Stan reference manual from \code{\link[rstan:rstan]{rstan-package}}'s \href{https://mc-stan.org}{homepage} for more detail).
 #'@param output.scen.config Optional logical, defaults to \code{FALSE}. If \code{TRUE}, the results will contain the necessary specifications of
 #'the evaluated scenario, i.e., the data scenario, priors, escalation rule specification, and seed. Otherwise, only the posterior summaries
 #'are returned.
@@ -581,8 +581,8 @@
 #' Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>.
 #'
 #' @seealso \code{\link[OncoBLRM:scenario_list_jointBLRM]{scenario_list_jointBLRM}()},
-#' \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:sampling]{rstan::sampling}()},
-#' \code{\link[rstan:rstan-package]{rstan-package}},
+#' \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' \code{\link[rstan:rstan]{rstan-package}},
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 #'
 #'@md
@@ -1895,8 +1895,8 @@ scenario_jointBLRM <- function(data=NULL,
 #'for the corresponding trial in the \code{data.list}.
 #'
 #'
-#' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:sampling]{rstan::sampling}()},
-#' \code{\link[rstan:rstan-package]{rstan-package}},
+#' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' \code{\link[rstan:rstan]{rstan-package}},
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 #' @export
 scenario_list_jointBLRM <- function(

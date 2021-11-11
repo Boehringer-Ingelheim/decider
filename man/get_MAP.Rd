@@ -96,12 +96,12 @@ to a prior summary.}
 \item{probs}{Optional numerical, defaults to \code{c(0.025, 0.5, 0.975)}.
 Indicates which quantiles should be included in the posterior summaries.}
 
-\item{...}{Optional additional arguments that are passed to \code{\link[rstan:sampling]{rstan::sampling}()}. These
+\item{...}{Optional additional arguments that are passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}. These
 include the settings for MCMC and the random seed. Refer
-to the \code{\link[rstan:rstan-package]{rstan-package}} for an overview. Note that
+to the \code{\link[rstan:rstan]{rstan-package}} for an overview. Note that
 the function will automatically use \code{iter=10000} and a \code{control} argument
 containing \code{adapt_delta=0.9} to ensure a relatively good fit if the
-arguments \code{iter} and \code{control} for \code{\link[rstan:sampling]{rstan::sampling}()}
+arguments \code{iter} and \code{control} for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
 are not provided manually in \code{...}.}
 
 \item{dose}{Numerical vector that lists the dose levels of a monotherapy compound applied to each
@@ -220,5 +220,5 @@ Statistics in Biopharmaceutical Research, 8(3), 345-354, \url{doi:10.1080/194663
 \seealso{
 \code{\link[OncoBLRM:get_pred_tox]{get_pred_tox}()}, \code{\link[OncoBLRM:fit_jointBLRM]{fit_jointBLRM}()},
 \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
-\code{\link[rstan:sampling]{rstan::sampling}()}, \code{\link[rstan:rstan-package]{rstan-package}}.
+\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}}.
 }

@@ -12,7 +12,7 @@ The underlying model is referred to as Bayesian logistic regression model (BLRM)
 and specified according to Neuenschwander et al. (2008, 2014, 2016).
 All Bayesian models were implemented in the
 in the \href{https://mc-stan.org}{Stan} modeling language (Stan Development Team (2020))
-using the \code{\link[rstan:rstan-package]{rstan-package}}
+using the \code{\link[rstan:rstan]{rstan-package}}
 and the \code{\link[rstantools:rstantools-package]{rstantools-package}}.
 
 Currently, only the so-called joint BLRM is included in the package. Different
@@ -60,6 +60,6 @@ Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>
 \seealso{
 \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
 \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()},\code{\link[OncoBLRM:fit_jointBLRM]{fit_jointBLRM}()},
-\code{\link[rstan:sampling]{rstan::sampling}},
-\code{\link[rstan:rstan-package]{rstan-package}}.
+\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}},
+\code{\link[rstan:rstan]{rstan-package}}.
 }

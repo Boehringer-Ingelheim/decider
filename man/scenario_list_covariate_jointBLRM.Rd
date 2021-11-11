@@ -55,7 +55,7 @@ and, additionally, the initialization of the parallel backend needs to occur onl
 }
 \seealso{
 \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
-\code{\link[rstan:sampling]{rstan::sampling}()},
-\code{\link[rstan:rstan-package]{rstan-package}},
+\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+\code{\link[rstan:rstan]{rstan-package}},
 \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 }

@@ -5,7 +5,7 @@
 #------------------------------------------------------------------------------
 
 #' Fit the joint BLRM and extract a stanfit object
-#' @description Call the \code{\link[rstan:sampling]{rstan::sampling}()} method for
+#' @description Call the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method for
 #' the joint BLRM to extract a \code{\link[rstan:stanfit-class]{rstan::stanfit-class}} object.
 #' Refer to \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for a
 #' documentation of the underlying model.
@@ -33,19 +33,19 @@
 #' @param saturating Optional logical, defaults to \code{FALSE}. If \code{TRUE}, the BLRM will be using a saturating interaction term as described in
 #' \code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()}. Also refer to the Details section in the documentation
 #' of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
-#' @param ... Additional optional arguments that are passed to \code{\link[rstan:sampling]{rstan::sampling}()}. These
+#' @param ... Additional optional arguments that are passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}. These
 #' include the settings for MCMC and the list of parameters which are returned in the stanfit object. Refer
-#' to the \code{\link[rstan:rstan-package]{rstan-package}} for an overview.
+#' to the \code{\link[rstan:rstan]{rstan-package}} for an overview.
 #' @returns An object of class \code{\link[rstan:stanfit-class]{rstan::stanfit-class}} from the
-#' \code{\link[rstan:rstan-package]{rstan-package}}.
+#' \code{\link[rstan:rstan]{rstan-package}}.
 #'
 #' @details Refer to \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for
 #' a description of the underlying model.
 #'
 #' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
 #' \code{\link[OncoBLRM:get_pred_tox]{get_pred_tox}()}, \code{\link[OncoBLRM:get_MAP]{get_MAP}()},
-#'  \code{\link[rstan:sampling]{rstan::sampling}()},
-#' \code{\link[rstan:stanfit-class]{rstan::stanfit-class}}, \code{\link[rstan:rstan-package]{rstan-package}}.
+#'  \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' \code{\link[rstan:stanfit-class]{rstan::stanfit-class}}, \code{\link[rstan:rstan]{rstan-package}}.
 #' @references
 #' Stan Development Team (2020). RStan: the R interface to Stan. R package version 2.21.2. \url{https://mc-stan.org}.
 #'

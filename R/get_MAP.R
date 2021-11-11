@@ -51,12 +51,12 @@
 #' to a prior summary.
 #' @param probs Optional numerical, defaults to \code{c(0.025, 0.5, 0.975)}.
 #' Indicates which quantiles should be included in the posterior summaries.
-#' @param ... Optional additional arguments that are passed to \code{\link[rstan:sampling]{rstan::sampling}()}. These
+#' @param ... Optional additional arguments that are passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}. These
 #' include the settings for MCMC and the random seed. Refer
-#' to the \code{\link[rstan:rstan-package]{rstan-package}} for an overview. Note that
+#' to the \code{\link[rstan:rstan]{rstan-package}} for an overview. Note that
 #' the function will automatically use \code{iter=10000} and a \code{control} argument
 #' containing \code{adapt_delta=0.9} to ensure a relatively good fit if the
-#' arguments \code{iter} and \code{control} for \code{\link[rstan:sampling]{rstan::sampling}()}
+#' arguments \code{iter} and \code{control} for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
 #' are not provided manually in \code{...}.
 #' @returns A table containing prior summaries of the MAP priors for either the parameters
 #' \eqn{log(\alpha)} and \eqn{log(\beta)} (function \code{get_MAP_mono()}) or of the
@@ -80,7 +80,7 @@
 #' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} is used.
 #' @seealso  \code{\link[OncoBLRM:get_pred_tox]{get_pred_tox}()}, \code{\link[OncoBLRM:fit_jointBLRM]{fit_jointBLRM}()},
 #' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
-#' \code{\link[rstan:sampling]{rstan::sampling}()}, \code{\link[rstan:rstan-package]{rstan-package}}.
+#' \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}}.
 #' @references
 #' Stan Development Team (2020). RStan: the R interface to Stan. R package version 2.21.2. \url{https://mc-stan.org}.
 #'

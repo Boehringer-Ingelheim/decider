@@ -201,10 +201,10 @@ of the \code{iter} many iterations, the first \code{warmup} many samples are not
 \item{warmup}{Optional integer, number of warmup iterations discarded from total MCMC iterations per chain. Defaults to \code{1000}.
 See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
 
-\item{refresh}{Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:sampling]{rstan::sampling}()}, defaults to \code{0}.
+\item{refresh}{Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, defaults to \code{0}.
 See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
 
-\item{adapt_delta}{Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
+\item{adapt_delta}{Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
 See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
 
 \item{max_treedepth}{Optional integer, defaults to 15.
@@ -513,7 +513,7 @@ Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>
 \code{\link[OncoBLRM:scenario_list_covariate_jointBLRM]{scenario_list_covariate_jointBLRM}()},
 \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
 \code{\link[OncoBLRM:scenario_list_jointBLRM]{scenario_list_jointBLRM}()},
-\code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:sampling]{rstan::sampling}()},
-\code{\link[rstan:rstan-package]{rstan-package}},
+\code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+\code{\link[rstan:rstan]{rstan-package}},
 \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 }
