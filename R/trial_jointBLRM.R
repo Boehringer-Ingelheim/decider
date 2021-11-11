@@ -975,6 +975,70 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
             prep.data.n.patients[curr.data.entry] <- curr.n.pat
             prep.data.study[curr.data.entry] <- data.n.study.combi.1
 
+            #check for back-fill cohort and simulate it if allowed
+            if(backfill.combi.a){
+                #if there is a previous dose level
+                #and if it is at least equal to the back-fill start dose
+                if(prev.dose.combi.a1 > 0 & prev.dose.combi.a2 > 0 &
+                   prev.dose.combi.a1 + 2*.Machine$double.eps>=backfill.start.combi.a1 &
+                   prev.dose.combi.a2 + 2*.Machine$double.eps>=backfill.start.combi.a2){
+                    #if it is actually contained in doses
+                    idx.prev.dose.combi.a <- which(doses.combi.a[1, ]==prev.dose.combi.a1 &
+                                                   doses.combi.a[2, ]==prev.dose.combi.a2)
+                    if(!length(idx.prev.dose.combi.a)==0){
+                        #if there was an escalation to reach the current dose,
+                        #and if the previous dose was not backfilled.
+                        if(prev.dose.esc.combi.a & prev.dose.ewoc.combi.a&
+                           !backfilled.combi.a[idx.prev.dose.combi.a]){
+                            #generate backfill cohort for dose
+                            prev.dose.name.combi.a <- paste0(prev.dose.combi.a1, "+",
+                                                             prev.dose.combi.a2)
+                            prev.tox.combi.a <- tox.combi.a[prev.dose.name.combi.a]
+                            if(length(backfill.size.combi.a)==1){
+                                bf.pat.combi.a <- backfill.size.combi.a
+                            }else{
+                                bf.pat.combi.a <- sample(backfill.size.combi.a,
+                                                         size=1, prob=backfill.prob.combi.a)
+                            }
+                            backfilled.combi.a[idx.prev.dose.combi.a] <- TRUE
+                            #when there is at least 1 back-fill patient
+                            if(bf.pat.combi.a>0){
+                                #generate and save cohort data
+                                n.pat[3] <- n.pat[3] + bf.pat.combi.a
+                                bf.dlt.combi.a <- rbinom(1, bf.pat.combi.a,
+                                                         prob = prev.tox.combi.a)
+                                n.dlt[3] <- n.dlt[3] + bf.dlt.combi.a
+
+                                #add to data frame
+                                curr.data.entry <- curr.data.entry + 1
+                                prep.data.doses.1[curr.data.entry] <- prev.dose.combi.a1
+                                prep.data.doses.2[curr.data.entry] <- prev.dose.combi.a2
+                                prep.data.DLT[curr.data.entry] <- bf.dlt.combi.a
+                                prep.data.n.patients[curr.data.entry] <- bf.pat.combi.a
+                                prep.data.study[curr.data.entry] <- data.n.study.combi.1
+
+                                #save data
+                                patients.at.dose.combi.1[prev.dose.name.combi.a] <- bf.pat.combi.a +
+                                    patients.at.dose.combi.1[prev.dose.name.combi.a]
+                                if(prev.tox.combi.a < dosing.intervals[1]){  #the cohort was treated with underdose
+                                    trials.n.under[3] <- as.numeric(trials.n.under[3]) + bf.pat.combi.a
+                                    trials.dlt.under[3] <- as.numeric(trials.dlt.under[3]) + bf.dlt.combi.a
+                                } else if (dosing.intervals[1] <= prev.tox.combi.a &
+                                           prev.tox.combi.a < dosing.intervals[2]){
+                                    #the cohort was treated with dose in target toxicicty interval
+                                    trials.n.target[3] <- as.numeric(trials.n.target[3]) + bf.pat.combi.a
+                                    trials.dlt.target[3] <- as.numeric(trials.dlt.target[3]) + bf.dlt.combi.a
+                                } else { # the cohort was given an overdose
+                                    trials.n.over[3] <- as.numeric(trials.n.over[3]) + bf.pat.combi.a
+                                    trials.dlt.over[3] <- as.numeric(trials.dlt.over[3]) + bf.dlt.combi.a
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
              #Call the main function
             current.results <- main_jointBLRM(dose1 = prep.data.doses.1[1:curr.data.entry],
                                               dose2 = prep.data.doses.2[1:curr.data.entry],
@@ -1008,6 +1072,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                               curr.dose1=current.dose.1.combi.1,
                                               curr.dose2=current.dose.2.combi.1,
 
+                                              check.prev.dose = backfill.combi.a,
                                               dosing.intervals = dosing.intervals,
                                               ewoc = ewoc,
                                               chains = chains,
@@ -1041,7 +1106,6 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                         (curr.n.treated >= decision.combi.a$PAT.AT.MTD) &
                         ((n.pat[3] >= decision.combi.a$MIN.PAT) | (target.prob >= decision.combi.a$TARGET.PROB ))
 
-
                 } else { #rule = 2
                     #same as above
                     combi.is.MTD.1 <- (next.combi.1.dose.1==current.dose.1.combi.1) &
@@ -1051,7 +1115,16 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                         ((curr.n.treated>= decision.combi.a$PAT.AT.MTD) | (target.prob >= decision.combi.a$TARGET.PROB ))
 
                 }
-
+                #update data that controls back-fill cohorts
+                if(backfill.combi.a){
+                    prev.dose.combi.a1 <- current.dose.1.combi.1
+                    prev.dose.combi.a2 <- current.dose.2.combi.1
+                    prev.dose.esc.combi.a <- ((current.dose.1.combi.1 < next.combi.1.dose.1 &
+                                               current.dose.2.combi.1 <= next.combi.1.dose.2 + 2*.Machine$double.eps)|
+                                              (current.dose.2.combi.1 < next.combi.1.dose.2 &
+                                               current.dose.1.combi.1 <= next.combi.1.dose.1 + 2*.Machine$double.eps))
+                    prev.dose.ewoc.combi.a <- current.results$bf.check
+                }
                 #continue with the new doses
                 current.dose.1.combi.1 <- next.combi.1.dose.1
                 current.dose.2.combi.1 <- next.combi.1.dose.2
@@ -1131,6 +1204,70 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                 prep.data.n.patients[curr.data.entry] <- curr.n.pat
                 prep.data.study[curr.data.entry] <- data.n.study.combi.2
 
+                #check for back-fill cohort and simulate it if allowed
+                if(backfill.combi.b){
+                    #if there is a previous dose level
+                    #and if it is at least equal to the back-fill start dose
+                    if(prev.dose.combi.b1 > 0 & prev.dose.combi.b2 > 0 &
+                       prev.dose.combi.b1 + 2*.Machine$double.eps>=backfill.start.combi.b1 &
+                       prev.dose.combi.b2 + 2*.Machine$double.eps>=backfill.start.combi.b2){
+                        #if it is actually contained in doses
+                        idx.prev.dose.combi.b <- which(doses.combi.b[1, ]==prev.dose.combi.b1 &
+                                                           doses.combi.b[2, ]==prev.dose.combi.b2)
+                        if(!length(idx.prev.dose.combi.b)==0){
+                            #if there was an escalation to reach the current dose,
+                            #and if the previous dose was not backfilled.
+                            if(prev.dose.esc.combi.b & prev.dose.ewoc.combi.b&
+                               !backfilled.combi.b[idx.prev.dose.combi.b]){
+                                #generate backfill cohort for dose
+                                prev.dose.name.combi.b <- paste0(prev.dose.combi.b1, "+",
+                                                                 prev.dose.combi.b2)
+                                prev.tox.combi.b <- tox.combi.b[prev.dose.name.combi.b]
+                                if(length(backfill.size.combi.b)==1){
+                                    bf.pat.combi.b <- backfill.size.combi.b
+                                }else{
+                                    bf.pat.combi.b <- sample(backfill.size.combi.b,
+                                                             size=1, prob=backfill.prob.combi.b)
+                                }
+                                backfilled.combi.b[idx.prev.dose.combi.b] <- TRUE
+                                #when there is at least 1 back-fill patient
+                                if(bf.pat.combi.b>0){
+                                    #generate and save cohort data
+                                    n.pat[6] <- n.pat[6] + bf.pat.combi.b
+                                    bf.dlt.combi.b <- rbinom(1, bf.pat.combi.b,
+                                                             prob = prev.tox.combi.b)
+                                    n.dlt[6] <- n.dlt[6] + bf.dlt.combi.b
+
+                                    #add to data frame
+                                    curr.data.entry <- curr.data.entry + 1
+                                    prep.data.doses.1[curr.data.entry] <- prev.dose.combi.b1
+                                    prep.data.doses.2[curr.data.entry] <- prev.dose.combi.b2
+                                    prep.data.DLT[curr.data.entry] <- bf.dlt.combi.b
+                                    prep.data.n.patients[curr.data.entry] <- bf.pat.combi.b
+                                    prep.data.study[curr.data.entry] <- data.n.study.combi.2
+
+                                    #save data
+                                    patients.at.dose.combi.2[prev.dose.name.combi.b] <- bf.pat.combi.b +
+                                        patients.at.dose.combi.2[prev.dose.name.combi.b]
+                                    if(prev.tox.combi.b < dosing.intervals[1]){  #the cohort was treated with underdose
+                                        trials.n.under[6] <- as.numeric(trials.n.under[6]) + bf.pat.combi.b
+                                        trials.dlt.under[6] <- as.numeric(trials.dlt.under[6]) + bf.dlt.combi.b
+                                    } else if (dosing.intervals[1] <= prev.tox.combi.b &
+                                               prev.tox.combi.b < dosing.intervals[2]){
+                                        #the cohort was treated with dose in target toxicicty interval
+                                        trials.n.target[6] <- as.numeric(trials.n.target[6]) + bf.pat.combi.b
+                                        trials.dlt.target[6] <- as.numeric(trials.dlt.target[6]) + bf.dlt.combi.b
+                                    } else { # the cohort was given an overdose
+                                        trials.n.over[6] <- as.numeric(trials.n.over[6]) + bf.pat.combi.b
+                                        trials.dlt.over[6] <- as.numeric(trials.dlt.over[6]) + bf.dlt.combi.b
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+
                 #Call the main function
                 current.results <- main_jointBLRM(dose1 = prep.data.doses.1[1:curr.data.entry],
                                                   dose2 = prep.data.doses.2[1:curr.data.entry],
@@ -1164,6 +1301,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                                   curr.dose1=current.dose.1.combi.2,
                                                   curr.dose2=current.dose.2.combi.2,
 
+                                                  check.prev.dose = backfill.combi.b,
                                                   dosing.intervals = dosing.intervals,
                                                   ewoc = ewoc,
                                                   chains = chains,
@@ -1204,6 +1342,17 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                 (n.pat[6] >= decision.combi.b$MIN.PAT) &
                                 ((curr.n.treated>= decision.combi.b$PAT.AT.MTD) | (target.prob >= decision.combi.b$TARGET.PROB ))
 
+                        }
+
+                        #update data that controls back-fill cohorts
+                        if(backfill.combi.b){
+                            prev.dose.combi.b1 <- current.dose.1.combi.2
+                            prev.dose.combi.b2 <- current.dose.2.combi.2
+                            prev.dose.esc.combi.b <- ((current.dose.1.combi.2 < next.combi.2.dose.1 &
+                                                           current.dose.2.combi.2 <= next.combi.2.dose.2 + 2*.Machine$double.eps)|
+                                                          (current.dose.2.combi.2 < next.combi.2.dose.2 &
+                                                               current.dose.1.combi.2 <= next.combi.2.dose.1 + 2*.Machine$double.eps))
+                            prev.dose.ewoc.combi.b <- current.results$bf.check
                         }
 
                         #continue with the new doses
