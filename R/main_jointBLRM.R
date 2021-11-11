@@ -166,8 +166,8 @@ main_jointBLRM <- function(dose1,
     #and could in theory be back-filled in
     #next iteration
     if(check.prev.dose){
-      bf.check <- (curr.dose1<next.d[1] & curr.dose2<=next.d[2]) |
-        (curr.dose1<=next.d[1] & curr.dose2<next.d[2])
+      bf.check <- (curr.dose1<next.d[1] & curr.dose2<=next.d[2]+2*.Machine$double.eps) |
+        (curr.dose1<=next.d[1]+2*.Machine$double.eps & curr.dose2<next.d[2])
     }else{
       bf.check <- FALSE
     }
@@ -203,8 +203,8 @@ main_jointBLRM <- function(dose1,
     #and could in theory be back-filled in
     #next iteration
     if(check.prev.dose){
-      bf.check <- (curr.dose1<next.d[1] & curr.dose2<=next.d[2]) |
-        (curr.dose1<=next.d[1] & curr.dose2<next.d[2])
+      bf.check <- (curr.dose1<next.d[1] & curr.dose2<=next.d[2]+2*.Machine$double.eps) |
+        (curr.dose1<=next.d[1]+2*.Machine$double.eps & curr.dose2<next.d[2])
     }else{
       bf.check <- FALSE
     }
