@@ -3321,7 +3321,6 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
 
   }
 
-
   #------------------------------------------------------------------------------------------------------------
   #same as for the other trials
   if(active.mono1.b){
@@ -3433,7 +3432,6 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
 
   }
 
-
   #------------------------------------------------------------------------------------------------------------
   #same as for the other trials
   #-------------------
@@ -3522,7 +3520,6 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     summary.mono.2["#DLT (all)", "2.5%"] <- quantile(trials.dlt.all[2,], na.rm = TRUE, probs = 0.025)
     summary.mono.2["% overdose", "2.5%"] <- quantile(trials.perc.over[2,], na.rm = TRUE, probs = 0.025)
     summary.mono.2["% DLT", "2.5%"] <- quantile(trials.perc.dlt[2,], na.rm = TRUE, probs = 0.025)
-
 
     summary.mono.2["#Pat underdose", "97.5%"] <- quantile(trials.n.under[2,], na.rm = TRUE, probs = 0.975)
     summary.mono.2["#Pat target dose", "97.5%"] <- quantile(trials.n.target[2,], na.rm = TRUE, probs = 0.975)
@@ -3630,7 +3627,6 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     summary.mono.5["#DLT (all)", "2.5%"] <- quantile(trials.dlt.all[5,], na.rm = TRUE, probs = 0.025)
     summary.mono.5["% overdose", "2.5%"] <- quantile(trials.perc.over[5,], na.rm = TRUE, probs = 0.025)
     summary.mono.5["% DLT", "2.5%"] <- quantile(trials.perc.dlt[5,], na.rm = TRUE, probs = 0.025)
-
 
     summary.mono.5["#Pat underdose", "97.5%"] <- quantile(trials.n.under[5,], na.rm = TRUE, probs = 0.975)
     summary.mono.5["#Pat target dose", "97.5%"] <- quantile(trials.n.target[5,], na.rm = TRUE, probs = 0.975)
@@ -3801,7 +3797,7 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                  colNames=TRUE, rowNames=TRUE, overwrite = TRUE)
     }
   }
-  #output
+  #output returned
   return(simulation.results)
 }
 #--------------------------------------------------------------------------------------------
