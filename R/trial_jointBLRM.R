@@ -1491,6 +1491,67 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
             prep.data.n.patients[curr.data.entry] <- curr.n.pat
             prep.data.study[curr.data.entry] <- data.n.study.mono.4
 
+
+            #check for back-fill cohort and simulate it if allowed
+            if(backfill.mono1.b){
+                #if there is a previous dose level
+                #and if it is at least equal to the back-fill start dose
+                if(prev.dose.mono1.b > 0 &
+                   prev.dose.mono1.b + 2*.Machine$double.eps>=backfill.start.mono1.b){
+                    #if it is actually contained in doses
+                    idx.prev.dose.mono1.b <- which(doses.mono1.b==prev.dose.mono1.b)
+                    if(!length(idx.prev.dose.mono1.b)==0){
+                        #if there was an escalation to reach the current dose,
+                        #and if the previous dose was not backfilled.
+                        if(prev.dose.esc.mono1.b & prev.dose.ewoc.mono1.b&
+                           !backfilled.mono1.b[idx.prev.dose.mono1.b]){
+                            #generate backfill cohort for dose
+                            prev.tox.mono1.b <- tox.mono1.b[toString(prev.dose.mono1.b)]
+                            if(length(backfill.size.mono1.b)==1){
+                                bf.pat.mono1.b <- backfill.size.mono1.b
+                            }else{
+                                bf.pat.mono1.b <- sample(backfill.size.mono1.b,
+                                                         size=1, prob=backfill.prob.mono1.b)
+                            }
+                            backfilled.mono1.b[idx.prev.dose.mono1.b] <- TRUE
+                            #when there is at least 1 back-fill patient
+                            if(bf.pat.mono1.b>0){
+                                #generate and save cohort data
+                                n.pat[4] <- n.pat[4] + bf.pat.mono1.b
+                                bf.dlt.mono1.b <- rbinom(1, bf.pat.mono1.b,
+                                                         prob = prev.tox.mono1.b)
+                                n.dlt[4] <- n.dlt[4] + bf.dlt.mono1.b
+
+                                #add to data frame
+                                curr.data.entry <- curr.data.entry + 1
+                                prep.data.doses.1[curr.data.entry] <- prev.dose.mono1.b
+                                prep.data.doses.2[curr.data.entry] <- 0
+                                prep.data.DLT[curr.data.entry] <- bf.dlt.mono1.b
+                                prep.data.n.patients[curr.data.entry] <- bf.pat.mono1.b
+                                prep.data.study[curr.data.entry] <- data.n.study.mono.4
+
+                                #save data
+                                patients.at.dose.mono.4[toString(prev.dose.mono1.b) ] <- bf.pat.mono1.b +
+                                    patients.at.dose.mono.4[toString(prev.dose.mono1.b)]
+                                if(prev.tox.mono1.b < dosing.intervals[1]){  #the cohort was treated with underdose
+                                    trials.n.under[4] <- as.numeric(trials.n.under[4]) + bf.pat.mono1.b
+                                    trials.dlt.under[4] <- as.numeric(trials.dlt.under[4]) + bf.dlt.mono1.b
+                                } else if (dosing.intervals[1] <= prev.tox.mono1.b &
+                                           prev.tox.mono1.b < dosing.intervals[2]){
+                                    #the cohort was treated with dose in target toxicicty interval
+                                    trials.n.target[4] <- as.numeric(trials.n.target[4]) + bf.pat.mono1.b
+                                    trials.dlt.target[4] <- as.numeric(trials.dlt.target[4]) + bf.dlt.mono1.b
+                                } else { # the cohort was given an overdose
+                                    trials.n.over[4] <- as.numeric(trials.n.over[4]) + bf.pat.mono1.b
+                                    trials.dlt.over[4] <- as.numeric(trials.dlt.over[4]) + bf.dlt.mono1.b
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
             #Call the main function
             current.results <- main_jointBLRM(dose1 = prep.data.doses.1[1:curr.data.entry],
                                               dose2 = prep.data.doses.2[1:curr.data.entry],
@@ -1526,6 +1587,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                               curr.dose1=current.dose.mono.4,          ##
                                               curr.dose2=0,                       ##
 
+                                              check.prev.dose = backfill.mono1.b,
                                               dosing.intervals = dosing.intervals,
                                               ewoc = ewoc,
                                               chains = chains,
@@ -1563,6 +1625,13 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                         (n.pat[4] >= decision.mono1.b$MIN.PAT) &
                         ((curr.n.treated>= decision.mono1.b$PAT.AT.MTD) | (target.prob >= decision.mono1.b$TARGET.PROB ))
 
+                }
+
+                #update data that controls back-fill cohorts
+                if(backfill.mono1.b){
+                    prev.dose.mono1.b <- current.dose.mono.4
+                    prev.dose.esc.mono1.b <- (current.dose.mono.4 < next.mono.dose.4)
+                    prev.dose.ewoc.mono1.b <- current.results$bf.check
                 }
 
                 #continue with the new dose
@@ -1632,6 +1701,66 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
             prep.data.n.patients[curr.data.entry] <- curr.n.pat
             prep.data.study[curr.data.entry] <- data.n.study.mono.2
 
+            #check for back-fill cohort and simulate it if allowed
+            if(backfill.mono2.a){
+                #if there is a previous dose level
+                #and if it is at least equal to the back-fill start dose
+                if(prev.dose.mono2.a > 0 &
+                   prev.dose.mono2.a + 2*.Machine$double.eps>=backfill.start.mono2.a){
+                    #if it is actually contained in doses
+                    idx.prev.dose.mono2.a <- which(doses.mono2.a==prev.dose.mono2.a)
+                    if(!length(idx.prev.dose.mono2.a)==0){
+                        #if there was an escalation to reach the current dose,
+                        #and if the previous dose was not backfilled.
+                        if(prev.dose.esc.mono2.a & prev.dose.ewoc.mono2.a&
+                           !backfilled.mono2.a[idx.prev.dose.mono2.a]){
+                            #generate backfill cohort for dose
+                            prev.tox.mono2.a <- tox.mono2.a[toString(prev.dose.mono2.a)]
+                            if(length(backfill.size.mono2.a)==1){
+                                bf.pat.mono2.a <- backfill.size.mono2.a
+                            }else{
+                                bf.pat.mono2.a <- sample(backfill.size.mono2.a,
+                                                         size=1, prob=backfill.prob.mono2.a)
+                            }
+                            backfilled.mono2.a[idx.prev.dose.mono2.a] <- TRUE
+                            #when there is at least 1 back-fill patient
+                            if(bf.pat.mono2.a>0){
+                                #generate and save cohort data
+                                n.pat[2] <- n.pat[2] + bf.pat.mono2.a
+                                bf.dlt.mono2.a <- rbinom(1, bf.pat.mono2.a,
+                                                         prob = prev.tox.mono2.a)
+                                n.dlt[2] <- n.dlt[2] + bf.dlt.mono2.a
+
+                                #add to data frame
+                                curr.data.entry <- curr.data.entry + 1
+                                prep.data.doses.1[curr.data.entry] <- 0
+                                prep.data.doses.2[curr.data.entry] <- prev.dose.mono2.a
+                                prep.data.DLT[curr.data.entry] <- bf.dlt.mono2.a
+                                prep.data.n.patients[curr.data.entry] <- bf.pat.mono2.a
+                                prep.data.study[curr.data.entry] <- data.n.study.mono.2
+
+                                #save data
+                                patients.at.dose.mono.2[toString(prev.dose.mono2.a) ] <- bf.pat.mono2.a +
+                                    patients.at.dose.mono.2[toString(prev.dose.mono2.a)]
+                                if(prev.tox.mono2.a < dosing.intervals[1]){  #the cohort was treated with underdose
+                                    trials.n.under[2] <- as.numeric(trials.n.under[2]) + bf.pat.mono2.a
+                                    trials.dlt.under[2] <- as.numeric(trials.dlt.under[2]) + bf.dlt.mono2.a
+                                } else if (dosing.intervals[1] <= prev.tox.mono2.a &
+                                           prev.tox.mono2.a < dosing.intervals[2]){
+                                    #the cohort was treated with dose in target toxicicty interval
+                                    trials.n.target[2] <- as.numeric(trials.n.target[2]) + bf.pat.mono2.a
+                                    trials.dlt.target[2] <- as.numeric(trials.dlt.target[2]) + bf.dlt.mono2.a
+                                } else { # the cohort was given an overdose
+                                    trials.n.over[2] <- as.numeric(trials.n.over[2]) + bf.pat.mono2.a
+                                    trials.dlt.over[2] <- as.numeric(trials.dlt.over[2]) + bf.dlt.mono2.a
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
             #Call the main function
             current.results <- main_jointBLRM(dose1 = prep.data.doses.1[1:curr.data.entry],
                                               dose2 = prep.data.doses.2[1:curr.data.entry],
@@ -1665,6 +1794,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                               curr.dose1=0,          ##
                                               curr.dose2=current.dose.mono.2,                       ##
 
+                                              check.prev.dose = backfill.mono2.a,
                                               dosing.intervals = dosing.intervals,
                                               ewoc = ewoc,
                                               chains = chains,
@@ -1702,7 +1832,12 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                         ((curr.n.treated>= decision.mono2.a$PAT.AT.MTD) | (target.prob >= decision.mono2.a$TARGET.PROB ))
 
                 }
-
+                #update data that controls back-fill cohorts
+                if(backfill.mono2.a){
+                    prev.dose.mono2.a <- current.dose.mono.2
+                    prev.dose.esc.mono2.a <- (current.dose.mono.2 < next.mono.dose.2)
+                    prev.dose.ewoc.mono2.a <- current.results$bf.check
+                }
                 #continue with the new doses
                 current.dose.mono.2 <- next.mono.dose.2
                 if(esc.constrain.mono2.a){
@@ -1765,6 +1900,66 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
             prep.data.n.patients[curr.data.entry] <- curr.n.pat
             prep.data.study[curr.data.entry] <- data.n.study.mono.5
 
+            #check for back-fill cohort and simulate it if allowed
+            if(backfill.mono2.b){
+                #if there is a previous dose level
+                #and if it is at least equal to the back-fill start dose
+                if(prev.dose.mono2.b > 0 &
+                   prev.dose.mono2.b + 2*.Machine$double.eps>=backfill.start.mono2.b){
+                    #if it is actually contained in doses
+                    idx.prev.dose.mono2.b <- which(doses.mono2.b==prev.dose.mono2.b)
+                    if(!length(idx.prev.dose.mono2.b)==0){
+                        #if there was an escalation to reach the current dose,
+                        #and if the previous dose was not backfilled.
+                        if(prev.dose.esc.mono2.b & prev.dose.ewoc.mono2.b&
+                           !backfilled.mono2.b[idx.prev.dose.mono2.b]){
+                            #generate backfill cohort for dose
+                            prev.tox.mono2.b <- tox.mono2.b[toString(prev.dose.mono2.b)]
+                            if(length(backfill.size.mono2.b)==1){
+                                bf.pat.mono2.b <- backfill.size.mono2.b
+                            }else{
+                                bf.pat.mono2.b <- sample(backfill.size.mono2.b,
+                                                         size=1, prob=backfill.prob.mono2.b)
+                            }
+                            backfilled.mono2.b[idx.prev.dose.mono2.b] <- TRUE
+                            #when there is at least 1 back-fill patient
+                            if(bf.pat.mono2.b>0){
+                                #generate and save cohort data
+                                n.pat[5] <- n.pat[5] + bf.pat.mono2.b
+                                bf.dlt.mono2.b <- rbinom(1, bf.pat.mono2.b,
+                                                         prob = prev.tox.mono2.b)
+                                n.dlt[5] <- n.dlt[5] + bf.dlt.mono2.b
+
+                                #add to data frame
+                                curr.data.entry <- curr.data.entry + 1
+                                prep.data.doses.1[curr.data.entry] <- 0
+                                prep.data.doses.2[curr.data.entry] <- prev.dose.mono2.b
+                                prep.data.DLT[curr.data.entry] <- bf.dlt.mono2.b
+                                prep.data.n.patients[curr.data.entry] <- bf.pat.mono2.b
+                                prep.data.study[curr.data.entry] <- data.n.study.mono.5
+
+                                #save data
+                                patients.at.dose.mono.5[toString(prev.dose.mono2.b) ] <- bf.pat.mono2.b +
+                                    patients.at.dose.mono.5[toString(prev.dose.mono2.b)]
+                                if(prev.tox.mono2.b < dosing.intervals[1]){  #the cohort was treated with underdose
+                                    trials.n.under[5] <- as.numeric(trials.n.under[5]) + bf.pat.mono2.b
+                                    trials.dlt.under[5] <- as.numeric(trials.dlt.under[5]) + bf.dlt.mono2.b
+                                } else if (dosing.intervals[1] <= prev.tox.mono2.b &
+                                           prev.tox.mono2.b < dosing.intervals[2]){
+                                    #the cohort was treated with dose in target toxicicty interval
+                                    trials.n.target[5] <- as.numeric(trials.n.target[5]) + bf.pat.mono2.b
+                                    trials.dlt.target[5] <- as.numeric(trials.dlt.target[5]) + bf.dlt.mono2.b
+                                } else { # the cohort was given an overdose
+                                    trials.n.over[5] <- as.numeric(trials.n.over[5]) + bf.pat.mono2.b
+                                    trials.dlt.over[5] <- as.numeric(trials.dlt.over[5]) + bf.dlt.mono2.b
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
             #Call the main function
             current.results <- main_jointBLRM(dose1 = prep.data.doses.1[1:curr.data.entry],
                                               dose2 = prep.data.doses.2[1:curr.data.entry],
@@ -1798,6 +1993,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                               curr.dose1=0,          ##
                                               curr.dose2=current.dose.mono.5,                       ##
 
+                                              check.prev.dose = backfill.mono2.b,
                                               dosing.intervals = dosing.intervals,
                                               ewoc = ewoc,
                                               chains = chains,
@@ -1833,6 +2029,13 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                         (n.pat[5] >= decision.mono2.b$MIN.PAT) &
                         ((curr.n.treated>= decision.mono2.b$PAT.AT.MTD) | (target.prob >= decision.mono2.b$TARGET.PROB ))
 
+                }
+
+                #update data that controls back-fill cohorts
+                if(backfill.mono2.b){
+                    prev.dose.mono2.b <- current.dose.mono.5
+                    prev.dose.esc.mono2.b <- (current.dose.mono.5 < next.mono.dose.5)
+                    prev.dose.ewoc.mono2.b <- current.results$bf.check
                 }
 
                 #continue with the new doses
