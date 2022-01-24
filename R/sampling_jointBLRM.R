@@ -823,7 +823,6 @@ post_tox_jointBLRM_sim <- function(
   type.interest,
   dose1.interest,
   dose2.interest,
-  BLRM,
   file.name,
   working.path,
   dose1,
@@ -1184,7 +1183,6 @@ post_tox_covariate_jointBLRM_sim <- function(
   cov.interest, ##NEW
   dose1.interest,
   dose2.interest,
-  BLRM,
   file.name,
   working.path,
   dose1,
