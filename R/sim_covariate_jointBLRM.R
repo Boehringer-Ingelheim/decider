@@ -3713,7 +3713,7 @@ sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
     #write the parameters of the decision rules in the output list
     simulation.results[['prior']] <- prior_mat_out(m=prior.mu, t=prior.tau)
 
-    simulation.results[["specifications"]] <- input_out_jointBLRM(
+    simulation.results[["specifications"]] <- input_out_covjointBLRM(
       active.mono1.a=active.mono1.a,
       active.mono1.b=active.mono1.b,
       active.mono2.a=active.mono2.a,
