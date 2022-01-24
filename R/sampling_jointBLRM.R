@@ -1194,7 +1194,7 @@ post_tox_covariate_jointBLRM_sim <- function(
   n.pat,
   n.dlt,
   n.study,
-  n.cov, ##NEW
+  cov, ##NEW
   d.loss = FALSE,
   dosing.intervals = c(0.16, 0.33),
   prior.mu = list(mu_a1 =  c(-1.386294, 2),
