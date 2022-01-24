@@ -464,7 +464,7 @@
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 #'
 #'@md
-#'@export scenario_jointBLRM
+#'@export scenario_covariate_jointBLRM
 
 scenario_covariate_jointBLRM <- function(
                                data=NULL,

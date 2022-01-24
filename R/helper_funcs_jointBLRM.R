@@ -1414,20 +1414,22 @@ input_out_jointBLRM <- function(
    res[5,1] <- dose.ref1
    res[6,1] <- dose.ref2
    res[7,1] <- saturating
+   res[8,1] <- two_sided1
+   res[9,1] <- two_sided2
 
-   curr <- 8
+   curr <- 10
    if(esc.rule%in%c("dynamic.loss", "dynamic")){
-     res[8,1:4] <- dynamic.weights[1, ]
-     res[9,1:4] <- dynamic.weights[2, ]
-     res[10,1:4] <- dynamic.weights[3, ]
-     res[11,1:4] <- dynamic.weights[4, ]
-     curr <- 12
+     res[10,1:4] <- dynamic.weights[1, ]
+     res[11,1:4] <- dynamic.weights[2, ]
+     res[12,1:4] <- dynamic.weights[3, ]
+     res[13,1:4] <- dynamic.weights[4, ]
+     curr <- 14
    }else if(esc.rule%in%c("loss")){
-     res[8,1:4] <- loss.weights
-     curr <- 9
+     res[10,1:4] <- loss.weights
+     curr <- 11
    }else{
-     res[8, 1] <- ewoc
-     curr <- 9
+     res[10, 1] <- ewoc
+     curr <- 11
    }
 
    if(active.mono1.a){
