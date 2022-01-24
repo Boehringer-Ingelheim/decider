@@ -69,7 +69,7 @@ main_covariate_jointBLRM <- function(dose1,
   }
 
   #compute interval probabilities of doses of interest
-  post_tox <- post_tox_jointBLRM_sim(
+  post_tox <- post_tox_covariate_jointBLRM_sim(
                                  study.interest=study.interest,
                                  type.interest=type.interest,
                                  dose1.interest=dose1.interest,

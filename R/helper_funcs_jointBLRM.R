@@ -1392,7 +1392,7 @@ input_out_jointBLRM <- function(
                 "mtd.decision.combi.b$target.prob","mtd.decision.combi.b$pat.at.mtd","mtd.decision.combi.b$min.pat",
                 "mtd.decision.combi.b$min.dlt", "mtd.decision.combi.b$rule", "mtd.enforce.combi.b",
                 "backfill.combi.b", "backfill.size.combi.b", "backfill.prob.combi.b",
-                "backfill.start.combi.b1", "backfill.start.combi.b2", , "covar.combi.b")
+                "backfill.start.combi.b1", "backfill.start.combi.b2", "covar.combi.b")
 
      ncol <- max(ncol, length(cohort.size.combi.b), length(backfill.size.combi.b))
    }
