@@ -95,17 +95,19 @@
 #'        mu_b1 = c(0, 1),
 #'        mu_a2 = c(logit(0.33), 2),
 #'        mu_b2 = c(0, 1),
-#'        mu_eta = c(0, 1.121),
-#'        mu_c1 = c(0, 1),
-#'        mu_c2 = c(0, 1)),
+#'        mu_eta = c(0, 1.121)),
+#'    prior.mu.covar = list(
+#'        mu_g1 = c(0, 1),
+#'        mu_g2 = c(0, 1)),
 #'    prior.tau = list(
 #'        tau_a1 = c(log(0.25), log(4)/1.96),
 #'        tau_b1 = c(log(0.125), log(4)/1.96),
 #'        tau_a2 = c(log(0.25), log(4)/1.96),
 #'        tau_b2 = c(log(0.125), log(4)/1.96),
-#'        tau_eta = c(log(0.125),log(4)/1.96),
-#'        tau_c1 = c(log(0.125),log(4)/1.96),
-#'        tau_c2 = c(log(0.125),log(4)/1.96)),
+#'        tau_eta = c(log(0.125),log(4)/1.96)),
+#'    prior.tau.covar = list(
+#'        tau_g1 = c(log(0.125),log(4)/1.96),
+#'        tau_g2 = c(log(0.125),log(4)/1.96)),
 #'    saturating = FALSE,
 #'    esc.step = NULL,
 #'    esc.step.mono1.a = esc.step,
@@ -384,6 +386,38 @@
 #'\item{\code{prior.tau$tau_eta}\cr Numeric with length two, defaults to \code{c(log(0.125), log(2)/1.96)}. Specifies mean and SD on log-scale of the heterogeneity \eqn{\tau_5} of the parameter \eqn{\eta} in the BLRM. The second entry must
 #'therefore be positive. See the Details section below for more detail.}
 #'}
+#'@param prior.mu.covar Optional named list that gives the prior distribution for the hyper-means of the additional parameters
+#'included in the joint BLRM to realize the binary covariate. Also refer to the Details section for the notation used in the following.
+#'The argument\code{prior.mu.covar} must be a list with named entries \code{mu_g1} and \code{mu_g2}.
+#'Both must have length 2, and provide the mean and SD of the hyper-means for the parameters corresponding to the covariate
+#'in compound 1 and 2. More precisely:
+#'\itemize{
+#'\item{\code{prior.mu.covar$mu_g1}\cr Numeric with length two, defaults to \code{c(0, 1)}. Specifies mean and SD of the hypermean \eqn{\mu_6} of the parameter \eqn{\gamma_1} in the BLRM. The second entry must
+#'therefore be positive. See the Details section below for more detail.}
+#'
+#'\item{\code{prior.mu.covar$mu_g2}\cr Numeric with length two, defaults to \code{c(0, 1)}. Specifies mean and SD of the hypermean \eqn{\mu_7} of the parameter \eqn{\gamma_2} in the BLRM. The second entry must
+#'therefore be positive. See the Details section below for more detail.}
+#'}
+#'@param prior.tau.covar Optional named list that gives the prior distribution for the between-trial heterogeneities of the additional parameters
+#'included in the joint BLRM to realize the binary covariate. Also refer to the Details section for the notation used in the following.
+#'The argument\code{prior.tau.covar} must be a list with named entries \code{tau_g1} and \code{tau_g2}.
+#'Both must have length 2, and provide the mean and SD of the hyper-means for the parameters corresponding to the covariate
+#'in compound 1 and 2. More precisely:
+#'\itemize{
+#'\item{\code{prior.tau.covar$tau_g1}\cr Numeric with length two, defaults to \code{c(0, 1)}. Specifies mean and SD of the between-trial
+#'heterogeneity \eqn{\tau_{\gamma_1}} of the parameter \eqn{\gamma_1} in the BLRM. The second entry must
+#'therefore be positive. See the Details section below for more detail.}
+#'
+#'\item{\code{prior.tau.covar$tau_g2}\cr Numeric with length two, defaults to \code{c(log(0.125), log(2)/1.96)}. Specifies mean and SD of the between-trial
+#'heterogeneity \eqn{\tau_{\gamma_2}} of the parameter \eqn{\gamma_2} in the BLRM. The second entry must
+#'therefore be positive. See the Details section below for more detail.}
+#'}
+#'@param two_sided1 Optional logical, defaults to \code{TRUE}. Indicates whether the covariate is assumed to have a two-sided effect
+#'on the DLT rate of compound 1. If \code{FALSE}, the function will assume a one-sided effect of the covariate on the DLT rate for compound 1.
+#'See the section Details below for a formal description.
+#'@param two_sided2 Optional logical. Optional logical, defaults to \code{TRUE}. Indicates whether the covariate is assumed to have a two-sided effect
+#'on the DLT rate of compound 2. If \code{FALSE}, the function will assume a one-sided effect of the covariate on the DLT rate for compound 2.
+#'See the section Details below for a formal description.
 #'@param saturating Optional logical, defaults to \code{FALSE}. If \code{TRUE}, the BLRM will be using a saturating interaction term as described in
 #'\code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()}. Also refer to the Details section in the documentation
 #'of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
@@ -518,6 +552,11 @@
 #'@param backfill.start.mono1.a,backfill.start.mono1.b,backfill.start.mono2.a,backfill.start.mono2.b,backfill.start.combi.a1,backfill.start.combi.a2,backfill.start.combi.b1,backfill.start.combi.b2
 #'Optional numericals. Specify the first dose on which back-fill cohorts are enrolled. If not provided, the
 #'lowest available dose will be assumed to be the starting point of back-fill cohorts in the respective trial.
+#'@param covar.mono1.a,covar.mono1.b,covar.mono2.a,covar.mono2.b,covar.combi.a,covar.combi.b
+#'Optional logicals, default to \code{FALSE}. Specify whether the corresponding simulated trial has a value of 0 or
+#'1 in the binary covariate. Set \code{covar.[...]=TRUE} when the trial shall have covariate 1.
+#'By default, all trials do not have the property indicated by the binary covariate. This is equivalent to a
+#'joint BLRM without covariate.
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}. Due to the long simulation time, it is recommended
 #'to first try lower numbers to obtain an estimation of the run-time for larger numbers of studies. Typically, about 1000 studies are recommended to obtain
 #'acceptably accurate simulation results.
@@ -621,7 +660,9 @@
 #'The joint BLRM is defined according to (Neuenschwander et al., 2014 and 2016). It allows to perform Bayesian logistic regression
 #'to estimate the dose-toxicity relationship of two different monotherapies and combination therapy with these compounds in
 #'a joint model, which includes a hierarchical prior for robust borrowing across trials. Refer to the documentation of
-#'\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for a detailed model description.
+#'\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for a detailed model description. Further, refer to the documentation of
+#'\code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for a description of the model including
+#'covariates.
 #'
 #'@references
 #' Stan Development Team (2020). RStan: the R interface to Stan. R package version 2.21.2. \url{https://mc-stan.org}.
@@ -643,7 +684,7 @@
 #'
 #'
 #' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
-#' \code{\link[rstan:rstan]{rstan-package}}.
+#' \code{\link[rstan:rstan]{rstan-package}}, \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},
 #'
 #'@export
 sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
@@ -695,18 +736,20 @@ sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
                             mu_b1 = c(0, 1),
                             mu_a2 = c(logit(0.33), 2),
                             mu_b2 = c(0, 1),
-                            mu_eta = c(0, 1.121),
-                            mu_c1 = c(0, 1),
-                            mu_c2 = c(0, 1)
+                            mu_eta = c(0, 1.121)),
+                          prior.mu.covar = list(
+                            mu_g1 = c(0, 1),
+                            mu_g2 = c(0, 1)
                           ),
 
                           prior.tau = list(tau_a1 = c(log(0.25), log(4)/1.96),
                                            tau_b1 = c(log(0.125), log(4)/1.96),
                                            tau_a2 = c(log(0.25), log(4)/1.96),
                                            tau_b2 = c(log(0.125), log(4)/1.96),
-                                           tau_eta = c(log(0.125),log(4)/1.96),
-                                           tau_c1 = c(log(0.125),log(4)/1.96),
-                                           tau_c2 = c(log(0.125),log(4)/1.96)),
+                                           tau_eta = c(log(0.125),log(4)/1.96)),
+                          prior.tau.covar = list(
+                                           tau_g1 = c(log(0.125),log(4)/1.96),
+                                           tau_g2 = c(log(0.125),log(4)/1.96)),
                           saturating = FALSE,
                           esc.step = NULL,
                           esc.step.mono1.a = esc.step,
@@ -1957,6 +2000,30 @@ sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
   }
   names(prior.tau) <- tolower(names(prior.tau))
   test.prior.tau(prior.tau)
+
+  if(!is.list(prior.mu.covar)){
+    stop("`prior.mu.covar` must be a named list.")
+  }
+  if(is.null(names(prior.mu.covar))){
+    stop("`prior.mu.covar` must be a named list.")
+  }
+  names(prior.mu.covar) <- tolower(names(prior.mu.covar))
+  test.prior.mu.covar(prior.mu.covar)
+
+  if(!is.list(prior.tau.covar)){
+    stop("`prior.tau.covar` must be a named list.")
+  }
+  if(is.null(names(prior.tau.covar))){
+    stop("`prior.tau.covar` must be a named list.")
+  }
+  names(prior.tau.covar) <- tolower(names(prior.tau.covar))
+  test.prior.tau.covar(prior.tau.covar)
+
+  prior.mu[["mu_c1"]] <- prior.mu.covar$mu_g1
+  prior.mu[["mu_c2"]] <- prior.mu.covar$mu_g2
+
+  prior.tau[["tau_c1"]] <- prior.tau.covar$tau_g1
+  prior.tau[["tau_c2"]] <- prior.tau.covar$tau_g2
 
   #--------------------------------
   #check backfill-starting doses
