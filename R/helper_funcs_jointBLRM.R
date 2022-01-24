@@ -585,6 +585,45 @@ clean.na.hist <- function(x){
 
 #'@keywords internal
 # check for inpurt format of historical data
+is.historical.cov.data <- function(x){
+  na <- names(x)
+  if(!all(c("dose1", "dose2", "n.pat", "n.dlt", "trial", "covar") %in% na)){
+    return(F)
+  }
+  x <- clean.na.hist(x)
+  len <- length(x$dose1)
+  if(!is.num(x$dose1, len=len, low=0, lB=T, uB=F)){
+    return(F)
+  }
+  if(!is.num(x$dose2, len=len, low=0, lB=T, uB=F)){
+    return(F)
+  }
+  if(!is.num(x$n.pat, len=len, low=0, lB=T, uB=F)|
+     !is.wholenumber(x$n.pat)){
+    return(F)
+  }
+  if(!is.num(x$n.dlt, len=len, low=0, lB=T, uB=F)|
+     !is.wholenumber(x$n.dlt)){
+    return(F)
+  }
+  if(!is.num(x$covar, len=len, low=0, up = 1, lB=T, uB=T)|
+     !is.wholenumber(x$covar)){
+    return(F)
+  }
+  if(!is.numeric(x$trial) & !is.character(x$trial)){
+    return(F)
+  }
+  if(any(is.na(x$trial))){
+    return(F)
+  }
+  if(!length(x$trial)==len){
+    return(F)
+  }
+  return(T)
+}
+
+#'@keywords internal
+# check for inpurt format of historical data
 is.historical.data <- function(x){
   na <- names(x)
   if(!all(c("dose1", "dose2", "n.pat", "n.dlt", "trial") %in% na)){
@@ -616,6 +655,23 @@ is.historical.data <- function(x){
     return(F)
   }
   return(T)
+}
+
+#'@keywords internal
+# remove observations from historical data
+remove.noninf.cov.obs <- function(x, idx){
+  len <- length(x$dose1)-length(idx)
+  allid <- 1:length(x$dose1)
+  keep <- allid[which(!allid%in%idx)]
+  res <- list(
+    "dose1" = x$dose1[keep],
+    "dose2" = x$dose2[keep],
+    "n.pat" = x$n.pat[keep],
+    "n.dlt" = x$n.dlt[keep],
+    "trial" = x$trial[keep],
+    "covar" = x$covar[keep]
+  )
+  return(res)
 }
 
 #'@keywords internal
