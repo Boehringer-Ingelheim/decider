@@ -53,10 +53,10 @@
 #'    two_sided2 = TRUE,
 #'    saturating = FALSE,
 #'    probs = c(0.025, 0.5, 0.975),
-#'    iter = 11000,
+#'    iter = 26000,
 #'    warmup = 1000,
 #'    refresh = 0,
-#'    adapt_delta = 0.9,
+#'    adapt_delta = 0.8,
 #'    max_treedepth = 15,
 #'    chains = 4,
 #'    seed=sample.int(.Machine$integer.max, 1),
@@ -207,14 +207,14 @@
 #' @param plot.height Optional numerical value or vector, can have length 1 or 3 and must have positive entries.
 #' Provides the height of the output plots measured in the unit given in \code{plot.unit}.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
-#'@param iter Optional integer, number of total MCMC iterations per chain. Defaults to 11000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
+#'@param iter Optional integer, number of total MCMC iterations per chain. Defaults to 26000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
 #'of the \code{iter} many iterations, the first \code{warmup} many samples are not saved.
 #'@param warmup Optional integer, number of warmup iterations discarded from total MCMC iterations per chain. Defaults to \code{1000}.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param chains Optional integer. Number of Markov chains constructed by Stan. Defaults to 4.
 #'@param refresh Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, defaults to \code{0}.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
-#'@param adapt_delta Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
+#'@param adapt_delta Optional numeric between 0.6 and 1, default is 0.8. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param max_treedepth Optional integer, defaults to 15.
 #'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
@@ -510,10 +510,10 @@ scenario_covariate_jointBLRM <- function(
                                saturating = FALSE,
 
                                probs = c(0.025, 0.5, 0.975),
-                               iter = 11000,
+                               iter = 26000,
                                warmup = 1000,
-                               refresh = 0, #floor(iter/10),
-                               adapt_delta = 0.9,
+                               refresh = 0,
+                               adapt_delta = 0.8,
                                max_treedepth = 15,
                                chains = 4,
                                seed=sample.int(.Machine$integer.max, 1),
@@ -1545,9 +1545,9 @@ scenario_covariate_jointBLRM <- function(
     stop("`max_treedepth` must be an integer.")
   }
 
-  if(!(0.8<=adapt_delta & adapt_delta <1)){
+  if(!(0.6<=adapt_delta & adapt_delta <1)){
 
-    stop("It is not permitted to set `adapt_delta` below 0.8, or larger or equal to 1.")
+    stop("It is not permitted to set `adapt_delta` below 0.6, or larger or equal to 1.")
   }
   if(!(refresh>=0)){
 

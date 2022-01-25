@@ -193,10 +193,10 @@
 #'    n.cores = 1,
 #'    seed = sample.int(.Machine$integer.max, 1),
 #'    chains = 4,
-#'    iter = 6000,
+#'    iter = 13500,
 #'    warmup = 1000,
-#'    adapt_delta = 0.9,
-#'    max_treedepth = 12,
+#'    adapt_delta = 0.8,
+#'    max_treedepth = 15,
 #'    refresh=0,
 #'    file.name = NULL,
 #'    path = NULL,
@@ -496,16 +496,28 @@
 #'@param mtd.enforce.mono1.b,mtd.enforce.mono2.b,mtd.enforce.combi.b
 #'Same as \code{mtd.enforce.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
-#'@param backfill.mono1.a,backfill.mono2.a,backfill.combi.a,backfill.mono1.b,backfill.mono2.b,backfill.combi.b
+#'@param backfill.mono1.a,backfill.mono2.a,backfill.combi.a
 #'Optional logicals, indicating whether back-fill cohorts are simulated for the trial.
-#'@param backfill.size,backfill.size.mono1.a,backfill.size.mono2.a,backfill.size.combi.a,backfill.size.mono1.b,backfill.size.mono2.b,backfill.size.combi.b
+#'@param backfill.mono1.b,backfill.mono2.b,backfill.combi.b
+#'Same as \code{backfill.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param backfill.size,backfill.size.mono1.a,backfill.size.mono2.a,backfill.size.combi.a
 #'Optional numericals, provide the size of simulated back-fill cohorts. Interpreted in the same fashion as \code{cohort.size}.
-#'@param backfill.prob,backfill.prob.mono1.a,backfill.prob.mono2.a,backfill.prob.combi.a,backfill.prob.mono1.b,backfill.prob.mono2.b,backfill.prob.combi.b
+#'@param backfill.size.mono1.b,backfill.size.mono2.b,backfill.size.combi.b
+#'Same as \code{backfill.size.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param backfill.prob,backfill.prob.mono1.a,backfill.prob.mono2.a,backfill.prob.combi.a
 #'Optional numericals, provide the probabilities if multiple possible back-fill cohort sizes are given.
 #'Interpreted in the same fashion as \code{cohort.prob}.
-#'@param backfill.start.mono1.a,backfill.start.mono1.b,backfill.start.mono2.a,backfill.start.mono2.b,backfill.start.combi.a1,backfill.start.combi.a2,backfill.start.combi.b1,backfill.start.combi.b2
+#'@param backfill.prob.mono1.b,backfill.prob.mono2.b,backfill.prob.combi.b
+#'Same as \code{backfill.prob.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param backfill.start.mono1.a,backfill.start.mono2.a,backfill.start.combi.a1,backfill.start.combi.a2
 #'Optional numericals. Specify the first dose on which back-fill cohorts are enrolled. If not provided, the
 #'lowest available dose will be assumed to be the starting point of back-fill cohorts in the respective trial.
+#'@param backfill.start.mono1.b,backfill.start.mono2.b,backfill.start.combi.b1,backfill.start.combi.b2
+#'Same as \code{backfill.start.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}. Due to the long simulation time, it is recommended
 #'to first try lower numbers to obtain an estimation of the run-time for larger numbers of studies. Typically, about 1000 studies are recommended to obtain
 #'acceptably accurate simulation results.
@@ -525,12 +537,12 @@
 #'Defaults to \code{1000}. The parameter is given to the method \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} from the package \code{\link[rstan:rstan]{rstan-package}}.
 #'The function enforces \code{warmup} to be at least \code{1000}, and further that \code{iter} is larger or equal than \code{warmup + 1000} (to ensure
 #'that at least 1000 samples from each chain are kept).
-#'@param adapt_delta Optional numerical that must be at least \code{0.8} and smaller than \code{1}, defaults to \code{0.9}. The parameter is given to the argument \code{control} of the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
+#'@param adapt_delta Optional numerical that must be at least \code{0.6} and smaller than \code{1}, defaults to \code{0.8}. The parameter is given to the argument \code{control} of the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
 #'method from the package \code{\link[rstan:rstan]{rstan-package}}. Translates to target Metropolis acceptance probability during Hamiltonian Monte Carlo, respectively NUTS.
 #'Can be used to influence the \code{stepsize} Stan uses for leapfrog steps during the NUTS algorithm. See \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}} for details and further reading.
 #'
 #'Note: Larger values than the default can be used to reduce the number of Stan warnings on "divergent transition", but will slow down sampling. The function will not
-#'permit to set \code{adapt_delta} to values below 0.8 (the \code{\link[rstan:rstan]{rstan-package}} default).
+#'permit to set \code{adapt_delta} to values below 0.6 (the \code{\link[rstan:rstan]{rstan-package}} default).
 #'@param max_treedepth Optional integer that must be at least \code{10}, defaults to \code{15}. The parameter is given to the argument \code{control} of the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
 #'method from the package \code{\link[rstan:rstan]{rstan-package}}. This is a parameter of the NUTS algorithm. Roughly speaking, NUTS constructs
 #'a search tree when generating a new proposal, until a stopping criterion (the NUTS criterion) is satisfied or, alternatively, until
@@ -795,10 +807,10 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                           n.cores = 1,
                           seed = sample.int(.Machine$integer.max, 1),
                           chains = 4,
-                          iter = 6000,
+                          iter = 13500,
                           warmup = 1000,
-                          adapt_delta = 0.9,
-                          max_treedepth = 12,
+                          adapt_delta = 0.8,
+                          max_treedepth = 15,
                           refresh=0,
                           file.name = NULL,
                           #path to the output file
@@ -1126,8 +1138,8 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
   #Checks for numeric and numeric vectors
   #--------------------------------------------
   #general numeric values
-  if(!is.num(adapt_delta, len=1, low=0.8, up=1, uB=F, lB=T)){
-    stop("`adapt_delta` must be a number that is at least 0.8 and smaller than 1")
+  if(!is.num(adapt_delta, len=1, low=0.6, up=1, uB=F, lB=T)){
+    stop("`adapt_delta` must be a number that is at least 0.6 and smaller than 1")
   }
 
   if(is.null(cohort.prob)){

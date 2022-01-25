@@ -41,10 +41,10 @@
 #'    ),
 #'    saturating = FALSE,
 #'    probs = c(0.025, 0.5, 0.975),
-#'    iter = 11000,
+#'    iter = 26000,
 #'    warmup = 1000,
 #'    refresh = 0,
-#'    adapt_delta = 0.9,
+#'    adapt_delta = 0.8,
 #'    max_treedepth = 15,
 #'    chains = 4,
 #'    seed=sample.int(.Machine$integer.max, 1),
@@ -254,7 +254,7 @@
 #' \code{plot.height} has only an effect if all of
 #' the parameters \code{plot.unit}, \code{plot.width}, and \code{plot.height} are defined. In this case, The output plots will be created with the
 #' specified width and length (interpreted in the given unit of measurement). If one of these parameters is missing, the default device size is used.
-##'@param iter Optional integer, number of total MCMC iterations per chain. Defaults to 11000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
+##'@param iter Optional integer, number of total MCMC iterations per chain. Defaults to 26000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
 #'of the \code{iter} many iterations, the first \code{warmup} many samples are not saved.
 #'@param warmup Optional integer, number of warmup iterations discarded from total MCMC iterations per chain. Defaults to \code{1000}.
 #'Note: Number of warmup iterations is counted towards \code{iter}, i.e. of the \code{iter} many iterations, the first \code{warmup} many samples
@@ -262,12 +262,12 @@
 #'@param chains Optional integer. Number of Markov chains constructed by Stan. Defaults to 4.
 #'@param refresh Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, defaults to \code{0}. A positive value indicates that updates on sampling progress are
 #'printed every \code{refresh} many iterations. Set this to 0 to avoid output from Stan. Refer to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} from the \code{\link[rstan:rstan]{rstan-package}} package for details.
-#'@param adapt_delta Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan. Translates to target Metropolis
+#'@param adapt_delta Optional numeric between 0.6 and 1, default is 0.8. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan. Translates to target Metropolis
 #'acceptance probability during Hamiltonian Monte Carlo, respectively NUTS.
 #'Can be used to influence the \code{stepsize} Stan uses for leapfrog steps during the NUTS algorithm. See \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}} for details.
 #'Note: One can increase the value of this parameter
 #'in order to reduce the number of Stan warnings on "divergent transition". Larger values than 0.95 will slow down sampling. The function will not
-#'permit to set \code{adapt_delta} to values below 0.8 (the \code{\link[rstan:rstan]{rstan-package}} default).
+#'permit to set \code{adapt_delta} to values below 0.6 (the \code{\link[rstan:rstan]{rstan-package}} default).
 #'@param max_treedepth Optional integer, defaults to 15. Should not be lower than 10. This is a parameter of the NUTS algorithm. Roughly speaking, NUTS constructs
 #'a search tree when generating a new proposal, until a stopping criterion (the NUTS criterion) is satisfied or, alternatively, until
 #'the maximum depth of the search tree is reached (to avoid endless looping). The argument \code{max_treedepth} allows to control the latter.
@@ -620,10 +620,10 @@ scenario_jointBLRM <- function(data=NULL,
                                ),
                                saturating = FALSE,
                                probs = c(0.025, 0.5, 0.975),
-                               iter = 11000,
+                               iter = 26000,
                                warmup = 1000,
                                refresh = 0, #floor(iter/10),
-                               adapt_delta = 0.9,
+                               adapt_delta = 0.8,
                                max_treedepth = 15,
                                chains = 4,
                                seed=sample.int(.Machine$integer.max, 1),
@@ -1569,9 +1569,9 @@ scenario_jointBLRM <- function(data=NULL,
     stop("`max_treedepth` must be an integer.")
   }
 
-  if(!(0.8<=adapt_delta & adapt_delta <1)){
+  if(!(0.6<=adapt_delta & adapt_delta <1)){
 
-    stop("It is not permitted to set `adapt_delta` below 0.8, or larger or equal to 1.")
+    stop("It is not permitted to set `adapt_delta` below 0.6, or larger or equal to 1.")
   }
   if(!(refresh>=0)){
 

@@ -35,10 +35,10 @@ scenario_jointBLRM(
    ),
    saturating = FALSE,
    probs = c(0.025, 0.5, 0.975),
-   iter = 11000,
+   iter = 26000,
    warmup = 1000,
    refresh = 0,
-   adapt_delta = 0.9,
+   adapt_delta = 0.8,
    max_treedepth = 15,
    chains = 4,
    seed=sample.int(.Machine$integer.max, 1),
@@ -206,7 +206,7 @@ therefore be positive. See the Details section below for more detail.}
 \item{probs}{Optional numeric with arbitrary entries between 0 and 1. Provides the levels for the quantiles displayed in
 the output. Defaults to \code{c(0.025, 0.5, 0.975)}.}
 
-\item{iter}{Optional integer, number of total MCMC iterations per chain. Defaults to 11000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
+\item{iter}{Optional integer, number of total MCMC iterations per chain. Defaults to 26000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
 of the \code{iter} many iterations, the first \code{warmup} many samples are not saved.}
 
 \item{warmup}{Optional integer, number of warmup iterations discarded from total MCMC iterations per chain. Defaults to \code{1000}.
@@ -216,12 +216,12 @@ are not saved. Refer to \code{\link[rstan:stanmodel-method-sampling]{rstan::samp
 \item{refresh}{Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, defaults to \code{0}. A positive value indicates that updates on sampling progress are
 printed every \code{refresh} many iterations. Set this to 0 to avoid output from Stan. Refer to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} from the \code{\link[rstan:rstan]{rstan-package}} package for details.}
 
-\item{adapt_delta}{Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan. Translates to target Metropolis
+\item{adapt_delta}{Optional numeric between 0.6 and 1, default is 0.8. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan. Translates to target Metropolis
 acceptance probability during Hamiltonian Monte Carlo, respectively NUTS.
 Can be used to influence the \code{stepsize} Stan uses for leapfrog steps during the NUTS algorithm. See \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}} for details.
 Note: One can increase the value of this parameter
 in order to reduce the number of Stan warnings on "divergent transition". Larger values than 0.95 will slow down sampling. The function will not
-permit to set \code{adapt_delta} to values below 0.8 (the \code{\link[rstan:rstan]{rstan-package}} default).}
+permit to set \code{adapt_delta} to values below 0.6 (the \code{\link[rstan:rstan]{rstan-package}} default).}
 
 \item{max_treedepth}{Optional integer, defaults to 15. Should not be lower than 10. This is a parameter of the NUTS algorithm. Roughly speaking, NUTS constructs
 a search tree when generating a new proposal, until a stopping criterion (the NUTS criterion) is satisfied or, alternatively, until

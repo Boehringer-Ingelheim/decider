@@ -44,10 +44,10 @@ scenario_covariate_jointBLRM(
    two_sided2 = TRUE,
    saturating = FALSE,
    probs = c(0.025, 0.5, 0.975),
-   iter = 11000,
+   iter = 26000,
    warmup = 1000,
    refresh = 0,
-   adapt_delta = 0.9,
+   adapt_delta = 0.8,
    max_treedepth = 15,
    chains = 4,
    seed=sample.int(.Machine$integer.max, 1),
@@ -195,7 +195,7 @@ See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 \item{probs}{Optional numeric with arbitrary entries between 0 and 1. Provides the levels for the quantiles displayed in
 the output. Defaults to \code{c(0.025, 0.5, 0.975)}.}
 
-\item{iter}{Optional integer, number of total MCMC iterations per chain. Defaults to 11000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
+\item{iter}{Optional integer, number of total MCMC iterations per chain. Defaults to 26000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
 of the \code{iter} many iterations, the first \code{warmup} many samples are not saved.}
 
 \item{warmup}{Optional integer, number of warmup iterations discarded from total MCMC iterations per chain. Defaults to \code{1000}.
@@ -204,7 +204,7 @@ See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 \item{refresh}{Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, defaults to \code{0}.
 See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
 
-\item{adapt_delta}{Optional numeric between 0 and 1, default is 0.9. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
+\item{adapt_delta}{Optional numeric between 0.6 and 1, default is 0.8. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
 See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
 
 \item{max_treedepth}{Optional integer, defaults to 15.
