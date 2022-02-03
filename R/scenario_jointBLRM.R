@@ -1006,11 +1006,24 @@ scenario_jointBLRM <- function(data=NULL,
 
     stop("`dose.ref1` and `dose.ref2` must be numeric.")
   }
+
+  if(!length(dose.ref1) ==1){
+    stop("`dose.ref1` must be of length 1")
+  }
+  if(!length(dose.ref2) ==1){
+    stop("`dose.ref2` must be of length 1")
+  }
   if((!dose.ref1>0) | (!dose.ref2>0)){
 
     stop("`dose.ref1` and `dose.ref2` must be positive.")
   }
 
+  if(!length(dose.ref1) ==1){
+    stop("`dose.ref1` must be of length 1")
+  }
+  if(!length(dose.ref2) ==1){
+    stop("`dose.ref2` must be of length 1")
+  }
 
   if(!is.character(esc.rule)){
 
