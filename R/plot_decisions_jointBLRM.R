@@ -273,12 +273,12 @@ plot_decisions_jointBLRM_ewoct <- function(
 
     if(ewoc.not.sat){
       if(ewoc.sat){
-        color_vec <- c(  "orange","firebrick", "forestgreen","gold")
+        color_vec <- c(  "tomato1","firebrick", "forestgreen","gold")
       }else{
         color_vec <- c( "firebrick", "forestgreen","gold")
       }
     }else{
-      color_vec <- c(  "orange", "forestgreen","gold")
+      color_vec <- c(  "tomato1", "forestgreen","gold")
     }
 
     if(!underint.deact){
@@ -490,12 +490,12 @@ plot_decisions_jointBLRM_ewoct <- function(
 
     if(ewoc.not.sat){
       if(ewoc.sat){
-        color_vec <- c(  "orange","firebrick", "forestgreen","gold")
+        color_vec <- c(  "tomato1","firebrick", "forestgreen","gold")
       }else{
         color_vec <- c( "firebrick", "forestgreen","gold")
       }
     }else{
-      color_vec <- c(  "orange", "forestgreen","gold")
+      color_vec <- c(  "tomato1", "forestgreen","gold")
     }
 
     if(!underint.deact){
@@ -707,12 +707,12 @@ plot_decisions_jointBLRM_ewoct <- function(
 
       if(ewoc.not.sat){
         if(ewoc.sat){
-          color_vec <- c(  "orange","firebrick", "forestgreen","gold")
+          color_vec <- c(  "tomato1","firebrick", "forestgreen","gold")
         }else{
           color_vec <- c( "firebrick", "forestgreen","gold")
         }
       }else{
-        color_vec <- c(  "orange", "forestgreen","gold")
+        color_vec <- c(  "tomato1", "forestgreen","gold")
       }
       if(!underint.deact){
         punder <- ggplot(data=datf,aes_string(x="dose", y="under"))+
