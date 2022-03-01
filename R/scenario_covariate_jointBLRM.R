@@ -913,7 +913,7 @@ scenario_covariate_jointBLRM <- function(
   }
 
   if(!is.null(trials.of.interest.covars)){
-    if(!is.numeric(trials.of.interest.covars)){
+    if(all(!is.numeric(trials.of.interest.covars) & !is.na(trials.of.interest.covars))){
       stop("`trials.of.interest.covars` must be numeric.")
     }
     if(!length(trials.of.interest.covars)== n_std_interest & !length(trials.of.interest.covars)==1){
