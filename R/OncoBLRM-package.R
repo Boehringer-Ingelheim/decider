@@ -39,6 +39,7 @@
 #' @import ggplot2
 #' @import openxlsx
 #' @import flock
+#' @import doRNG
 #' @importFrom rstan sampling
 #' @importFrom RBesT mixfit
 #' @importFrom stats rbinom sd family quantile median
