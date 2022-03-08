@@ -2274,15 +2274,17 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
 
   }
 
+  #distribute number of studies across nodes
   chunks_outer <- chunkVector(seq_len(n.studies), foreach::getDoParWorkers())
 
   # ----------------------------------------------------------------------------
   # ACTUAL SIMULATION
   # ----------------------------------------------------------------------------
-  #foreach loop over the desired number of trials.
+  #foreach loop over the available number of nodes
      res.list <- foreach( k = chunks_outer,
                           .packages = c("OncoBLRM"),
                           .export = c("stanmodels"),
+                          #needed when run outside of package
                           #.packages = c("openxlsx", "flock", "rstan", "openssl"),
                           # .export = c("get_int_probs_BLRM", "inv_logit", "logit",
                           #             "main_jointBLRM", "post_tox_jointBLRM_sim",
@@ -2291,16 +2293,32 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                           #             "get_ewoc_dec_jointBLRM"),
                           .errorhandling = "pass",
                           .inorder = FALSE,
-                          combine = c) %dorng%
-  # res.list <- list()
-  # for(i in 1:n.studies)
-      {
+                          .combine = c) %dorng% {
+
+          #distribute number of trials for this node among workers
           chunks_inner <- chunkVector(k, foreach::getDoParWorkers())
 
-          foreach::foreach(i = chunks_inner, .combine = c) %dorng% {
-              res<- OncoBLRM:::trial_jointBLRM_par(
+          #parallel foreach across number of workers
+          foreach::foreach(i = chunks_inner,
+                           .combine = c,
+                           .errorhandling = "pass") %dorng% {
+
+              #return list of outputs from trial_jointBLRM
+              lapply(i, function(j){
+
+                #write progress if monitor path is given
+                if(!is.null(file.name)&!is.null(monitor.path)){
+                  if(dir.exists(file.path(monitor.path))){
+                    write.table(matrix("Processing...", nrow=1, ncol=1),
+                                file=paste(file.path(monitor.path),
+                                           "/trial-",j, "_", file.name,".txt", sep=""),
+                                row.names = F, col.names = F, append = FALSE)
+                  }
+                }
+                #call function
+                return(OncoBLRM:::trial_jointBLRM_par(
                                 doses.mono1.a = doses.mono1.a,
-              #OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
+                           #OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
                                 doses.mono2.a = doses.mono2.a,
                                 doses.combi.a = doses.combi.a,
                                 doses.mono1.b = doses.mono1.b,
@@ -2315,7 +2333,7 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                                 start.dose.combi.b1 = start.dose.combi.b1,
                                 start.dose.combi.b2 = start.dose.combi.b2,
                                 #seed = trial_seeds[i],
-              #BLRM = BLRM,
+                                #BLRM = BLRM,
 
                                 historical.data= historical.data,
 
@@ -2435,21 +2453,13 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                                 refresh = refresh,
                                 adapt_delta = adapt_delta,
                                 warmup = warmup,
-                                max_treedepth = max_treedepth
-      )
+                                max_treedepth = max_treedepth))
 
-      if(!is.null(file.name)&!is.null(monitor.path)){
-        if(dir.exists(file.path(monitor.path))){
-          write.table(matrix("Done", nrow=1, ncol=1),
-                     file=paste(file.path(monitor.path),
-                                "/trial-",i, "_", file.name,".txt", sep=""),
-                     row.names = F, col.names = F, append = FALSE)
-        }
-      }
+              })
 
-      return(res)
+    #end inner foreach
     }
-
+  #end outer foreach
   }
   #clusters need to be stopped
   #if(n.cores>1){stopCluster(cl_foreach)}
