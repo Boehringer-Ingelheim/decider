@@ -645,8 +645,9 @@
 #' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
 #' \code{\link[rstan:rstan]{rstan-package}}.
 #'
-#'@export
-sim_jointBLRM_par <- function(active.mono1.a = FALSE,
+#'@keywords internal
+#@export
+sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
                           active.mono1.b = FALSE,
                           active.mono2.a = FALSE,
                           active.mono2.b = FALSE,
@@ -2252,77 +2253,81 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
   #utils::globalVariables("k")
   #utils::globalVariables("i")
 
-  ## required functions
-  "%dorng%" <- doRNG::"%dorng%"
-  "%dopar%" <- foreach::"%dopar%"
-  if(!foreach::getDoParRegistered()) {
+  # ## required functions
+  # "%dorng%" <- doRNG::"%dorng%"
+  # "%dopar%" <- foreach::"%dopar%"
+  # if(!foreach::getDoParRegistered()) {
+  #
+  #   message("\nCaution: No parallel backend detected for the 'foreach' framework.",
+  #           " For parallel execution of the function, register a parallel backend.\n",
+  #           " This can be accomplished e.g. with: \n",
+  #           "   doFuture::registerDoFuture()\n",
+  #           "   future::plan(future::multisession)\n")
+  #
+  #   tt <- suppressWarnings(foreach::foreach(k = 1:2) %dopar% {k^k^k})
+  #   rm(tt)
+  #
+  # }
+  #
+  # ## Code inspired by https://stackoverflow.com/questions/3318333/split-a-vector-into-chunks
+  # ## Answer by mathheadinclouds
+  # chunkVector <- function(x, n_chunks) {
+  #
+  #   if (n_chunks <= 1) {
+  #
+  #     chunk_list <- list(x)
+  #
+  #   } else {
+  #
+  #     chunk_list <- unname(split(x, cut(seq_along(x), n_chunks, labels = FALSE)))
+  #
+  #   }
+  #
+  #   return (chunk_list)
+  #
+  # }
+  #
+  # #distribute number of studies across nodes
+  # chunks_outer <- chunkVector(seq_len(n.studies), foreach::getDoParWorkers())
+  #
+  # # ----------------------------------------------------------------------------
+  # # ACTUAL SIMULATION
+  # # ----------------------------------------------------------------------------
+  # #foreach loop over the available number of nodes
+  #    res.list <- foreach::foreach( kpar = chunks_outer,
+  #                         .packages = c("OncoBLRM"),
+  #                         .export = c("stanmodels", "trial_jointBLRM_par"),
+  #                         .errorhandling = "pass",
+  #                         .inorder = FALSE,
+  #                         .combine = c) %dorng% {
+  #
+  #         #distribute number of trials for this node among workers
+  #         chunks_inner <- chunkVector(kpar, foreach::getDoParWorkers())
+  #
+  #         #parallel foreach across number of workers
+  #         foreach::foreach(ipar = chunks_inner,
+  #                          .combine = c,
+  #                          .errorhandling = "pass") %dorng% {
+  #
+  #             #return list of outputs from trial_jointBLRM
+  #             lapply(ipar, function(j){
+  #
+  #               #write progress if monitor path is given
+  #               if(!is.null(file.name)&!is.null(monitor.path)){
+  #                 if(dir.exists(file.path(monitor.path))){
+  #                   write.table(matrix("Processing...", nrow=1, ncol=1),
+  #                               file=paste(file.path(monitor.path),
+  #                                          "/trial-",j, "_", file.name,".txt", sep=""),
+  #                               row.names = F, col.names = F, append = FALSE)
+  #                 }
+  #               }
+  #               #call function
+  #               # return(OncoBLRM:::trial_jointBLRM_par(
 
-    message("\nCaution: No parallel backend detected for the 'foreach' framework.",
-            " For parallel execution of the function, register a parallel backend.\n",
-            " This can be accomplished e.g. with: \n",
-            "   doFuture::registerDoFuture()\n",
-            "   future::plan(future::multisession)\n")
 
-    tt <- suppressWarnings(foreach::foreach(k = 1:2) %dopar% {k^k^k})
-    rm(tt)
-
-  }
-
-  ## Code inspired by https://stackoverflow.com/questions/3318333/split-a-vector-into-chunks
-  ## Answer by mathheadinclouds
-  chunkVector <- function(x, n_chunks) {
-
-    if (n_chunks <= 1) {
-
-      chunk_list <- list(x)
-
-    } else {
-
-      chunk_list <- unname(split(x, cut(seq_along(x), n_chunks, labels = FALSE)))
-
-    }
-
-    return (chunk_list)
-
-  }
-
-  #distribute number of studies across nodes
-  chunks_outer <- chunkVector(seq_len(n.studies), foreach::getDoParWorkers())
-
-  # ----------------------------------------------------------------------------
-  # ACTUAL SIMULATION
-  # ----------------------------------------------------------------------------
-  #foreach loop over the available number of nodes
-     res.list <- foreach::foreach( kpar = chunks_outer,
-                          .packages = c("OncoBLRM"),
-                          .export = c("stanmodels", "trial_jointBLRM_par"),
-                          .errorhandling = "pass",
-                          .inorder = FALSE,
-                          .combine = c) %dorng% {
-
-          #distribute number of trials for this node among workers
-          chunks_inner <- chunkVector(kpar, foreach::getDoParWorkers())
-
-          #parallel foreach across number of workers
-          foreach::foreach(ipar = chunks_inner,
-                           .combine = c,
-                           .errorhandling = "pass") %dorng% {
-
-              #return list of outputs from trial_jointBLRM
-              lapply(ipar, function(j){
-
-                #write progress if monitor path is given
-                if(!is.null(file.name)&!is.null(monitor.path)){
-                  if(dir.exists(file.path(monitor.path))){
-                    write.table(matrix("Processing...", nrow=1, ncol=1),
-                                file=paste(file.path(monitor.path),
-                                           "/trial-",j, "_", file.name,".txt", sep=""),
-                                row.names = F, col.names = F, append = FALSE)
-                  }
-                }
-                #call function
-                # return(OncoBLRM:::trial_jointBLRM_par(
-                  return(trial_jointBLRM_par(
+  #only one call to trials_jointBLRM_par
+      res.list  <- trials_jointBLRM_par(
+                                n.studies = n.studies,
                                 doses.mono1.a = doses.mono1.a,
                                 doses.mono2.a = doses.mono2.a,
                                 doses.combi.a = doses.combi.a,
@@ -2458,14 +2463,14 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                                 refresh = refresh,
                                 adapt_delta = adapt_delta,
                                 warmup = warmup,
-                                max_treedepth = max_treedepth))
-
-              })
-
-    #end inner foreach
-    }
-  #end outer foreach
-  }
+                                max_treedepth = max_treedepth)
+#
+#               })
+#
+#     #end inner foreach
+#     }
+#   #end outer foreach
+#   }
 
   #---------------------------------------------------------------------------
   #Post-Processing the results

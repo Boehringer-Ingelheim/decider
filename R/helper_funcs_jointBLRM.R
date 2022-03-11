@@ -1,3 +1,6 @@
+#avoid RCMD CHECK findings
+utils::globalVariables("kpar")
+utils::globalVariables("ipar")
 
 
 #'@keywords internal
