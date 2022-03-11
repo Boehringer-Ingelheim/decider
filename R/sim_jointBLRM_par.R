@@ -2281,16 +2281,9 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
   # ACTUAL SIMULATION
   # ----------------------------------------------------------------------------
   #foreach loop over the available number of nodes
-     res.list <- foreach( k = chunks_outer,
+     res.list <- foreach::foreach( k = chunks_outer,
                           .packages = c("OncoBLRM"),
                           .export = c("stanmodels"),
-                          #needed when run outside of package
-                          #.packages = c("openxlsx", "flock", "rstan", "openssl"),
-                          # .export = c("get_int_probs_BLRM", "inv_logit", "logit",
-                          #             "main_jointBLRM", "post_tox_jointBLRM_sim",
-                          #             "trial_jointBLRM", "harmonize_vecnames_jointBLRM",
-                          #             "get_dloss_dec_jointBLRM", "get_loss_dec_jointBLRM",
-                          #             "get_ewoc_dec_jointBLRM"),
                           .errorhandling = "pass",
                           .inorder = FALSE,
                           .combine = c) %dorng% {
@@ -2318,7 +2311,6 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                 #call function
                 return(OncoBLRM:::trial_jointBLRM_par(
                                 doses.mono1.a = doses.mono1.a,
-                           #OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
                                 doses.mono2.a = doses.mono2.a,
                                 doses.combi.a = doses.combi.a,
                                 doses.mono1.b = doses.mono1.b,
@@ -2461,8 +2453,7 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
     }
   #end outer foreach
   }
-  #clusters need to be stopped
-  #if(n.cores>1){stopCluster(cl_foreach)}
+
   #---------------------------------------------------------------------------
   #Post-Processing the results
   #---------------------------------------------------------------------------
