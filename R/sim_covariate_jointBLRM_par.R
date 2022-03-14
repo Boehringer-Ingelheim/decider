@@ -1,10 +1,408 @@
 # --------------------------
 # function: sim_jointBLRM
 # --------------------------
-
-#'@keywords internal
-#@export
-sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
+#'Simulate dose-finding trials with covariates
+#'@description Simulates dose-finding trials with up to six parallel monotherapy or two-drug combination therapy trials modeled together in a
+#'joint BLRM. The function assumes that two different compounds are involved, compounds 1 and 2 (and their combination).
+#'Up to two monotherapy trials for each compound can be actively simulated, and additionally two combination therapy trials.
+#'Additionally, for each trial the binary covariate included in the model can be activated or deactivated.
+#'Please refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details on
+#'the model specification and \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details on most of the
+#'arguments used by the function. Note that function \code{sim_covariate_jointBLRM()} uses to a large extent the same arguments as
+#'\code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}. The additionally added arguments for handling of the binary
+#'covariate are \code{two_sided1},
+#'\code{two_sided2}, \code{prior.mu.covar}, \code{prior.tau.covar}, and \code{covar.[...]}, where \code{[...]} is
+#'one of the trial names, i.e. \code{mono1.a}, \code{mono1.b}, \code{mono2.a}, \code{mono2.b}, \code{combi.a}, and
+#'\code{combi.b}.
+#'
+#'@usage
+#'sim_covariate_jointBLRM_par(
+#'    active.mono1.a = FALSE,
+#'    active.mono1.b = FALSE,
+#'    active.mono2.a = FALSE,
+#'    active.mono2.b = FALSE,
+#'    active.combi.a = FALSE,
+#'    active.combi.b = FALSE,
+#'    doses.mono1.a,
+#'    doses.mono2.a,
+#'    doses.mono1.b,
+#'    doses.mono2.b,
+#'    doses.combi.a,
+#'    doses.combi.b,
+#'    dose.ref1,
+#'    dose.ref2,
+#'    tox.mono1.a,
+#'    tox.mono2.a,
+#'    tox.combi.a,
+#'    tox.mono1.b,
+#'    tox.mono2.b,
+#'    tox.combi.b,
+#'    start.dose.mono1.a,
+#'    start.dose.mono2.a,
+#'    start.dose.mono1.b,
+#'    start.dose.mono2.b,
+#'    start.dose.combi.a1,
+#'    start.dose.combi.a2,
+#'    start.dose.combi.b1,
+#'    start.dose.combi.b2,
+#'    cohort.queue = rep( c(1,2,3,4,5,6), times= 100),
+#'    historical.data = NULL,
+#'    esc.rule = "ewoc",
+#'    esc.comp.max=1,
+#'    dosing.intervals = c(0.16, 0.33, 0.6),
+#'    ewoc.threshold = 0.25,
+#'    loss.weights = c(1, 0, 1, 2),
+#'    dynamic.weights =  rbind(
+#'        c(0.32, 0, 0.32, 0.36),
+#'        c(0.29, 0, 0.31, 0.40),
+#'        c(0.27, 0, 0.33, 0.40),
+#'        c(0.20, 0, 0.30, 0.50)),
+#'    prior.mu = list(
+#'        mu_a1 = c(logit(0.33), 2),
+#'        mu_b1 = c(0, 1),
+#'        mu_a2 = c(logit(0.33), 2),
+#'        mu_b2 = c(0, 1),
+#'        mu_eta = c(0, 1.121)),
+#'    prior.mu.covar = list(
+#'        mu_g1 = c(0, 1),
+#'        mu_g2 = c(0, 1)),
+#'    prior.tau = list(
+#'        tau_a1 = c(log(0.25), log(4)/1.96),
+#'        tau_b1 = c(log(0.125), log(4)/1.96),
+#'        tau_a2 = c(log(0.25), log(4)/1.96),
+#'        tau_b2 = c(log(0.125), log(4)/1.96),
+#'        tau_eta = c(log(0.125),log(4)/1.96)),
+#'    prior.tau.covar = list(
+#'        tau_g1 = c(log(0.125),log(4)/1.96),
+#'        tau_g2 = c(log(0.125),log(4)/1.96)),
+#'    saturating = FALSE,
+#'    esc.step = NULL,
+#'    esc.step.mono1.a = esc.step,
+#'    esc.step.mono2.a = esc.step,
+#'    esc.step.mono1.b = esc.step,
+#'    esc.step.mono2.b = esc.step,
+#'    esc.step.combi.a1 = esc.step,
+#'    esc.step.combi.b1 = esc.step,
+#'    esc.step.combi.a2 = esc.step,
+#'    esc.step.combi.b2 = esc.step,
+#'    esc.constrain = FALSE,
+#'    esc.constrain.mono1.a=esc.constrain,
+#'    esc.constrain.mono2.a=esc.constrain,
+#'    esc.constrain.mono1.b=esc.constrain,
+#'    esc.constrain.mono2.b=esc.constrain,
+#'    esc.constrain.combi.a1=esc.constrain,
+#'    esc.constrain.combi.b1=esc.constrain,
+#'    esc.constrain.combi.a2=esc.constrain,
+#'    esc.constrain.combi.b2=esc.constrain,
+#'    cohort.size = c(3),
+#'    cohort.size.mono1.a = cohort.size,
+#'    cohort.size.mono1.b = cohort.size,
+#'    cohort.size.mono2.a = cohort.size,
+#'    cohort.size.mono2.b = cohort.size,
+#'    cohort.size.combi.a = cohort.size,
+#'    cohort.size.combi.b = cohort.size,
+#'    cohort.prob = NULL,
+#'    cohort.prob.mono1.a = cohort.prob,
+#'    cohort.prob.mono1.b = cohort.prob,
+#'    cohort.prob.mono2.a = cohort.prob,
+#'    cohort.prob.mono2.b = cohort.prob,
+#'    cohort.prob.combi.a = cohort.prob,
+#'    cohort.prob.combi.b = cohort.prob,
+#'    max.n = 42,
+#'    max.n.mono1.a = max.n,
+#'    max.n.mono1.b = max.n,
+#'    max.n.mono2.a = max.n,
+#'    max.n.mono2.b = max.n,
+#'    max.n.combi.a = max.n,
+#'    max.n.combi.b = max.n,
+#'    mtd.decision = list(
+#'        target.prob = 0.5,
+#'        pat.at.mtd = 6,
+#'        min.pat = 12,
+#'        min.dlt = 1,
+#'        rule = 2),
+#'    mtd.decision.combi.a = mtd.decision,
+#'    mtd.decision.combi.b = mtd.decision,
+#'    mtd.decision.mono1.a = mtd.decision,
+#'    mtd.decision.mono1.b = mtd.decision,
+#'    mtd.decision.mono2.a = mtd.decision,
+#'    mtd.decision.mono2.b = mtd.decision,
+#'    mtd.enforce = FALSE,
+#'    mtd.enforce.mono1.a = mtd.enforce,
+#'    mtd.enforce.mono2.a = mtd.enforce,
+#'    mtd.enforce.mono1.b = mtd.enforce,
+#'    mtd.enforce.mono2.b = mtd.enforce,
+#'    mtd.enforce.combi.a = mtd.enforce,
+#'    mtd.enforce.combi.b = mtd.enforce,
+#'    backfill.mono1.a = FALSE,
+#'    backfill.mono1.b = FALSE,
+#'    backfill.mono2.a = FALSE,
+#'    backfill.mono2.b = FALSE,
+#'    backfill.combi.a = FALSE,
+#'    backfill.combi.b = FALSE,
+#'    backfill.size = c(3),
+#'    backfill.prob = NULL,
+#'    backfill.size.mono1.a = backfill.size,
+#'    backfill.size.mono1.b = backfill.size,
+#'    backfill.size.mono2.a = backfill.size,
+#'    backfill.size.mono2.b = backfill.size,
+#'    backfill.size.combi.a = backfill.size,
+#'    backfill.size.combi.b = backfill.size,
+#'    backfill.prob.mono1.a = backfill.prob,
+#'    backfill.prob.mono1.b = backfill.prob,
+#'    backfill.prob.mono2.a = backfill.prob,
+#'    backfill.prob.mono2.b = backfill.prob,
+#'    backfill.prob.combi.a = backfill.prob,
+#'    backfill.prob.combi.b = backfill.prob,
+#'    backfill.start.mono1.a = NULL,
+#'    backfill.start.mono1.b = NULL,
+#'    backfill.start.mono2.a = NULL,
+#'    backfill.start.mono2.b = NULL,
+#'    backfill.start.combi.a1 = NULL,
+#'    backfill.start.combi.a2 = NULL,
+#'    backfill.start.combi.b1 = NULL,
+#'    backfill.start.combi.b2 = NULL,
+#'    two_sided1 = TRUE,
+#'    two_sided2 = TRUE,
+#'    covar.mono1.a = FALSE,
+#'    covar.mono2.a = FALSE,
+#'    covar.mono1.b = FALSE,
+#'    covar.mono2.b = FALSE,
+#'    covar.combi.a = FALSE,
+#'    covar.combi.b = FALSE,
+#'    n.studies = 1,
+#'    n.cores = 1,
+#'    seed = sample.int(.Machine$integer.max, 1),
+#'    chains = 4,
+#'    iter = 13500,
+#'    warmup = 1000,
+#'    adapt_delta = 0.8,
+#'    max_treedepth = 15,
+#'    refresh=0,
+#'    file.name = NULL,
+#'    path = NULL,
+#'    monitor.path = NULL,
+#'    working.path = NULL,
+#'    clean.working.path = FALSE,
+#'    output.sim.config =TRUE
+#')
+#'@param active.mono1.a,active.mono1.b,active.mono2.a,active.mono2.b,active.combi.a,active.combi.b Logicals, default to \code{FALSE}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param doses.mono1.a,doses.mono1.b,doses.mono2.a,doses.mono2.b Numericals, one dimensional vectors with positive, strictly ascending entries.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param doses.combi.a,doses.combi.b Numericals, two dimensional arrays with two rows, arbitrarily many columns, and positive entries.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param dose.ref1 Positive numerical value. Reference dose of compound 1.
+#'@param dose.ref2 Positive numerical value. Reference dose of compound 2.
+#'@param tox.mono1.a,tox.mono1.b,tox.mono2.a,tox.mono2.b Numericals, one dimensional vectors with entries in \eqn{(0,1)}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param tox.combi.a,tox.combi.b Numericals, one dimensional vectors with entries in \eqn{(0,1)}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param start.dose.mono1.a,start.dose.mono2.a,start.dose.mono1.b,start.dose.mono2.b Positive numerical values that specify the starting dose for the simulated monotherapy trials.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param start.dose.combi.a1,start.dose.combi.a2,start.dose.combi.b1,start.dose.combi.b2 Positive numerical values that specify the starting dose for the simulated combination therapy trials.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param cohort.queue Optional numerical or character vector that specifies the order or pattern in which cohorts are enrolled in the simulated trials.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param historical.data Optional parameter that must be \code{NULL} (the default) or a named list that specifies the historical data to be included in the trial.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details, and to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()}
+#'for the required input format of historical data.
+#'@param esc.rule Optional character string, must have one of the following values: \code{"ewoc"}, \code{"ewoc.opt"}, \code{"ewoc.max"}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param esc.comp.max Optional integer, must be either \code{1} (the default) or \code{2}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param dosing.intervals Optional numeric vector with ascending entries between 0 and 1.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param ewoc.threshold Optional numerical value between 0 and 1 (excluding the boundaries), defaults to \code{0.25}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param loss.weights Optional numerical vector with four entries (which can be arbitrary numbers), the default is \code{c(1,0,1,2)}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param dynamic.weights Optional numerical matrix with four rows and four columns, and arbitrary numbers as entries.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param prior.mu Optional list that gives the prior distribution for the hyper means \eqn{\mu}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param prior.tau Optional list that gives the prior distribution for the between-trial heterogeneities (hyper SD) \eqn{\tau}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param prior.mu.covar Optional named list that gives the prior distribution for the hyper-means of the additional parameters
+#'included in the joint BLRM to realize the binary covariate.
+#'Refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
+#'@param prior.tau.covar Optional named list that gives the prior distribution for the between-trial heterogeneities of the additional parameters
+#'included in the joint BLRM to realize the binary covariate.
+#'Refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
+#'@param two_sided1 Optional logical, defaults to \code{TRUE}.
+#'Refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
+#'@param two_sided2 Optional logical, defaults to \code{TRUE}.
+#'Refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
+#'@param saturating Optional logical, defaults to \code{FALSE}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param esc.step,esc.step.mono1.a,esc.step.mono2.a,esc.step.combi.a1,esc.step.combi.a2 Optional numerical values that specify
+#'the maximum factor of dose escalations that is demanded additionally to the selected escalation rule.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param esc.step.mono1.b,esc.step.mono2.b,esc.step.combi.b1,esc.step.combi.b2
+#'Same as \code{esc.step.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param esc.constrain,esc.constrain.mono1.a,esc.constrain.mono2.a
+#'Optional logicals, default to \code{FALSE}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param esc.constrain.combi.a1,esc.constrain.combi.a2
+#'Optional logicals, default to \code{FALSE}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param esc.constrain.mono1.b,esc.constrain.mono2.b,esc.constrain.combi.b1,esc.constrain.combi.b2
+#'Same as \code{esc.constrain.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param cohort.size,cohort.size.mono1.a,cohort.size.mono2.a,cohort.size.combi.a
+#'Optional positive integer vectors that specify the available cohort sizes for simulated cohorts.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param cohort.size.mono1.b,cohort.size.mono2.b,cohort.size.combi.b
+#'Same as \code{cohort.size.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param cohort.prob,cohort.prob.mono1.a,cohort.prob.mono2.a,cohort.prob.combi.a
+#'Optional positive numeric vectors with values between 0 and 1 that specify the probability for each of the available cohort sizes in the corresponding argument \code{cohort.size.[...]}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param cohort.prob.mono1.b,cohort.prob.mono2.b,cohort.prob.combi.b
+#'Same as \code{cohort.prob.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param max.n,max.n.mono1.a,max.n.mono2.a,max.n.combi.a Optional positive integer values that specify
+#'the maximum number of patients to be enrolled in simulated trials.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param max.n.mono1.b,max.n.mono2.b,max.n.combi.b
+#'Same as \code{max.n.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param mtd.decision,mtd.decision.mono1.a,mtd.decision.mono2.a,mtd.decision.combi.a
+#'Optional named lists that specify the rules for MTD selection.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param mtd.decision.mono1.b,mtd.decision.mono2.b,mtd.decision.combi.b
+#'Same as \code{mtd.decision.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param mtd.enforce,mtd.enforce.mono1.a,mtd.enforce.mono2.a,mtd.enforce.combi.a
+#'Optional logicals, default to \code{FALSE}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param mtd.enforce.mono1.b,mtd.enforce.mono2.b,mtd.enforce.combi.b
+#'Same as \code{mtd.enforce.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param backfill.mono1.a,backfill.mono2.a,backfill.combi.a
+#'Optional logicals, indicating whether back-fill cohorts are simulated for the trial.
+#'@param backfill.mono1.b,backfill.mono2.b,backfill.combi.b
+#'Same as \code{backfill.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param backfill.size,backfill.size.mono1.a,backfill.size.mono2.a,backfill.size.combi.a
+#'Optional numericals, provide the size of simulated back-fill cohorts. Interpreted in the same fashion as \code{cohort.size}.
+#'@param backfill.size.mono1.b,backfill.size.mono2.b,backfill.size.combi.b
+#'Same as \code{backfill.size.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param backfill.prob,backfill.prob.mono1.a,backfill.prob.mono2.a,backfill.prob.combi.a
+#'Optional numericals, provide the probabilities if multiple possible back-fill cohort sizes are given.
+#'Interpreted in the same fashion as \code{cohort.prob}.
+#'@param backfill.prob.mono1.b,backfill.prob.mono2.b,backfill.prob.combi.b
+#'Same as \code{backfill.prob.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param backfill.start.mono1.a,backfill.start.mono2.a,backfill.start.combi.a1,backfill.start.combi.a2
+#'Optional numericals. Specify the first dose on which back-fill cohorts are enrolled. If not provided, the
+#'lowest available dose will be assumed to be the starting point of back-fill cohorts in the respective trial.
+#'@param backfill.start.mono1.b,backfill.start.mono2.b,backfill.start.combi.b1,backfill.start.combi.b2
+#'Same as \code{backfill.start.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
+#'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
+#'@param covar.mono1.a,covar.mono1.b,covar.mono2.a,covar.mono2.b,covar.combi.a,covar.combi.b
+#'Optional logicals, default to \code{FALSE}. Specify whether the corresponding simulated trial has a value of 0 or
+#'1 in the binary covariate. Set \code{covar.[...]=TRUE} when the trial shall have covariate 1.
+#'By default, all trials do not have the property indicated by the binary covariate. This is equivalent to a
+#'joint BLRM without covariate.
+#'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param n.cores Optional positive integer, defaults to \code{1}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param seed Optional positive integer that specified the seed to be used for the simulation.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param chains Optional positive integer that specifies the number of Markov chains to be used during MCMC sampling, defaults to \code{4}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param iter Optional positive integer that specifies the total number of iterations per chain to be used during MCMC sampling, defaults to \code{13500}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param warmup Optional positive integer that specifies the number of iterations per chain that are discarded from the total number of iterations, \code{iter}.
+#'Defaults to \code{1000}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param adapt_delta Optional numerical that must be at least \code{0.6} and smaller than \code{1}, defaults to \code{0.8}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param max_treedepth Optional integer that must be at least \code{10}, defaults to \code{15}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param refresh Optional integer, defaults to \code{0}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param file.name Optional character string that provides a name for potential output files.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param path Optional character string that specifies the path to the output directory.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param monitor.path Optional character string that specifies a path to an additional output directory for monitoring simulation progress.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param working.path Optional character string that specifies a path to a directory for temporary results.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param clean.working.path Optional logical, defaults to \code{FALSE}.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@param output.sim.config Optional logical that specifies whether the input parameters of the call to \code{sim_jointBLRM()} are added to
+#'the output list.
+#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'@returns List that contains a number of metrics that summarize the results of the simulation for each simulated trial,
+#'and, depending on the specification, additional list entries that save the given input specification.
+#'
+#'By default, the following list entries are generated for each simulated trial (where \code{[...]}
+#'is the corresponding suffix of the trial):
+#'\itemize{
+#'\item{\code{...$'results [...]'}\cr Overview of number of MTDs per dosing interval (under, target, over), and number of
+#' trials that stopped without finding an MTD, either due to the stopping rule (when
+#' EWOC-based escalation is used) or due to reaching the maximal patient number.}
+#'
+#'\item{\code{...$'summary [...]'}\cr Summary statistics (mean, median, min, max, 2.5% and 97.5% quantile) of
+#'the number of patients, patients per dosing interval, DLTs, and
+#'DLTs per dosing interval.}
+#'
+#'\item{\code{...$'MTDs [...]'}\cr Number of MTDs per dose level and their assumed DLT rates.}
+#'
+#'\item{\code{...$'#pat [...]'}\cr Mean, median, minimum and maximum number of patients enrolled at each dose level.}
+#'}
+#'Additionally, if \code{output.sim.config} is active, the list will include the following entries:
+#'\itemize{
+#'\item{\code{...$'historical.data'}\cr Only included when historical data was included in the simulations. Contains the specified cohorts
+#' from historical data.}
+#'
+#'\item{\code{...$'prior'}\cr The prior distribution for the hyper-parameters that was used by the BLRM.}
+#'
+#'\item{\code{...$'specifications'}\cr All other simulation specifications. Includes e. g. reference doses, decision rules, escalation steps,
+#'and the seed.}
+#'
+#'\item{\code{...$'Stan options'}\cr Options given to Stan, such as the number of MCMC iterations and chains.}
+#'}
+#'
+#'
+#'@details
+#'The joint BLRM is defined according to (Neuenschwander et al., 2014 and 2016). It allows to perform Bayesian logistic regression
+#'to estimate the dose-toxicity relationship of two different monotherapies and combination therapy with these compounds in
+#'a joint model, which includes a hierarchical prior for robust borrowing across trials. Refer to the documentation of
+#'\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for a detailed model description. Further, refer to the documentation of
+#'\code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for a description of the model including
+#'covariates.
+#'
+#'@references
+#' Stan Development Team (2020). RStan: the R interface to Stan. R package version 2.21.2. \url{https://mc-stan.org}.
+#'
+#' Neuenschwander, B., Branson, M., & Gsponer, T. (2008). Critical aspects of the Bayesian approach to phase I cancer trials.
+#' Statistics in medicine, 27(13), 2420-2439, <doi:10.1002/sim.3230>.
+#'
+#' Neuenschwander, B., Matano, A., Tang, Z., Roychoudhury, S., Wandel, S., & Bailey, S. (2014). A Bayesian Industry Approach to Phase I Combination Trials in Oncology.
+#' In: Zhao. W & Yang, H. (editors). Statistical methods in drug combination studies. Chapman and Hall/CRC, 95-135, <doi:10.1201/b17965>.
+#'
+#' Neuenschwander, B., Roychoudhury, S., & Schmidli, H. (2016). On the use of co-data in clinical trials.
+#' Statistics in Biopharmaceutical Research, 8(3), 345-354, <doi:10.1080/19466315.2016.1174149>.
+#'
+#' Babb, J., Rogatko, A., & Zacks, S. (1998). Cancer phase I clinical trials: Efficient dose escalation with overdose control.
+#' Statistics in medicine 17(10), 1103-1120.
+#'
+#' Zhou, H.,  Yuan, Y., & Nie, L. (2018). Accuracy, safety, and reliability of novel phase I designs.
+#' Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>.
+#'
+#'
+#' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' \code{\link[rstan:rstan]{rstan-package}}, \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},
+#'
+#'@export
+sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
                           active.mono1.b = FALSE,
                           active.mono2.a = FALSE,
                           active.mono2.b = FALSE,
@@ -53,7 +451,10 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
                             mu_b1 = c(0, 1),
                             mu_a2 = c(logit(0.33), 2),
                             mu_b2 = c(0, 1),
-                            mu_eta = c(0, 1.121)
+                            mu_eta = c(0, 1.121)),
+                          prior.mu.covar = list(
+                            mu_g1 = c(0, 1),
+                            mu_g2 = c(0, 1)
                           ),
 
                           prior.tau = list(tau_a1 = c(log(0.25), log(4)/1.96),
@@ -61,6 +462,9 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
                                            tau_a2 = c(log(0.25), log(4)/1.96),
                                            tau_b2 = c(log(0.125), log(4)/1.96),
                                            tau_eta = c(log(0.125),log(4)/1.96)),
+                          prior.tau.covar = list(
+                                           tau_g1 = c(log(0.125),log(4)/1.96),
+                                           tau_g2 = c(log(0.125),log(4)/1.96)),
                           saturating = FALSE,
                           esc.step = NULL,
                           esc.step.mono1.a = esc.step,
@@ -161,6 +565,15 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
                           backfill.start.combi.b1 = NULL,
                           backfill.start.combi.b2 = NULL,
 
+                          two_sided1 = TRUE, #'NEW'
+                          two_sided2 = TRUE, #'NEW'
+                          covar.mono1.a = FALSE,
+                          covar.mono2.a = FALSE,
+                          covar.mono1.b = FALSE,
+                          covar.mono2.b = FALSE,
+                          covar.combi.a = FALSE,
+                          covar.combi.b = FALSE,
+
                           n.studies = 1,
                           n.cores = 1,
                           seed = sample.int(.Machine$integer.max, 1),
@@ -209,6 +622,23 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
          "`mtd.enforce.mono2.a`, `mtd.enforce.mono2.b`, `mtd.enforce.combi.a`,\n",
          "and `mtd.enforce.combi.b` must be of type logical.")
   }
+
+  if(!is.logical(c( two_sided1, two_sided2))){
+    stop("The arguments  `two_sided1`, `two_sided2`\n",
+         "must be of type logical.")
+  }
+
+
+  if(!is.logical(c( covar.mono1.a, covar.mono1.b,
+                    covar.mono2.a, covar.mono2.b,
+                    covar.combi.a,
+                    covar.combi.b))){
+    stop("The arguments  `covar.mono1.a`, `covar.mono1.b`,\n",
+         "`covar.mono2.a`, `covar.mono2.b`, `covar.combi.a`,\n",
+         "and `covar.combi.b` must be of type logical.")
+  }
+
+
   if(!any(c(active.mono1.a, active.mono1.b, active.mono2.a, active.mono2.b,
             active.combi.a,active.combi.b))){
     stop("None of the trials is activated (via arguments `active.[...]`).")
@@ -1286,6 +1716,30 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
   names(prior.tau) <- tolower(names(prior.tau))
   test.prior.tau(prior.tau)
 
+  if(!is.list(prior.mu.covar)){
+    stop("`prior.mu.covar` must be a named list.")
+  }
+  if(is.null(names(prior.mu.covar))){
+    stop("`prior.mu.covar` must be a named list.")
+  }
+  names(prior.mu.covar) <- tolower(names(prior.mu.covar))
+  test.prior.mu.covar(prior.mu.covar)
+
+  if(!is.list(prior.tau.covar)){
+    stop("`prior.tau.covar` must be a named list.")
+  }
+  if(is.null(names(prior.tau.covar))){
+    stop("`prior.tau.covar` must be a named list.")
+  }
+  names(prior.tau.covar) <- tolower(names(prior.tau.covar))
+  test.prior.tau.covar(prior.tau.covar)
+
+  prior.mu[["mu_c1"]] <- prior.mu.covar$mu_g1
+  prior.mu[["mu_c2"]] <- prior.mu.covar$mu_g2
+
+  prior.tau[["tau_c1"]] <- prior.tau.covar$tau_g1
+  prior.tau[["tau_c2"]] <- prior.tau.covar$tau_g2
+
   #--------------------------------
   #check backfill-starting doses
   #--------------------------------
@@ -1425,7 +1879,7 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
       stop("`historical.data` must be NULL or a named list.")
     }
     names(historical.data) <- tolower(names(historical.data))
-    if(!is.historical.data(historical.data)){
+    if(!is.historical.cov.data(historical.data)){
       stop("`historical.data` does not follow the format specified in the documentation.")
     }
     if(!all(historical.data$n.dlt <= historical.data$n.pat)){
@@ -1446,7 +1900,7 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
       if(length(idx_noninf_obs)==length(historical.data$dose1)){
         remove.hist <- TRUE
       }else{
-        historical.data <- remove.noninf.obs(historical.data, idx_noninf_obs)
+        historical.data <- remove.noninf.cov.obs(historical.data, idx_noninf_obs)
       }
     }
     #continue consistency checks
@@ -1590,244 +2044,231 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
 
 
   #sample seeds for each trial
-  #trial_seeds = sample.int(.Machine$integer.max, n.studies)
+  trial_seeds = sample.int(.Machine$integer.max, n.studies)
   #Note: this ensures that the trials will be based on the same seeds, regardless
   #of whether the simulation is parallelized or not.
 
-  # #parallelization
-  # if(n.cores>1){
-  #   cl_foreach <- makeCluster(n.cores)
-  #   registerDoParallel(cl_foreach)
-  #   message("Parallel simulation with ", n.cores, " cores started.")
-  # }else{
-  #   registerDoSEQ()
-  #   message("Sequential simulation started.")
-  # }
+  ## required functions
+  "%dorng%" <- doRNG::"%dorng%"
+  "%dopar%" <- foreach::"%dopar%"
+  if(!foreach::getDoParRegistered()) {
 
+    message("\nCaution: No parallel backend detected for the 'foreach' framework.",
+            " For parallel execution of the function, register a parallel backend.\n",
+            " This can be accomplished e.g. with: \n",
+            "   doFuture::registerDoFuture()\n",
+            "   future::plan(future::multisession)\n")
 
-  ##New: use nested foreach
-  ## R CMD check appeasement for forach loop
-  #utils::globalVariables("k")
-  #utils::globalVariables("i")
+    tt <- suppressWarnings(foreach::foreach(k = 1:2) %dopar% {k^k^k})
+    rm(tt)
 
-  # ## required functions
-  # "%dorng%" <- doRNG::"%dorng%"
-  # "%dopar%" <- foreach::"%dopar%"
-  # if(!foreach::getDoParRegistered()) {
-  #
-  #   message("\nCaution: No parallel backend detected for the 'foreach' framework.",
-  #           " For parallel execution of the function, register a parallel backend.\n",
-  #           " This can be accomplished e.g. with: \n",
-  #           "   doFuture::registerDoFuture()\n",
-  #           "   future::plan(future::multisession)\n")
-  #
-  #   tt <- suppressWarnings(foreach::foreach(k = 1:2) %dopar% {k^k^k})
-  #   rm(tt)
-  #
-  # }
-  #
-  # ## Code inspired by https://stackoverflow.com/questions/3318333/split-a-vector-into-chunks
-  # ## Answer by mathheadinclouds
-  # chunkVector <- function(x, n_chunks) {
-  #
-  #   if (n_chunks <= 1) {
-  #
-  #     chunk_list <- list(x)
-  #
-  #   } else {
-  #
-  #     chunk_list <- unname(split(x, cut(seq_along(x), n_chunks, labels = FALSE)))
-  #
-  #   }
-  #
-  #   return (chunk_list)
-  #
-  # }
-  #
-  # #distribute number of studies across nodes
-  # chunks_outer <- chunkVector(seq_len(n.studies), foreach::getDoParWorkers())
-  #
-  # # ----------------------------------------------------------------------------
-  # # ACTUAL SIMULATION
-  # # ----------------------------------------------------------------------------
-  # #foreach loop over the available number of nodes
-  #    res.list <- foreach::foreach( kpar = chunks_outer,
-  #                         .packages = c("OncoBLRM"),
-  #                         .export = c("stanmodels", "trial_jointBLRM_par"),
-  #                         .errorhandling = "pass",
-  #                         .inorder = FALSE,
-  #                         .combine = c) %dorng% {
-  #
-  #         #distribute number of trials for this node among workers
-  #         chunks_inner <- chunkVector(kpar, foreach::getDoParWorkers())
-  #
-  #         #parallel foreach across number of workers
-  #         foreach::foreach(ipar = chunks_inner,
-  #                          .combine = c,
-  #                          .errorhandling = "pass") %dorng% {
-  #
-  #             #return list of outputs from trial_jointBLRM
-  #             lapply(ipar, function(j){
-  #
-  #               #write progress if monitor path is given
-  #               if(!is.null(file.name)&!is.null(monitor.path)){
-  #                 if(dir.exists(file.path(monitor.path))){
-  #                   write.table(matrix("Processing...", nrow=1, ncol=1),
-  #                               file=paste(file.path(monitor.path),
-  #                                          "/trial-",j, "_", file.name,".txt", sep=""),
-  #                               row.names = F, col.names = F, append = FALSE)
-  #                 }
-  #               }
-  #               #call function
-  #               # return(OncoBLRM:::trial_jointBLRM_par(
+  }
 
+  ## Code inspired by https://stackoverflow.com/questions/3318333/split-a-vector-into-chunks
+  ## Answer by mathheadinclouds
+  chunkVector <- function(x, n_chunks) {
 
-  #only one call to trials_jointBLRM_par
-      res.list  <- trials_jointBLRM_par(
-                                n.studies = n.studies,
-                                doses.mono1.a = doses.mono1.a,
-                                doses.mono2.a = doses.mono2.a,
-                                doses.combi.a = doses.combi.a,
-                                doses.mono1.b = doses.mono1.b,
-                                doses.mono2.b = doses.mono2.b,
-                                doses.combi.b = doses.combi.b,
-                                start.dose.mono1.a= start.dose.mono1.a,
-                                start.dose.mono2.a= start.dose.mono2.a,
-                                start.dose.mono1.b= start.dose.mono1.b,
-                                start.dose.mono2.b= start.dose.mono2.b,
-                                start.dose.combi.a1= start.dose.combi.a1,
-                                start.dose.combi.a2= start.dose.combi.a2,
-                                start.dose.combi.b1 = start.dose.combi.b1,
-                                start.dose.combi.b2 = start.dose.combi.b2,
-                                #seed = trial_seeds[i],
-                                #BLRM = BLRM,
+    if (n_chunks <= 1) {
 
-                                historical.data= historical.data,
+      chunk_list <- list(x)
 
-                                active.mono1.a = active.mono1.a,
-                                active.mono1.b = active.mono1.b,
-                                active.mono2.a = active.mono2.a,
-                                active.mono2.b = active.mono2.b,
-                                active.combi.a = active.combi.a,
-                                active.combi.b = active.combi.b,
+    } else {
 
-                                cohort.queue = cohort.queue,
+      chunk_list <- unname(split(x, cut(seq_along(x), n_chunks, labels = FALSE)))
 
-                                tox.combi.a = tox.combi.a,
-                                tox.mono1.a = tox.mono1.a,
-                                tox.mono2.a = tox.mono2.a,
-                                tox.combi.b = tox.combi.b,
-                                tox.mono1.b = tox.mono1.b,
-                                tox.mono2.b = tox.mono2.b,
+    }
 
-                                cohort.size.mono1.a= cohort.size.mono1.a,
-                                cohort.prob.mono1.a= cohort.prob.mono1.a,
-                                cohort.size.mono2.a= cohort.size.mono2.a,
-                                cohort.prob.mono2.a= cohort.prob.mono2.a,
-                                cohort.size.mono1.b= cohort.size.mono1.b,
-                                cohort.prob.mono1.b= cohort.prob.mono1.b,
-                                cohort.size.mono2.b= cohort.size.mono2.b,
-                                cohort.prob.mono2.b= cohort.prob.mono2.b,
-                                cohort.size.combi.a= cohort.size.combi.a,
-                                cohort.prob.combi.a= cohort.prob.combi.a,
-                                cohort.size.combi.b= cohort.size.combi.b,
-                                cohort.prob.combi.b= cohort.prob.combi.b,
+    return (chunk_list)
 
-                                esc.rule = esc.rule,
-                                esc.comp.max = esc.comp.max,
+  }
 
-                                esc.step.mono1.a=esc.step.mono1.a,
-                                esc.step.mono2.a=esc.step.mono2.a,
-                                esc.step.mono1.b=esc.step.mono1.b,
-                                esc.step.mono2.b=esc.step.mono2.b,
-                                esc.step.combi.a1=esc.step.combi.a1,
-                                esc.step.combi.b1=esc.step.combi.b1,
-                                esc.step.combi.a2=esc.step.combi.a2,
-                                esc.step.combi.b2=esc.step.combi.b2,
+  #distribute number of studies across nodes
+  chunks_outer <- chunkVector(seq_len(n.studies), foreach::getDoParWorkers())
 
-                                esc.constrain.mono1.a=esc.constrain.mono1.a,
-                                esc.constrain.mono2.a=esc.constrain.mono2.a,
-                                esc.constrain.mono1.b=esc.constrain.mono1.b,
-                                esc.constrain.mono2.b=esc.constrain.mono2.b,
-                                esc.constrain.combi.a1=esc.constrain.combi.a1,
-                                esc.constrain.combi.b1=esc.constrain.combi.b1,
-                                esc.constrain.combi.a2=esc.constrain.combi.a2,
-                                esc.constrain.combi.b2=esc.constrain.combi.b2,
+  # ----------------------------------------------------------------------------
+  # ACTUAL SIMULATION
+  # ----------------------------------------------------------------------------
+  #foreach loop over the available number of nodes
+  res.list <- foreach::foreach( kpar = chunks_outer,
+                                .packages = c("OncoBLRM"),
+                                .export = c("stanmodels", "trial_covariate_jointBLRM_par"),
+                                .errorhandling = "pass",
+                                .inorder = FALSE,
+                                .combine = c) %dorng% {
 
-                                prior.tau = prior.tau,
-                                prior.mu = prior.mu,
-                                saturating = saturating,
+                                  #distribute number of trials for this node among workers
+                                  chunks_inner <- chunkVector(kpar, foreach::getDoParWorkers())
 
-                                dose.ref1 = dose.ref1,
-                                dose.ref2 = dose.ref2,
+                                  #parallel foreach across number of workers
+                                  foreach::foreach(ipar = chunks_inner,
+                                                   .combine = c,
+                                                   .errorhandling = "pass") %dorng% {
 
-                                dosing.intervals = dosing.intervals,
-                                loss.weights = loss.weights,
-                                dynamic.weights = dynamic.weights,
-                                ewoc = ewoc.threshold,
+                                                     #return list of outputs from trial_jointBLRM
+                                                     lapply(ipar, function(j){
 
-                                max.n.mono1.a=max.n.mono1.a,
-                                max.n.mono1.b=max.n.mono1.b,
-                                max.n.mono2.a=max.n.mono2.a,
-                                max.n.mono2.b=max.n.mono2.b,
-                                max.n.combi.a=max.n.combi.a,
-                                max.n.combi.b=max.n.combi.b,
-                                decision.combi.a=mtd.decision.combi.a,
-                                decision.combi.b=mtd.decision.combi.b,
-                                decision.mono1.a=mtd.decision.mono1.a,
-                                decision.mono1.b=mtd.decision.mono1.b,
-                                decision.mono2.a=mtd.decision.mono2.a,
-                                decision.mono2.b=mtd.decision.mono2.b,
+                                                       #write progress if monitor path is given
+                                                       if(!is.null(file.name)&!is.null(monitor.path)){
+                                                         if(dir.exists(file.path(monitor.path))){
+                                                           write.table(matrix("Processing...", nrow=1, ncol=1),
+                                                                       file=paste(file.path(monitor.path),
+                                                                                  "/trial-",j, "_", file.name,".txt", sep=""),
+                                                                       row.names = F, col.names = F, append = FALSE)
+                                                         }
+                                                       }
 
-                                mtd.enforce.mono1.a = mtd.enforce.mono1.a,
-                                mtd.enforce.mono1.b = mtd.enforce.mono1.b,
-                                mtd.enforce.mono2.a = mtd.enforce.mono2.a,
-                                mtd.enforce.mono2.b = mtd.enforce.mono2.b,
-                                mtd.enforce.combi.a = mtd.enforce.combi.a,
-                                mtd.enforce.combi.b = mtd.enforce.combi.b,
+                                                       return(trial_covariate_jointBLRM_par(  doses.mono1.a = doses.mono1.a,
+                                                                                              #OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
+                                                                                              doses.mono2.a = doses.mono2.a,
+                                                                                              doses.combi.a = doses.combi.a,
+                                                                                              doses.mono1.b = doses.mono1.b,
+                                                                                              doses.mono2.b = doses.mono2.b,
+                                                                                              doses.combi.b = doses.combi.b,
+                                                                                              start.dose.mono1.a= start.dose.mono1.a,
+                                                                                              start.dose.mono2.a= start.dose.mono2.a,
+                                                                                              start.dose.mono1.b= start.dose.mono1.b,
+                                                                                              start.dose.mono2.b= start.dose.mono2.b,
+                                                                                              start.dose.combi.a1= start.dose.combi.a1,
+                                                                                              start.dose.combi.a2= start.dose.combi.a2,
+                                                                                              start.dose.combi.b1 = start.dose.combi.b1,
+                                                                                              start.dose.combi.b2 = start.dose.combi.b2,
+                                                                                              seed = trial_seeds[i],
+                                                                                              #BLRM = BLRM,
 
-                                backfill.mono1.a = backfill.mono1.a,
-                                backfill.mono1.b = backfill.mono1.b,
-                                backfill.size.mono1.a = backfill.size.mono1.a,
-                                backfill.size.mono1.b = backfill.size.mono1.b,
-                                backfill.prob.mono1.a = backfill.prob.mono1.a,
-                                backfill.prob.mono1.b = backfill.prob.mono1.b,
-                                backfill.mono2.a = backfill.mono2.a,
-                                backfill.mono2.b = backfill.mono2.b,
-                                backfill.size.mono2.a = backfill.size.mono2.a,
-                                backfill.size.mono2.b = backfill.size.mono2.b,
-                                backfill.prob.mono2.a = backfill.prob.mono2.a,
-                                backfill.prob.mono2.b = backfill.prob.mono2.b,
-                                backfill.combi.a = backfill.combi.a,
-                                backfill.combi.b = backfill.combi.b,
-                                backfill.size.combi.a = backfill.size.combi.a,
-                                backfill.size.combi.b = backfill.size.combi.b,
-                                backfill.prob.combi.a = backfill.prob.combi.a,
-                                backfill.prob.combi.b = backfill.prob.combi.b,
-                                backfill.start.mono1.a = backfill.start.mono1.a,
-                                backfill.start.mono1.b = backfill.start.mono1.b,
-                                backfill.start.mono2.a = backfill.start.mono2.a,
-                                backfill.start.mono2.b = backfill.start.mono2.b,
-                                backfill.start.combi.a1 = backfill.start.combi.a1,
-                                backfill.start.combi.a2 = backfill.start.combi.a2,
-                                backfill.start.combi.b1 = backfill.start.combi.b1,
-                                backfill.start.combi.b2 = backfill.start.combi.b2,
+                                                                                              historical.data= historical.data,
 
-                                working.path = working.path,
-                                file.name = file.name,
-                                chains = chains,
-                                iter = iter,
-                                refresh = refresh,
-                                adapt_delta = adapt_delta,
-                                warmup = warmup,
-                                max_treedepth = max_treedepth)
-#
-#               })
-#
-#     #end inner foreach
-#     }
-#   #end outer foreach
-#   }
+                                                                                              active.mono1.a = active.mono1.a,
+                                                                                              active.mono1.b = active.mono1.b,
+                                                                                              active.mono2.a = active.mono2.a,
+                                                                                              active.mono2.b = active.mono2.b,
+                                                                                              active.combi.a = active.combi.a,
+                                                                                              active.combi.b = active.combi.b,
+
+                                                                                              cohort.queue = cohort.queue,
+
+                                                                                              tox.combi.a = tox.combi.a,
+                                                                                              tox.mono1.a = tox.mono1.a,
+                                                                                              tox.mono2.a = tox.mono2.a,
+                                                                                              tox.combi.b = tox.combi.b,
+                                                                                              tox.mono1.b = tox.mono1.b,
+                                                                                              tox.mono2.b = tox.mono2.b,
+
+                                                                                              cohort.size.mono1.a= cohort.size.mono1.a,
+                                                                                              cohort.prob.mono1.a= cohort.prob.mono1.a,
+                                                                                              cohort.size.mono2.a= cohort.size.mono2.a,
+                                                                                              cohort.prob.mono2.a= cohort.prob.mono2.a,
+                                                                                              cohort.size.mono1.b= cohort.size.mono1.b,
+                                                                                              cohort.prob.mono1.b= cohort.prob.mono1.b,
+                                                                                              cohort.size.mono2.b= cohort.size.mono2.b,
+                                                                                              cohort.prob.mono2.b= cohort.prob.mono2.b,
+                                                                                              cohort.size.combi.a= cohort.size.combi.a,
+                                                                                              cohort.prob.combi.a= cohort.prob.combi.a,
+                                                                                              cohort.size.combi.b= cohort.size.combi.b,
+                                                                                              cohort.prob.combi.b= cohort.prob.combi.b,
+
+                                                                                              esc.rule = esc.rule,
+                                                                                              esc.comp.max = esc.comp.max,
+
+                                                                                              esc.step.mono1.a=esc.step.mono1.a,
+                                                                                              esc.step.mono2.a=esc.step.mono2.a,
+                                                                                              esc.step.mono1.b=esc.step.mono1.b,
+                                                                                              esc.step.mono2.b=esc.step.mono2.b,
+                                                                                              esc.step.combi.a1=esc.step.combi.a1,
+                                                                                              esc.step.combi.b1=esc.step.combi.b1,
+                                                                                              esc.step.combi.a2=esc.step.combi.a2,
+                                                                                              esc.step.combi.b2=esc.step.combi.b2,
+
+                                                                                              esc.constrain.mono1.a=esc.constrain.mono1.a,
+                                                                                              esc.constrain.mono2.a=esc.constrain.mono2.a,
+                                                                                              esc.constrain.mono1.b=esc.constrain.mono1.b,
+                                                                                              esc.constrain.mono2.b=esc.constrain.mono2.b,
+                                                                                              esc.constrain.combi.a1=esc.constrain.combi.a1,
+                                                                                              esc.constrain.combi.b1=esc.constrain.combi.b1,
+                                                                                              esc.constrain.combi.a2=esc.constrain.combi.a2,
+                                                                                              esc.constrain.combi.b2=esc.constrain.combi.b2,
+
+                                                                                              prior.tau = prior.tau,
+                                                                                              prior.mu = prior.mu,
+                                                                                              saturating = saturating,
+
+                                                                                              dose.ref1 = dose.ref1,
+                                                                                              dose.ref2 = dose.ref2,
+
+                                                                                              dosing.intervals = dosing.intervals,
+                                                                                              loss.weights = loss.weights,
+                                                                                              dynamic.weights = dynamic.weights,
+                                                                                              ewoc = ewoc.threshold,
+
+                                                                                              max.n.mono1.a=max.n.mono1.a,
+                                                                                              max.n.mono1.b=max.n.mono1.b,
+                                                                                              max.n.mono2.a=max.n.mono2.a,
+                                                                                              max.n.mono2.b=max.n.mono2.b,
+                                                                                              max.n.combi.a=max.n.combi.a,
+                                                                                              max.n.combi.b=max.n.combi.b,
+                                                                                              decision.combi.a=mtd.decision.combi.a,
+                                                                                              decision.combi.b=mtd.decision.combi.b,
+                                                                                              decision.mono1.a=mtd.decision.mono1.a,
+                                                                                              decision.mono1.b=mtd.decision.mono1.b,
+                                                                                              decision.mono2.a=mtd.decision.mono2.a,
+                                                                                              decision.mono2.b=mtd.decision.mono2.b,
+
+                                                                                              mtd.enforce.mono1.a = mtd.enforce.mono1.a,
+                                                                                              mtd.enforce.mono1.b = mtd.enforce.mono1.b,
+                                                                                              mtd.enforce.mono2.a = mtd.enforce.mono2.a,
+                                                                                              mtd.enforce.mono2.b = mtd.enforce.mono2.b,
+                                                                                              mtd.enforce.combi.a = mtd.enforce.combi.a,
+                                                                                              mtd.enforce.combi.b = mtd.enforce.combi.b,
+
+                                                                                              backfill.mono1.a = backfill.mono1.a,
+                                                                                              backfill.mono1.b = backfill.mono1.b,
+                                                                                              backfill.size.mono1.a = backfill.size.mono1.a,
+                                                                                              backfill.size.mono1.b = backfill.size.mono1.b,
+                                                                                              backfill.prob.mono1.a = backfill.prob.mono1.a,
+                                                                                              backfill.prob.mono1.b = backfill.prob.mono1.b,
+                                                                                              backfill.mono2.a = backfill.mono2.a,
+                                                                                              backfill.mono2.b = backfill.mono2.b,
+                                                                                              backfill.size.mono2.a = backfill.size.mono2.a,
+                                                                                              backfill.size.mono2.b = backfill.size.mono2.b,
+                                                                                              backfill.prob.mono2.a = backfill.prob.mono2.a,
+                                                                                              backfill.prob.mono2.b = backfill.prob.mono2.b,
+                                                                                              backfill.combi.a = backfill.combi.a,
+                                                                                              backfill.combi.b = backfill.combi.b,
+                                                                                              backfill.size.combi.a = backfill.size.combi.a,
+                                                                                              backfill.size.combi.b = backfill.size.combi.b,
+                                                                                              backfill.prob.combi.a = backfill.prob.combi.a,
+                                                                                              backfill.prob.combi.b = backfill.prob.combi.b,
+                                                                                              backfill.start.mono1.a = backfill.start.mono1.a,
+                                                                                              backfill.start.mono1.b = backfill.start.mono1.b,
+                                                                                              backfill.start.mono2.a = backfill.start.mono2.a,
+                                                                                              backfill.start.mono2.b = backfill.start.mono2.b,
+                                                                                              backfill.start.combi.a1 = backfill.start.combi.a1,
+                                                                                              backfill.start.combi.a2 = backfill.start.combi.a2,
+                                                                                              backfill.start.combi.b1 = backfill.start.combi.b1,
+                                                                                              backfill.start.combi.b2 = backfill.start.combi.b2,
+
+                                                                                              two_sided1 = two_sided1,
+                                                                                              two_sided2 = two_sided2,
+                                                                                              covar.mono1.a = covar.mono1.a,
+                                                                                              covar.mono1.b = covar.mono1.b,
+                                                                                              covar.mono2.a = covar.mono2.a,
+                                                                                              covar.mono2.b = covar.mono2.b,
+                                                                                              covar.combi.a = covar.combi.a,
+                                                                                              covar.combi.b = covar.combi.b,
+
+                                                                                              working.path = working.path,
+                                                                                              file.name = file.name,
+                                                                                              chains = chains,
+                                                                                              iter = iter,
+                                                                                              refresh = refresh,
+                                                                                              adapt_delta = adapt_delta,
+                                                                                              warmup = warmup,
+                                                                                              max_treedepth = max_treedepth
+                                                       ))
+                                                     })
+                                                     #inner foreach
+                                                   }
+                                  #outer forach
+                                }
 
   #---------------------------------------------------------------------------
   #Post-Processing the results
@@ -3083,7 +3524,7 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
     #write the parameters of the decision rules in the output list
     simulation.results[['prior']] <- prior_mat_out(m=prior.mu, t=prior.tau)
 
-    simulation.results[["specifications"]] <- input_out_jointBLRM(
+    simulation.results[["specifications"]] <- input_out_covjointBLRM(
       active.mono1.a=active.mono1.a,
       active.mono1.b=active.mono1.b,
       active.mono2.a=active.mono2.a,
@@ -3190,7 +3631,15 @@ sim_jointBLRM_par_new <- function(active.mono1.a = FALSE,
       backfill.start.combi.a1 = backfill.start.combi.a1,
       backfill.start.combi.a2 = backfill.start.combi.a2,
       backfill.start.combi.b1 = backfill.start.combi.b1,
-      backfill.start.combi.b2 = backfill.start.combi.b2
+      backfill.start.combi.b2 = backfill.start.combi.b2,
+      two_sided1 = two_sided1,
+      two_sided2 = two_sided2,
+      covar.mono1.a = covar.mono1.a,
+      covar.mono1.b = covar.mono1.b,
+      covar.mono2.a = covar.mono2.a,
+      covar.mono2.b = covar.mono2.b,
+      covar.combi.a = covar.combi.a,
+      covar.combi.b = covar.combi.b
     )
 
     #write the input parameters and simulation options into the output list.
