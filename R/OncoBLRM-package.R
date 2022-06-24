@@ -1,4 +1,4 @@
-#' The 'OncoBLRM' package.
+#' The 'OncoBLRM' package: DECIsion making in oncology Dose Escalation trials with Bayesian logistic Regression
 #'
 #' @description Performs Bayesian logistic regression for binary dose-toxicity
 #' data from monotherapy and/or (two-component) combination therapy dose-finding trials.
