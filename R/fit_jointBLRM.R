@@ -7,7 +7,7 @@
 # #' Fit the joint BLRM and extract a stanfit object
 # #' @description Call the \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method for
 # #' the joint BLRM to extract a \code{\link[rstan:stanfit-class]{rstan::stanfit-class}} object.
-# #' Refer to \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for a
+# #' Refer to \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for a
 # #' documentation of the underlying model.
 # #' @param dose1 Numerical vector that lists the dose levels of the first compound applied to each
 # #' patient. The length must be equal to the number of cohorts. If the first compound was not
@@ -27,23 +27,23 @@
 # #' @param MAP.prior Optional logical, defaults to \code{FALSE}. If \code{TRUE}, the returned stanfit contains an additional
 # #' trial number that provides the resulting meta-analytic predictive prior for a new trial.
 # #' @param prior.mu Optional list that specifies the prior.
-# #' Same format as documented in \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+# #' Same format as documented in \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 # #' @param prior.tau Optional list that specifies the prior.
-# #' Same format as documented in \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+# #' Same format as documented in \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 # #' @param saturating Optional logical, defaults to \code{FALSE}. If \code{TRUE}, the BLRM will be using a saturating interaction term as described in
 # #' \code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()}. Also refer to the Details section in the documentation
-# #' of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+# #' of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 # #' @param ... Additional optional arguments that are passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}. These
 # #' include the settings for MCMC and the list of parameters which are returned in the stanfit object. Refer
 # #' to the \code{\link[rstan:rstan]{rstan-package}} for an overview.
 # #' @returns An object of class \code{\link[rstan:stanfit-class]{rstan::stanfit-class}} from the
 # #' \code{\link[rstan:rstan]{rstan-package}}.
 # #'
-# #' @details Refer to \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for
+# #' @details Refer to \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for
 # #' a description of the underlying model.
 # #'
-# #' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
-# #' \code{\link[OncoBLRM:get_pred_tox]{get_pred_tox}()}, \code{\link[OncoBLRM:get_MAP]{get_MAP}()},
+# #' @seealso \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
+# #' \code{\link[decider:get_pred_tox]{get_pred_tox}()}, \code{\link[decider:get_MAP]{get_MAP}()},
 # #'  \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
 # #' \code{\link[rstan:stanfit-class]{rstan::stanfit-class}}, \code{\link[rstan:rstan]{rstan-package}}.
 # #' @references

@@ -1,4 +1,4 @@
 library(testthat)
-library(OncoBLRM)
+library(decider)
 
-test_check("OncoBLRM")
+test_check("decider")

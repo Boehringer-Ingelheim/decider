@@ -1,4 +1,4 @@
-#' The 'OncoBLRM' package: DECIsion making in oncology Dose Escalation trials with Bayesian logistic Regression
+#' The 'decider' package: DECIsion making in oncology Dose Escalation trials with logistic Regression
 #'
 #' @description Performs Bayesian logistic regression for binary dose-toxicity
 #' data from monotherapy and/or (two-component) combination therapy dose-finding trials.
@@ -12,8 +12,8 @@
 #' Currently, only the so-called joint BLRM is included in the package. Different
 #' methods for the derivation of dosing recommendations are supported, among others the
 #' escalation with overdose control (EWOC) criterion that goes back to Babb et al. (1998).
-#' The main functions are \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} and
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' The main functions are \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} and
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #' Refer to their documentation entries for a detailed description of the underlying methods.
 #'
 #' The methods implemented by this package were mainly developed in the context
@@ -31,9 +31,9 @@
 #' different notions instead.
 #'
 #' @docType package
-#' @name OncoBLRM-package
-#' @aliases OncoBLRM
-#' @useDynLib OncoBLRM, .registration = TRUE
+#' @name decider-package
+#' @aliases decider
+#' @useDynLib decider, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @import ggplot2
@@ -73,8 +73,8 @@
 #' Zhou, H.,  Yuan, Y., & Nie, L. (2018). Accuracy, safety, and reliability of novel phase I designs.
 #' Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>.
 #'
-#' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
-#' \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()},\code{\link[OncoBLRM:fit_jointBLRM]{fit_jointBLRM}()},
+#' @seealso \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
+#' \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()},\code{\link[decider:fit_jointBLRM]{fit_jointBLRM}()},
 #' \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}},
 #' \code{\link[rstan:rstan]{rstan-package}}.
 NULL

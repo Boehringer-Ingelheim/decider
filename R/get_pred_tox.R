@@ -5,7 +5,7 @@
 #'distributions of the DLT rates of a set of dose levels considered in a new
 #'dose finding trial based on historical data from one or more dose-finding trials
 #'based on a joint BLRM. The function supports both monotherapy and two-drug
-#'combination therapy and is essentially a wrapper for \code{\link[OncoBLRM:get_MAP]{get_MAP}()}
+#'combination therapy and is essentially a wrapper for \code{\link[decider:get_MAP]{get_MAP}()}
 #'but additionally computes samples from the predictive DLT rates from the
 #'drawn samples from the MAP prior. Note that this is equivalent to the posterior
 #'distribution of the DLT rates of a trial that has not recorded
@@ -51,17 +51,17 @@
 #' @param prior.mu Named list that specifies the distribution of the
 #' hypermeans of the parameters of the combination therapy BLRM. Same format,
 #' default, and requirements as documented for the function
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #' @param prior.tau Named list that specifies the distribution of the
 #' between-trial heterogeneities of the parameters of the combination therapy BLRM.
 #' Same format, default, and requirements as documented for the function
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #' @param saturating Optional logical, defaults to \code{FALSE}. If \code{TRUE}, the BLRM will be using a saturating interaction term as described in
 #' \code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()}. Also refer to the Details section in the documentation
-#' of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #' @param dosing.intervals Optional numeric ascending positive entries between 0 and 1.
 #' Defines the limits of the dosing intervals to be evaluated, similarly to
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}. The default value
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}. The default value
 #' is \code{c(0.16, 0.33)}.
 #' @param return.samples Optional logical, defaults to \code{FALSE}. If \code{TRUE},
 #' the function will return a matrix with samples from the MAP prior additionally
@@ -76,13 +76,13 @@
 #' arguments \code{iter} and \code{control} for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}
 #' are not provided manually in \code{...}.
 #'
-#'@details Refer to the documentation of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}
+#'@details Refer to the documentation of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}
 #'for a description of the underlying model used to compute predictive distributions
 #'of the DLT rates.
 #'
 #'The function \code{get_pred_tox()} can optionally return the samples from the
 #'predictive distribution, which can in turn be used to perform single-dose analyses
-#'using a binomial-beta-mixture model. Refer to the documentation of \code{\link[OncoBLRM:binomial_betamix]{binomial_betamix}()}
+#'using a binomial-beta-mixture model. Refer to the documentation of \code{\link[decider:binomial_betamix]{binomial_betamix}()}
 #'and the vignette on single dose confirmation for details.
 #'@usage
 #'get_pred_tox(
@@ -112,9 +112,9 @@
 #'  dosing.intervals = c(0.16, 0.33),
 #'  ...
 #')
-#' @seealso  \code{\link[OncoBLRM:get_MAP]{get_MAP}()},\code{\link[OncoBLRM:binomial_betamix]{binomial_betamix}()},
-#' \code{\link[OncoBLRM:fit_jointBLRM]{fit_jointBLRM}()},
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
+#' @seealso  \code{\link[decider:get_MAP]{get_MAP}()},\code{\link[decider:binomial_betamix]{binomial_betamix}()},
+#' \code{\link[decider:fit_jointBLRM]{fit_jointBLRM}()},
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
 #' \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}}.
 #' @references
 #' Stan Development Team (2020). RStan: the R interface to Stan. R package version 2.21.2. \url{https://mc-stan.org}.

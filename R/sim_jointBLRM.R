@@ -374,7 +374,7 @@
 #'}
 #'@param saturating Optional logical, defaults to \code{FALSE}. If \code{TRUE}, the BLRM will be using a saturating interaction term as described in
 #'\code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()}. Also refer to the Details section in the documentation
-#'of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#'of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'@param esc.step,esc.step.mono1.a,esc.step.mono2.a,esc.step.combi.a1,esc.step.combi.a2 Optional numerical values that specify
 #'the maximum factor of dose escalations that is demanded additionally to the selected escalation rule. The default is \code{NULL}, in which case the escalation step
 #'is determined automatically for the corresponding trial (if activated) as the maximum factor between the (sorted) available doses for the trial.
@@ -621,7 +621,7 @@
 #'The joint BLRM is defined according to (Neuenschwander et al., 2014 and 2016). It allows to perform Bayesian logistic regression
 #'to estimate the dose-toxicity relationship of two different monotherapies and combination therapy with these compounds in
 #'a joint model, which includes a hierarchical prior for robust borrowing across trials. Refer to the documentation of
-#'\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for a detailed model description.
+#'\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for a detailed model description.
 #'
 #'@references
 #' Stan Development Team (2020). RStan: the R interface to Stan. R package version 2.21.2. \url{https://mc-stan.org}.
@@ -642,7 +642,7 @@
 #' Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>.
 #'
 #'
-#' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' @seealso \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
 #' \code{\link[rstan:rstan]{rstan-package}}.
 #'
 #'@export
@@ -2294,7 +2294,7 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
   # ----------------------------------------------------------------------------
   #foreach loop over the available number of nodes
      res.list <- foreach::foreach( kpar = chunks_outer,
-                          .packages = c("OncoBLRM"),
+                          .packages = c("decider"),
                           .export = c("stanmodels", "trial_jointBLRM_par"),
                           .errorhandling = "pass",
                           .inorder = FALSE,
@@ -2321,7 +2321,7 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                   }
                 }
                 #call function
-                # return(OncoBLRM:::trial_jointBLRM_par(
+                # return(decider:::trial_jointBLRM_par(
                   return(trial_jointBLRM_par(
                                 doses.mono1.a = doses.mono1.a,
                                 doses.mono2.a = doses.mono2.a,

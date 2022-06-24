@@ -6,10 +6,10 @@
 #'joint BLRM. The function assumes that two different compounds are involved, compounds 1 and 2 (and their combination).
 #'Up to two monotherapy trials for each compound can be actively simulated, and additionally two combination therapy trials.
 #'Additionally, for each trial the binary covariate included in the model can be activated or deactivated.
-#'Please refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details on
-#'the model specification and \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details on most of the
+#'Please refer to \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details on
+#'the model specification and \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details on most of the
 #'arguments used by the function. Note that function \code{sim_covariate_jointBLRM()} uses to a large extent the same arguments as
-#'\code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}. The additionally added arguments for handling of the binary
+#'\code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()}. The additionally added arguments for handling of the binary
 #'covariate are \code{two_sided1},
 #'\code{two_sided2}, \code{prior.mu.covar}, \code{prior.tau.covar}, and \code{covar.[...]}, where \code{[...]} is
 #'one of the trial names, i.e. \code{mono1.a}, \code{mono1.b}, \code{mono2.a}, \code{mono2.b}, \code{combi.a}, and
@@ -186,96 +186,96 @@
 #'    output.sim.config =TRUE
 #')
 #'@param active.mono1.a,active.mono1.b,active.mono2.a,active.mono2.b,active.combi.a,active.combi.b Logicals, default to \code{FALSE}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param doses.mono1.a,doses.mono1.b,doses.mono2.a,doses.mono2.b Numericals, one dimensional vectors with positive, strictly ascending entries.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param doses.combi.a,doses.combi.b Numericals, two dimensional arrays with two rows, arbitrarily many columns, and positive entries.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param dose.ref1 Positive numerical value. Reference dose of compound 1.
 #'@param dose.ref2 Positive numerical value. Reference dose of compound 2.
 #'@param tox.mono1.a,tox.mono1.b,tox.mono2.a,tox.mono2.b Numericals, one dimensional vectors with entries in \eqn{(0,1)}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param tox.combi.a,tox.combi.b Numericals, one dimensional vectors with entries in \eqn{(0,1)}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param start.dose.mono1.a,start.dose.mono2.a,start.dose.mono1.b,start.dose.mono2.b Positive numerical values that specify the starting dose for the simulated monotherapy trials.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param start.dose.combi.a1,start.dose.combi.a2,start.dose.combi.b1,start.dose.combi.b2 Positive numerical values that specify the starting dose for the simulated combination therapy trials.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param cohort.queue Optional numerical or character vector that specifies the order or pattern in which cohorts are enrolled in the simulated trials.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param historical.data Optional parameter that must be \code{NULL} (the default) or a named list that specifies the historical data to be included in the trial.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details, and to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()}
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details, and to \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()}
 #'for the required input format of historical data.
 #'@param esc.rule Optional character string, must have one of the following values: \code{"ewoc"}, \code{"ewoc.opt"}, \code{"ewoc.max"}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param esc.comp.max Optional integer, must be either \code{1} (the default) or \code{2}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param dosing.intervals Optional numeric vector with ascending entries between 0 and 1.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param ewoc.threshold Optional numerical value between 0 and 1 (excluding the boundaries), defaults to \code{0.25}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param loss.weights Optional numerical vector with four entries (which can be arbitrary numbers), the default is \code{c(1,0,1,2)}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param dynamic.weights Optional numerical matrix with four rows and four columns, and arbitrary numbers as entries.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param prior.mu Optional list that gives the prior distribution for the hyper means \eqn{\mu}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param prior.tau Optional list that gives the prior distribution for the between-trial heterogeneities (hyper SD) \eqn{\tau}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param prior.mu.covar Optional named list that gives the prior distribution for the hyper-means of the additional parameters
 #'included in the joint BLRM to realize the binary covariate.
-#'Refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
 #'@param prior.tau.covar Optional named list that gives the prior distribution for the between-trial heterogeneities of the additional parameters
 #'included in the joint BLRM to realize the binary covariate.
-#'Refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
 #'@param two_sided1 Optional logical, defaults to \code{TRUE}.
-#'Refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
 #'@param two_sided2 Optional logical, defaults to \code{TRUE}.
-#'Refer to \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details.
 #'@param saturating Optional logical, defaults to \code{FALSE}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param esc.step,esc.step.mono1.a,esc.step.mono2.a,esc.step.combi.a1,esc.step.combi.a2 Optional numerical values that specify
 #'the maximum factor of dose escalations that is demanded additionally to the selected escalation rule.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param esc.step.mono1.b,esc.step.mono2.b,esc.step.combi.b1,esc.step.combi.b2
 #'Same as \code{esc.step.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
 #'@param esc.constrain,esc.constrain.mono1.a,esc.constrain.mono2.a
 #'Optional logicals, default to \code{FALSE}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param esc.constrain.combi.a1,esc.constrain.combi.a2
 #'Optional logicals, default to \code{FALSE}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param esc.constrain.mono1.b,esc.constrain.mono2.b,esc.constrain.combi.b1,esc.constrain.combi.b2
 #'Same as \code{esc.constrain.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
 #'@param cohort.size,cohort.size.mono1.a,cohort.size.mono2.a,cohort.size.combi.a
 #'Optional positive integer vectors that specify the available cohort sizes for simulated cohorts.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param cohort.size.mono1.b,cohort.size.mono2.b,cohort.size.combi.b
 #'Same as \code{cohort.size.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
 #'@param cohort.prob,cohort.prob.mono1.a,cohort.prob.mono2.a,cohort.prob.combi.a
 #'Optional positive numeric vectors with values between 0 and 1 that specify the probability for each of the available cohort sizes in the corresponding argument \code{cohort.size.[...]}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param cohort.prob.mono1.b,cohort.prob.mono2.b,cohort.prob.combi.b
 #'Same as \code{cohort.prob.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
 #'@param max.n,max.n.mono1.a,max.n.mono2.a,max.n.combi.a Optional positive integer values that specify
 #'the maximum number of patients to be enrolled in simulated trials.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param max.n.mono1.b,max.n.mono2.b,max.n.combi.b
 #'Same as \code{max.n.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
 #'@param mtd.decision,mtd.decision.mono1.a,mtd.decision.mono2.a,mtd.decision.combi.a
 #'Optional named lists that specify the rules for MTD selection.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param mtd.decision.mono1.b,mtd.decision.mono2.b,mtd.decision.combi.b
 #'Same as \code{mtd.decision.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
 #'@param mtd.enforce,mtd.enforce.mono1.a,mtd.enforce.mono2.a,mtd.enforce.combi.a
 #'Optional logicals, default to \code{FALSE}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param mtd.enforce.mono1.b,mtd.enforce.mono2.b,mtd.enforce.combi.b
 #'Same as \code{mtd.enforce.[...].a} (where \code{[...]} is \code{mono1}, \code{mono2}, or \code{combi})
 #'but for the second potentially simulated trial (suffix \code{.b}) of the respective trial type.
@@ -307,37 +307,37 @@
 #'By default, all trials do not have the property indicated by the binary covariate. This is equivalent to a
 #'joint BLRM without covariate.
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 # #'@param n.cores Optional positive integer, defaults to \code{1}.
-# #'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+# #'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param seed Optional positive integer that specified the seed to be used for the simulation.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param chains Optional positive integer that specifies the number of Markov chains to be used during MCMC sampling, defaults to \code{4}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param iter Optional positive integer that specifies the total number of iterations per chain to be used during MCMC sampling, defaults to \code{13500}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param warmup Optional positive integer that specifies the number of iterations per chain that are discarded from the total number of iterations, \code{iter}.
 #'Defaults to \code{1000}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param adapt_delta Optional numerical that must be at least \code{0.6} and smaller than \code{1}, defaults to \code{0.8}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param max_treedepth Optional integer that must be at least \code{10}, defaults to \code{15}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param refresh Optional integer, defaults to \code{0}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param file.name Optional character string that provides a name for potential output files.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param path Optional character string that specifies the path to the output directory.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param monitor.path Optional character string that specifies a path to an additional output directory for monitoring simulation progress.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param working.path Optional character string that specifies a path to a directory for temporary results.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param clean.working.path Optional logical, defaults to \code{FALSE}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param output.sim.config Optional logical that specifies whether the input parameters of the call to \code{sim_jointBLRM()} are added to
 #'the output list.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+#'Refer to \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@returns List that contains a number of metrics that summarize the results of the simulation for each simulated trial,
 #'and, depending on the specification, additional list entries that save the given input specification.
 #'
@@ -374,8 +374,8 @@
 #'The joint BLRM is defined according to (Neuenschwander et al., 2014 and 2016). It allows to perform Bayesian logistic regression
 #'to estimate the dose-toxicity relationship of two different monotherapies and combination therapy with these compounds in
 #'a joint model, which includes a hierarchical prior for robust borrowing across trials. Refer to the documentation of
-#'\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for a detailed model description. Further, refer to the documentation of
-#'\code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for a description of the model including
+#'\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for a detailed model description. Further, refer to the documentation of
+#'\code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for a description of the model including
 #'covariates.
 #'
 #'@references
@@ -397,8 +397,8 @@
 #' Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>.
 #'
 #'
-#' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
-#' \code{\link[rstan:rstan]{rstan-package}}, \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},
+#' @seealso \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' \code{\link[rstan:rstan]{rstan-package}}, \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},
 #'
 #'@export
 sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
@@ -2089,7 +2089,7 @@ sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
   # ----------------------------------------------------------------------------
   #foreach loop over the available number of nodes
   res.list <- foreach::foreach( kpar = chunks_outer,
-                                .packages = c("OncoBLRM"),
+                                .packages = c("decider"),
                                 .export = c("stanmodels", "trial_covariate_jointBLRM_par"),
                                 .errorhandling = "pass",
                                 .inorder = FALSE,
@@ -2117,7 +2117,7 @@ sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
                                                        }
 
                                                        return(trial_covariate_jointBLRM_par(  doses.mono1.a = doses.mono1.a,
-                                                                                              #OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
+                                                                                              #decider:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
                                                                                               doses.mono2.a = doses.mono2.a,
                                                                                               doses.combi.a = doses.combi.a,
                                                                                               doses.mono1.b = doses.mono1.b,

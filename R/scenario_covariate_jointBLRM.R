@@ -7,7 +7,7 @@
 #'controlled separately for each of thw two compounds.
 #'
 #'If multiple scenarios need to be evaluated, consider using the function
-#'\code{\link[OncoBLRM:scenario_list_covariate_jointBLRM]{scenario_list_covariate_jointBLRM}()}
+#'\code{\link[decider:scenario_list_covariate_jointBLRM]{scenario_list_covariate_jointBLRM}()}
 #'instead, which is a parallelized wrapper that processes a list of data scenarios
 #'within the same setting via \code{scenario_covariate_jointBLRM()}.
 #'
@@ -105,14 +105,14 @@
 #'in the sense that observations with the same entries in \code{data$trial}, respectively \code{historical.data$trial}
 #'are interpreted to belong to the same trial.
 #'@param trials.of.interest Optional vector of numerical or character trial numbers/names, for which the posterior is to be computed.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param doses.of.interest Numeric matrix with two rows and non-negative entries. Each column gives a dose combination
 #'of interest.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param types.of.interest Optional character vector with one entry for each entry of \code{trials.of.interest} which specifies the
 #'trial type of the corresponding trial of interest. Supported trial types are \code{"mono1"}, \code{"mono2"},  \code{"combi"},
 #'and \code{"all"}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param trials.of.interest.covars Optional numerical vector with either length 1 or the same length as \code{trials.of.interest}.
 #'Indicates (if applicable) the value of the covariate that is of interest for one or all trials of interest. Entries can be either
 #'\code{0}, \code{1}, or \code{NA},
@@ -129,22 +129,22 @@
 #'@param dose.ref2 Numeric, must be positive. Reference dose for compound 2.
 #'@param esc.rule  Optional character. Can be either \code{"ewoc"}, \code{"loss"}, \code{"dynamic"} or \code{"dynamic.loss"}, where the
 #'latter two are treated synonymously.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param dosing.intervals Optional numeric with 1, 2, or 3 ascending positive entries. Must have three entries when the \code{esc.rule} is
 #'set to \code{"loss"}, \code{"dynamic.loss"}, or \code{"dynamic"}, otherwise (i.e. when \code{esc.rule} is \code{"ewoc"}) lengths 1, 2, or
 #'3 are permitted.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param ewoc.threshold Optional numeric between 0 and 1. Overdosing thresholds for EWOC plots. Defaults to 0.25.
 #'@param loss.weights Optional numerical vector with four entries (which can be arbitrary numbers), the default is \code{c(1,0,1,2)}.
 #'Specifies the weights used for loss escalation.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param dynamic.weights Optional numerical matrix with four rows and four columns, and arbitrary numbers as entries.  Specifies the interval weights/penalties
 #'that are used for dynamic loss escalation.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param prior.mu Optional list that gives the prior distribution for the hyper means \eqn{\mu}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param prior.tau Optional list that gives the prior distribution for the between-trial heterogeneities (hyper SD) \eqn{\tau}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param prior.mu.covar Optional named list that gives the prior distribution for the hyper-means of the additional parameters
 #'included in the joint BLRM to realize the binary covariate. Also refer to the Details section for the notation used in the following.
 #'The argument\code{prior.mu.covar} must be a list with named entries \code{mu_g1} and \code{mu_g2}.
@@ -178,7 +178,7 @@
 #'on the DLT rate of compound 2. If \code{FALSE}, the function will assume a one-sided effect of the covariate on the DLT rate for compound 2.
 #'See the section Details below for a formal description.
 #'@param saturating Optional logical that activates the use of a saturating interaction term (instead of linear), defaults to \code{FALSE}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param probs Optional numeric with arbitrary entries between 0 and 1. Provides the levels for the quantiles displayed in
 #'the output. Defaults to \code{c(0.025, 0.5, 0.975)}.
 #'@param path Optional character that specified the path to save the resulting output files. If \code{NULL} (the default), no
@@ -188,7 +188,7 @@
 #'that plots will not be returned to R unless the additional argument \code{plot.return} is specified.
 #'@param plot.decisions Optional logical, defaults to \code{FALSE}. If \code{TRUE}, plots of escalation decisions according to the
 #'specified escalation rule are created.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param plot.combi.heatmap Optional logical, defaults to \code{TRUE}. If the value is \code{TRUE}, combination therapy plots
 #'are created as heatmaps instead of bar plots. This affects all escalation rules.
 #'@param plot.int.probs.loss Optional logical, defaults to \code{FALSE}. Only has an effect if \code{esc.rule} is either
@@ -196,35 +196,35 @@
 #'be created that display the interval probabilities to complement the (always created) plots that display the resulting expected loss.
 #'@param plot.return Optional logical, defaults to \code{FALSE}. If set to \code{TRUE}, the functions return the created plots
 #'to R in the result list.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param plot.file.format Optional character, defaults to \code{"pdf"}. Can either be \code{"pdf"}, \code{"jpeg"} or \code{"png"}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param plot.unit Optional character string, can be "in", "cm", or "mm".
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #' @param plot.width Optional numerical value or vector, can have length 1 or 3 and must have positive entries.
 #' Provides the width of the output plots measured in the unit given in \code{plot.unit}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #' @param plot.height Optional numerical value or vector, can have length 1 or 3 and must have positive entries.
 #' Provides the height of the output plots measured in the unit given in \code{plot.unit}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param iter Optional integer, number of total MCMC iterations per chain. Defaults to 26000. Note: Number of warmup iterations is counted towards \code{iter}, i.e.
 #'of the \code{iter} many iterations, the first \code{warmup} many samples are not saved.
 #'@param warmup Optional integer, number of warmup iterations discarded from total MCMC iterations per chain. Defaults to \code{1000}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param chains Optional integer. Number of Markov chains constructed by Stan. Defaults to 4.
 #'@param refresh Optional integer. Given to Stan's \code{refresh} argument for \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, defaults to \code{0}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param adapt_delta Optional numeric between 0.6 and 1, default is 0.8. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param max_treedepth Optional integer, defaults to 15.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param seed Optional positive integer that specifies the seed to be used for the simulation.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param output.scen.config Optional logical, defaults to \code{FALSE}.
-#'See \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@details
 #'The basic joint BLRM is defined according to (Neuenschwander et al., 2014 and 2016). Refer to the section Details in the documentation of
-#'\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} for details of the general model definition.
+#'\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details of the general model definition.
 #'
 #'In the following, we will describe how the function includes a binary covariate in the basic joint BLRM.
 #'Recall the parameter vector used for the joint BLRM without covariates for trial \eqn{j}, i.e.
@@ -456,10 +456,10 @@
 #' Zhou, H.,  Yuan, Y., & Nie, L. (2018). Accuracy, safety, and reliability of novel phase I designs.
 #' Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>.
 #'
-#' @seealso \code{\link[OncoBLRM:scenario_list_covariate_jointBLRM]{scenario_list_covariate_jointBLRM}()},
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
-#' \code{\link[OncoBLRM:scenario_list_jointBLRM]{scenario_list_jointBLRM}()},
-#' \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' @seealso \code{\link[decider:scenario_list_covariate_jointBLRM]{scenario_list_covariate_jointBLRM}()},
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
+#' \code{\link[decider:scenario_list_jointBLRM]{scenario_list_jointBLRM}()},
+#' \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
 #' \code{\link[rstan:rstan]{rstan-package}},
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 #'
@@ -1900,15 +1900,15 @@ scenario_covariate_jointBLRM <- function(
 
 #'Process a list of data scenarios including a binary covariate in parallel
 #'@rdname scenario_list_covariate_jointBLRM
-#'@description Wrapper for calling \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()}
+#'@description Wrapper for calling \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()}
 #'for a list of data scenarios, and processing them in parallel. This function is mostly included
 #'for convenience, e.g. to evaluate a number of scenarios that are used for prior adjustment
 #'in a quick manner.
 #'
-#'Be aware that input checks are performed by \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#'Be aware that input checks are performed by \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'If this results in an error for one or more scenarios, the error is returned in the output list.
 #'@param data.list List of hypothetical data scenarios. Each entry is passed to
-#'\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#'\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'@param n.cores Optional integer, defaults to \code{1}. Indicates the number of workers
 #'to be used during parallel processing. A value of \code{1} causes the scenarios to
 #'be processed sequentially.
@@ -1919,7 +1919,7 @@ scenario_covariate_jointBLRM <- function(
 #'the output for scenario \eqn{i} will be \code{"scenario_i"}.
 #'Otherwise, a vector with the same length as the \code{data.list} can be supplied as \code{file.names},
 #'which is used as a file name for each scenario.
-#'@param ... Arguments that are passed to \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
+#'@param ... Arguments that are passed to \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
 #'e.g. priors, number of MCMC iterations, and number of chains. Can contain any arguments of
 #'\code{scenario_jointBLRM()}, except for the argument \code{data}, which is taken from the \code{data.list} instead,
 #'and for the argument \code{file.name}, which is taken from \code{file.names} instead.
@@ -1929,11 +1929,11 @@ scenario_covariate_jointBLRM <- function(
 #'in Stan. However, we recommend to parallelize at level of the scenarios.
 #'This way, also the generation of e.g. the plots and posterior toxicities are parallelized,
 #'and, additionally, the initialization of the parallel backend needs to occur only once.
-#'@returns Numbered list in which each entry contains the output of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}
+#'@returns Numbered list in which each entry contains the output of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}
 #'for the corresponding trial in the \code{data.list}.
 #'
 #'
-#' @seealso \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
+#' @seealso \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
 #'  \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
 #' \code{\link[rstan:rstan]{rstan-package}},
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
@@ -1971,7 +1971,7 @@ scenario_list_covariate_jointBLRM <- function(
   }
 
   res.list <- foreach(i = 1:n.scen,
-                      .packages = c("OncoBLRM"),
+                      .packages = c("decider"),
                       .errorhandling = "pass",
                       .inorder = TRUE)%dopar%
     {

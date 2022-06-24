@@ -1,1 +1,1 @@
-# OncoBLRM R package
+# decider R package

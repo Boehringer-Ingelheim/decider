@@ -1,6 +1,6 @@
-Package: OncoBLRM
-Title: Simulation of and Tools for Dose-Finding Trials guided by Bayesian Logistic Regression Models
-Version: 0.0.0.9007
+Package: decider
+Title: DECision making in oncology Dose Escalation trials with logistic Regression
+Version: 0.0.0.9008
 Authors@R: 
     c(person(given = "Boehringer Ingelheim",
            family = "Pharma GmbH & Co. KG",

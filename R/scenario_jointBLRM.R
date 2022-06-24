@@ -4,7 +4,7 @@
 #'posterior toxicities for a trial of interest and a set of doses of interest.
 #'
 #'If multiple scenarios need to be evaluated, consider using the function
-#'\code{\link[OncoBLRM:scenario_list_jointBLRM]{scenario_list_jointBLRM}()}
+#'\code{\link[decider:scenario_list_jointBLRM]{scenario_list_jointBLRM}()}
 #'instead, which is a parallelized wrapper that processes a list of data scenarios
 #'within the same setting via \code{scenario_jointBLRM()}.
 #'
@@ -580,8 +580,8 @@
 #' Zhou, H.,  Yuan, Y., & Nie, L. (2018). Accuracy, safety, and reliability of novel phase I designs.
 #' Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>.
 #'
-#' @seealso \code{\link[OncoBLRM:scenario_list_jointBLRM]{scenario_list_jointBLRM}()},
-#' \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' @seealso \code{\link[decider:scenario_list_jointBLRM]{scenario_list_jointBLRM}()},
+#' \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
 #' \code{\link[rstan:rstan]{rstan-package}},
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 #'
@@ -1875,15 +1875,15 @@ scenario_jointBLRM <- function(data=NULL,
 
 #'Process a list of data scenarios in parallel.
 #'@rdname scenario_list_jointBLRM
-#'@description Wrapper for calling \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}
+#'@description Wrapper for calling \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}
 #'for a list of data scenarios, and processing them in parallel. This function is mostly included
 #'for convenience, e.g. to evaluate a number of scenarios that are used for prior adjustment
 #'in a quick manner.
 #'
-#'Be aware that input checks are performed by \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#'Be aware that input checks are performed by \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'If this results in an error for one or more scenarios, the error is returned in the output list.
 #'@param data.list List of hypothetical data scenarios. Each entry is passed to
-#'\code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#'\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'@param n.cores Optional integer, defaults to \code{1}. Indicates the number of workers
 #'to be used during parallel processing. A value of \code{1} causes the scenarios to
 #'be processed sequentially.
@@ -1894,7 +1894,7 @@ scenario_jointBLRM <- function(data=NULL,
 #'the output for scenario \eqn{i} will be \code{"scenario_i"}.
 #'Otherwise, a vector with the same length as the \code{data.list} can be supplied as \code{file.names},
 #'which is used as a file name for each scenario.
-#'@param ... Arguments that are passed to \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
+#'@param ... Arguments that are passed to \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
 #'e.g. priors, number of MCMC iterations, and number of chains. Can contain any arguments of
 #'\code{scenario_jointBLRM()}, except for the argument \code{data}, which is taken from the \code{data.list} instead,
 #'and for the argument \code{file.name}, which is taken from \code{file.names} instead.
@@ -1904,11 +1904,11 @@ scenario_jointBLRM <- function(data=NULL,
 #'in Stan. However, we recommend to parallelize at level of the scenarios.
 #'This way, also the generation of e.g. the plots and posterior toxicities are parallelized,
 #'and, additionally, the initialization of the parallel backend needs to occur only once.
-#'@returns Numbered list in which each entry contains the output of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}
+#'@returns Numbered list in which each entry contains the output of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}
 #'for the corresponding trial in the \code{data.list}.
 #'
 #'
-#' @seealso \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
+#' @seealso \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},
 #' \code{\link[rstan:rstan]{rstan-package}},
 #' \code{\link[ggplot2:ggplot]{ggplot2::ggplot}}, \code{\link[ggplot2:ggplot2-package]{ggplot2-package}}.
 #' @export
@@ -1945,7 +1945,7 @@ scenario_list_jointBLRM <- function(
   }
 
   res.list <- foreach(i = 1:n.scen,
-                      .packages = c("OncoBLRM"),
+                      .packages = c("decider"),
                       .export = c("stanmodels"),
                       .errorhandling = "pass",
                       .inorder = TRUE)%dopar%

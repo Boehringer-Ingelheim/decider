@@ -38,14 +38,14 @@
 #' @param prior.mu Named list that specifies the distribution of the
 #' hypermeans of the parameters of the combination therapy BLRM. Same format,
 #' default, and requirements as documented for the function
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #' @param prior.tau Named list that specifies the distribution of the
 #' between-trial heterogeneities of the parameters of the combination therapy BLRM.
 #' Same format, default, and requirements as documented for the function
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #' @param saturating Optional logical, defaults to \code{FALSE}. If \code{TRUE}, the BLRM will be using a saturating interaction term as described in
 #' \code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()}. Also refer to the Details section in the documentation
-#' of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #' @param return.samples Optional logical, defaults to \code{FALSE}. If \code{TRUE},
 #' the function will return a matrix with samples from the MAP prior additionally
 #' to a prior summary.
@@ -69,17 +69,17 @@
 #' The model for computing meta-analytic predictive prior is specified according to
 #' Neuenschwander et al. (2014, 2016). A model description of the hierarchical BLRM
 #' used by the function to obtain the predictive distribution can be found in the documentation
-#' of \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'
 #' The underlying model for monotherapy MAP priors is the two-parameter monotherapy variant of the
 #' more general hierarchical model that is described in the documentation of
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #' As the function \code{get_MAP_mono()} only considers monotherapy, only the parameters \eqn{log(\alpha)}
 #' and \eqn{log(\beta)} are needed to model the DLT rate of each dose level.
 #' Besides this, the same hierarchical model structure as described in
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()} is used.
-#' @seealso  \code{\link[OncoBLRM:get_pred_tox]{get_pred_tox}()}, \code{\link[OncoBLRM:fit_jointBLRM]{fit_jointBLRM}()},
-#' \code{\link[OncoBLRM:scenario_jointBLRM]{scenario_jointBLRM}()},
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} is used.
+#' @seealso  \code{\link[decider:get_pred_tox]{get_pred_tox}()}, \code{\link[decider:fit_jointBLRM]{fit_jointBLRM}()},
+#' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
 #' \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}}.
 #' @references
 #' Stan Development Team (2020). RStan: the R interface to Stan. R package version 2.21.2. \url{https://mc-stan.org}.
