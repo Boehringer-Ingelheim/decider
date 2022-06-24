@@ -16,7 +16,7 @@
 #'\code{combi.b}.
 #'
 #'@usage
-#'sim_covariate_jointBLRM(
+#'sim_covariate_jointBLRM_par(
 #'    active.mono1.a = FALSE,
 #'    active.mono1.b = FALSE,
 #'    active.mono2.a = FALSE,
@@ -171,7 +171,6 @@
 #'    covar.combi.a = FALSE,
 #'    covar.combi.b = FALSE,
 #'    n.studies = 1,
-#'    n.cores = 1,
 #'    seed = sample.int(.Machine$integer.max, 1),
 #'    chains = 4,
 #'    iter = 13500,
@@ -309,8 +308,8 @@
 #'joint BLRM without covariate.
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}.
 #'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
-#'@param n.cores Optional positive integer, defaults to \code{1}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+# #'@param n.cores Optional positive integer, defaults to \code{1}.
+# #'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param seed Optional positive integer that specified the seed to be used for the simulation.
 #'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param chains Optional positive integer that specifies the number of Markov chains to be used during MCMC sampling, defaults to \code{4}.
@@ -402,7 +401,7 @@
 #' \code{\link[rstan:rstan]{rstan-package}}, \code{\link[OncoBLRM:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},
 #'
 #'@export
-sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
+sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
                           active.mono1.b = FALSE,
                           active.mono2.a = FALSE,
                           active.mono2.b = FALSE,
@@ -575,7 +574,7 @@ sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
                           covar.combi.b = FALSE,
 
                           n.studies = 1,
-                          n.cores = 1,
+                          #n.cores = 1,
                           seed = sample.int(.Machine$integer.max, 1),
                           chains = 4,
                           iter = 13500,
@@ -704,12 +703,12 @@ sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
     stop("`iter` must be larger than `warmup` by at least 1000.")
   }
 
-  if(!is.wholenumber(n.cores)){
-    stop("`n.cores` needs to be an integer.")
-  }
-  if(!n.cores>=0 | !length(n.cores)==1){
-    stop("`n.cores` must have length 1 and be larger or equal than 0.")
-  }
+  # if(!is.wholenumber(n.cores)){
+  #   stop("`n.cores` needs to be an integer.")
+  # }
+  # if(!n.cores>=0 | !length(n.cores)==1){
+  #   stop("`n.cores` must have length 1 and be larger or equal than 0.")
+  # }
 
   if(!is.wholenumber(max.n)){
     stop("`max.n` needs to be an integer.")
@@ -2044,203 +2043,232 @@ sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
 
 
   #sample seeds for each trial
-  trial_seeds = sample.int(.Machine$integer.max, n.studies)
+  #trial_seeds = sample.int(.Machine$integer.max, n.studies)
   #Note: this ensures that the trials will be based on the same seeds, regardless
   #of whether the simulation is parallelized or not.
 
-  #parallelization
-  if(n.cores>1){
-    cl_foreach <- makeCluster(n.cores)
-    registerDoParallel(cl_foreach)
-    message("Parallel simulation with ", n.cores, " cores started.")
-  }else{
-    registerDoSEQ()
-    message("Sequential simulation started.")
+  ## required functions
+  "%dorng%" <- doRNG::"%dorng%"
+  "%dopar%" <- foreach::"%dopar%"
+  if(!foreach::getDoParRegistered()) {
+
+    message("\nCaution: No parallel backend detected for the 'foreach' framework.",
+            " For parallel execution of the function, register a parallel backend.\n",
+            " This can be accomplished e.g. with: \n",
+            "   doFuture::registerDoFuture()\n",
+            "   future::plan(future::multisession)\n")
+
+    tt <- suppressWarnings(foreach::foreach(k = 1:2) %dopar% {k^k^k})
+    rm(tt)
+
   }
 
+  ## Code inspired by https://stackoverflow.com/questions/3318333/split-a-vector-into-chunks
+  ## Answer by mathheadinclouds
+  chunkVector <- function(x, n_chunks) {
+
+    if (n_chunks <= 1) {
+
+      chunk_list <- list(x)
+
+    } else {
+
+      chunk_list <- unname(split(x, cut(seq_along(x), n_chunks, labels = FALSE)))
+
+    }
+
+    return (chunk_list)
+
+  }
+
+  #distribute number of studies across nodes
+  chunks_outer <- chunkVector(seq_len(n.studies), foreach::getDoParWorkers())
 
   # ----------------------------------------------------------------------------
   # ACTUAL SIMULATION
   # ----------------------------------------------------------------------------
-  #foreach loop over the desired number of trials.
-     res.list <- foreach( i = 1:n.studies,
-                          .packages = c("OncoBLRM"),
-                          .export = c("stanmodels"),
-                          #.packages = c("openxlsx", "flock", "rstan", "openssl"),
-                          # .export = c("get_int_probs_BLRM", "inv_logit", "logit",
-                          #             "main_jointBLRM", "post_tox_jointBLRM_sim",
-                          #             "trial_jointBLRM", "harmonize_vecnames_jointBLRM",
-                          #             "get_dloss_dec_jointBLRM", "get_loss_dec_jointBLRM",
-                          #             "get_ewoc_dec_jointBLRM"),
-                          .errorhandling = "pass",
-                          .inorder = FALSE)%dopar%
-  # res.list <- list()
-  # for(i in 1:n.studies)
-      {
+  #foreach loop over the available number of nodes
+  res.list <- foreach::foreach( kpar = chunks_outer,
+                                .packages = c("OncoBLRM"),
+                                .export = c("stanmodels", "trial_covariate_jointBLRM_par"),
+                                .errorhandling = "pass",
+                                .inorder = FALSE,
+                                .combine = c) %dorng% {
 
-        res<- OncoBLRM:::trial_covariate_jointBLRM(  doses.mono1.a = doses.mono1.a,
-              #OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
-                                doses.mono2.a = doses.mono2.a,
-                                doses.combi.a = doses.combi.a,
-                                doses.mono1.b = doses.mono1.b,
-                                doses.mono2.b = doses.mono2.b,
-                                doses.combi.b = doses.combi.b,
-                                start.dose.mono1.a= start.dose.mono1.a,
-                                start.dose.mono2.a= start.dose.mono2.a,
-                                start.dose.mono1.b= start.dose.mono1.b,
-                                start.dose.mono2.b= start.dose.mono2.b,
-                                start.dose.combi.a1= start.dose.combi.a1,
-                                start.dose.combi.a2= start.dose.combi.a2,
-                                start.dose.combi.b1 = start.dose.combi.b1,
-                                start.dose.combi.b2 = start.dose.combi.b2,
-                                seed = trial_seeds[i],
-              #BLRM = BLRM,
+                                  #distribute number of trials for this node among workers
+                                  chunks_inner <- chunkVector(kpar, foreach::getDoParWorkers())
 
-                                historical.data= historical.data,
+                                  #parallel foreach across number of workers
+                                  foreach::foreach(ipar = chunks_inner,
+                                                   .combine = c,
+                                                   .errorhandling = "pass") %dorng% {
 
-                                active.mono1.a = active.mono1.a,
-                                active.mono1.b = active.mono1.b,
-                                active.mono2.a = active.mono2.a,
-                                active.mono2.b = active.mono2.b,
-                                active.combi.a = active.combi.a,
-                                active.combi.b = active.combi.b,
+                                                     #return list of outputs from trial_jointBLRM
+                                                     lapply(ipar, function(j){
 
-                                cohort.queue = cohort.queue,
+                                                       #write progress if monitor path is given
+                                                       if(!is.null(file.name)&!is.null(monitor.path)){
+                                                         if(dir.exists(file.path(monitor.path))){
+                                                           write.table(matrix("Processing...", nrow=1, ncol=1),
+                                                                       file=paste(file.path(monitor.path),
+                                                                                  "/trial-",j, "_", file.name,".txt", sep=""),
+                                                                       row.names = F, col.names = F, append = FALSE)
+                                                         }
+                                                       }
 
-                                tox.combi.a = tox.combi.a,
-                                tox.mono1.a = tox.mono1.a,
-                                tox.mono2.a = tox.mono2.a,
-                                tox.combi.b = tox.combi.b,
-                                tox.mono1.b = tox.mono1.b,
-                                tox.mono2.b = tox.mono2.b,
+                                                       return(trial_covariate_jointBLRM_par(  doses.mono1.a = doses.mono1.a,
+                                                                                              #OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
+                                                                                              doses.mono2.a = doses.mono2.a,
+                                                                                              doses.combi.a = doses.combi.a,
+                                                                                              doses.mono1.b = doses.mono1.b,
+                                                                                              doses.mono2.b = doses.mono2.b,
+                                                                                              doses.combi.b = doses.combi.b,
+                                                                                              start.dose.mono1.a= start.dose.mono1.a,
+                                                                                              start.dose.mono2.a= start.dose.mono2.a,
+                                                                                              start.dose.mono1.b= start.dose.mono1.b,
+                                                                                              start.dose.mono2.b= start.dose.mono2.b,
+                                                                                              start.dose.combi.a1= start.dose.combi.a1,
+                                                                                              start.dose.combi.a2= start.dose.combi.a2,
+                                                                                              start.dose.combi.b1 = start.dose.combi.b1,
+                                                                                              start.dose.combi.b2 = start.dose.combi.b2,
+                                                                                              #seed = trial_seeds[i],
+                                                                                              #BLRM = BLRM,
 
-                                cohort.size.mono1.a= cohort.size.mono1.a,
-                                cohort.prob.mono1.a= cohort.prob.mono1.a,
-                                cohort.size.mono2.a= cohort.size.mono2.a,
-                                cohort.prob.mono2.a= cohort.prob.mono2.a,
-                                cohort.size.mono1.b= cohort.size.mono1.b,
-                                cohort.prob.mono1.b= cohort.prob.mono1.b,
-                                cohort.size.mono2.b= cohort.size.mono2.b,
-                                cohort.prob.mono2.b= cohort.prob.mono2.b,
-                                cohort.size.combi.a= cohort.size.combi.a,
-                                cohort.prob.combi.a= cohort.prob.combi.a,
-                                cohort.size.combi.b= cohort.size.combi.b,
-                                cohort.prob.combi.b= cohort.prob.combi.b,
+                                                                                              historical.data= historical.data,
 
-                                esc.rule = esc.rule,
-                                esc.comp.max = esc.comp.max,
+                                                                                              active.mono1.a = active.mono1.a,
+                                                                                              active.mono1.b = active.mono1.b,
+                                                                                              active.mono2.a = active.mono2.a,
+                                                                                              active.mono2.b = active.mono2.b,
+                                                                                              active.combi.a = active.combi.a,
+                                                                                              active.combi.b = active.combi.b,
 
-                                esc.step.mono1.a=esc.step.mono1.a,
-                                esc.step.mono2.a=esc.step.mono2.a,
-                                esc.step.mono1.b=esc.step.mono1.b,
-                                esc.step.mono2.b=esc.step.mono2.b,
-                                esc.step.combi.a1=esc.step.combi.a1,
-                                esc.step.combi.b1=esc.step.combi.b1,
-                                esc.step.combi.a2=esc.step.combi.a2,
-                                esc.step.combi.b2=esc.step.combi.b2,
+                                                                                              cohort.queue = cohort.queue,
 
-                                esc.constrain.mono1.a=esc.constrain.mono1.a,
-                                esc.constrain.mono2.a=esc.constrain.mono2.a,
-                                esc.constrain.mono1.b=esc.constrain.mono1.b,
-                                esc.constrain.mono2.b=esc.constrain.mono2.b,
-                                esc.constrain.combi.a1=esc.constrain.combi.a1,
-                                esc.constrain.combi.b1=esc.constrain.combi.b1,
-                                esc.constrain.combi.a2=esc.constrain.combi.a2,
-                                esc.constrain.combi.b2=esc.constrain.combi.b2,
+                                                                                              tox.combi.a = tox.combi.a,
+                                                                                              tox.mono1.a = tox.mono1.a,
+                                                                                              tox.mono2.a = tox.mono2.a,
+                                                                                              tox.combi.b = tox.combi.b,
+                                                                                              tox.mono1.b = tox.mono1.b,
+                                                                                              tox.mono2.b = tox.mono2.b,
 
-                                prior.tau = prior.tau,
-                                prior.mu = prior.mu,
-                                saturating = saturating,
+                                                                                              cohort.size.mono1.a= cohort.size.mono1.a,
+                                                                                              cohort.prob.mono1.a= cohort.prob.mono1.a,
+                                                                                              cohort.size.mono2.a= cohort.size.mono2.a,
+                                                                                              cohort.prob.mono2.a= cohort.prob.mono2.a,
+                                                                                              cohort.size.mono1.b= cohort.size.mono1.b,
+                                                                                              cohort.prob.mono1.b= cohort.prob.mono1.b,
+                                                                                              cohort.size.mono2.b= cohort.size.mono2.b,
+                                                                                              cohort.prob.mono2.b= cohort.prob.mono2.b,
+                                                                                              cohort.size.combi.a= cohort.size.combi.a,
+                                                                                              cohort.prob.combi.a= cohort.prob.combi.a,
+                                                                                              cohort.size.combi.b= cohort.size.combi.b,
+                                                                                              cohort.prob.combi.b= cohort.prob.combi.b,
 
-                                dose.ref1 = dose.ref1,
-                                dose.ref2 = dose.ref2,
+                                                                                              esc.rule = esc.rule,
+                                                                                              esc.comp.max = esc.comp.max,
 
-                                dosing.intervals = dosing.intervals,
-                                loss.weights = loss.weights,
-                                dynamic.weights = dynamic.weights,
-                                ewoc = ewoc.threshold,
+                                                                                              esc.step.mono1.a=esc.step.mono1.a,
+                                                                                              esc.step.mono2.a=esc.step.mono2.a,
+                                                                                              esc.step.mono1.b=esc.step.mono1.b,
+                                                                                              esc.step.mono2.b=esc.step.mono2.b,
+                                                                                              esc.step.combi.a1=esc.step.combi.a1,
+                                                                                              esc.step.combi.b1=esc.step.combi.b1,
+                                                                                              esc.step.combi.a2=esc.step.combi.a2,
+                                                                                              esc.step.combi.b2=esc.step.combi.b2,
 
-                                max.n.mono1.a=max.n.mono1.a,
-                                max.n.mono1.b=max.n.mono1.b,
-                                max.n.mono2.a=max.n.mono2.a,
-                                max.n.mono2.b=max.n.mono2.b,
-                                max.n.combi.a=max.n.combi.a,
-                                max.n.combi.b=max.n.combi.b,
-                                decision.combi.a=mtd.decision.combi.a,
-                                decision.combi.b=mtd.decision.combi.b,
-                                decision.mono1.a=mtd.decision.mono1.a,
-                                decision.mono1.b=mtd.decision.mono1.b,
-                                decision.mono2.a=mtd.decision.mono2.a,
-                                decision.mono2.b=mtd.decision.mono2.b,
+                                                                                              esc.constrain.mono1.a=esc.constrain.mono1.a,
+                                                                                              esc.constrain.mono2.a=esc.constrain.mono2.a,
+                                                                                              esc.constrain.mono1.b=esc.constrain.mono1.b,
+                                                                                              esc.constrain.mono2.b=esc.constrain.mono2.b,
+                                                                                              esc.constrain.combi.a1=esc.constrain.combi.a1,
+                                                                                              esc.constrain.combi.b1=esc.constrain.combi.b1,
+                                                                                              esc.constrain.combi.a2=esc.constrain.combi.a2,
+                                                                                              esc.constrain.combi.b2=esc.constrain.combi.b2,
 
-                                mtd.enforce.mono1.a = mtd.enforce.mono1.a,
-                                mtd.enforce.mono1.b = mtd.enforce.mono1.b,
-                                mtd.enforce.mono2.a = mtd.enforce.mono2.a,
-                                mtd.enforce.mono2.b = mtd.enforce.mono2.b,
-                                mtd.enforce.combi.a = mtd.enforce.combi.a,
-                                mtd.enforce.combi.b = mtd.enforce.combi.b,
+                                                                                              prior.tau = prior.tau,
+                                                                                              prior.mu = prior.mu,
+                                                                                              saturating = saturating,
 
-                                backfill.mono1.a = backfill.mono1.a,
-                                backfill.mono1.b = backfill.mono1.b,
-                                backfill.size.mono1.a = backfill.size.mono1.a,
-                                backfill.size.mono1.b = backfill.size.mono1.b,
-                                backfill.prob.mono1.a = backfill.prob.mono1.a,
-                                backfill.prob.mono1.b = backfill.prob.mono1.b,
-                                backfill.mono2.a = backfill.mono2.a,
-                                backfill.mono2.b = backfill.mono2.b,
-                                backfill.size.mono2.a = backfill.size.mono2.a,
-                                backfill.size.mono2.b = backfill.size.mono2.b,
-                                backfill.prob.mono2.a = backfill.prob.mono2.a,
-                                backfill.prob.mono2.b = backfill.prob.mono2.b,
-                                backfill.combi.a = backfill.combi.a,
-                                backfill.combi.b = backfill.combi.b,
-                                backfill.size.combi.a = backfill.size.combi.a,
-                                backfill.size.combi.b = backfill.size.combi.b,
-                                backfill.prob.combi.a = backfill.prob.combi.a,
-                                backfill.prob.combi.b = backfill.prob.combi.b,
-                                backfill.start.mono1.a = backfill.start.mono1.a,
-                                backfill.start.mono1.b = backfill.start.mono1.b,
-                                backfill.start.mono2.a = backfill.start.mono2.a,
-                                backfill.start.mono2.b = backfill.start.mono2.b,
-                                backfill.start.combi.a1 = backfill.start.combi.a1,
-                                backfill.start.combi.a2 = backfill.start.combi.a2,
-                                backfill.start.combi.b1 = backfill.start.combi.b1,
-                                backfill.start.combi.b2 = backfill.start.combi.b2,
+                                                                                              dose.ref1 = dose.ref1,
+                                                                                              dose.ref2 = dose.ref2,
 
-                                two_sided1 = two_sided1,
-                                two_sided2 = two_sided2,
-                                covar.mono1.a = covar.mono1.a,
-                                covar.mono1.b = covar.mono1.b,
-                                covar.mono2.a = covar.mono2.a,
-                                covar.mono2.b = covar.mono2.b,
-                                covar.combi.a = covar.combi.a,
-                                covar.combi.b = covar.combi.b,
+                                                                                              dosing.intervals = dosing.intervals,
+                                                                                              loss.weights = loss.weights,
+                                                                                              dynamic.weights = dynamic.weights,
+                                                                                              ewoc = ewoc.threshold,
 
-                                working.path = working.path,
-                                file.name = file.name,
-                                chains = chains,
-                                iter = iter,
-                                refresh = refresh,
-                                adapt_delta = adapt_delta,
-                                warmup = warmup,
-                                max_treedepth = max_treedepth
-      )
+                                                                                              max.n.mono1.a=max.n.mono1.a,
+                                                                                              max.n.mono1.b=max.n.mono1.b,
+                                                                                              max.n.mono2.a=max.n.mono2.a,
+                                                                                              max.n.mono2.b=max.n.mono2.b,
+                                                                                              max.n.combi.a=max.n.combi.a,
+                                                                                              max.n.combi.b=max.n.combi.b,
+                                                                                              decision.combi.a=mtd.decision.combi.a,
+                                                                                              decision.combi.b=mtd.decision.combi.b,
+                                                                                              decision.mono1.a=mtd.decision.mono1.a,
+                                                                                              decision.mono1.b=mtd.decision.mono1.b,
+                                                                                              decision.mono2.a=mtd.decision.mono2.a,
+                                                                                              decision.mono2.b=mtd.decision.mono2.b,
 
-      if(!is.null(file.name)&!is.null(monitor.path)){
-        if(dir.exists(file.path(monitor.path))){
-          write.table(matrix("Done", nrow=1, ncol=1),
-                     file=paste(file.path(monitor.path),
-                                "/trial-",i, "_", file.name,".txt", sep=""),
-                     row.names = F, col.names = F, append = FALSE)
-        }
-      }
+                                                                                              mtd.enforce.mono1.a = mtd.enforce.mono1.a,
+                                                                                              mtd.enforce.mono1.b = mtd.enforce.mono1.b,
+                                                                                              mtd.enforce.mono2.a = mtd.enforce.mono2.a,
+                                                                                              mtd.enforce.mono2.b = mtd.enforce.mono2.b,
+                                                                                              mtd.enforce.combi.a = mtd.enforce.combi.a,
+                                                                                              mtd.enforce.combi.b = mtd.enforce.combi.b,
 
-      return(res)
-    }
+                                                                                              backfill.mono1.a = backfill.mono1.a,
+                                                                                              backfill.mono1.b = backfill.mono1.b,
+                                                                                              backfill.size.mono1.a = backfill.size.mono1.a,
+                                                                                              backfill.size.mono1.b = backfill.size.mono1.b,
+                                                                                              backfill.prob.mono1.a = backfill.prob.mono1.a,
+                                                                                              backfill.prob.mono1.b = backfill.prob.mono1.b,
+                                                                                              backfill.mono2.a = backfill.mono2.a,
+                                                                                              backfill.mono2.b = backfill.mono2.b,
+                                                                                              backfill.size.mono2.a = backfill.size.mono2.a,
+                                                                                              backfill.size.mono2.b = backfill.size.mono2.b,
+                                                                                              backfill.prob.mono2.a = backfill.prob.mono2.a,
+                                                                                              backfill.prob.mono2.b = backfill.prob.mono2.b,
+                                                                                              backfill.combi.a = backfill.combi.a,
+                                                                                              backfill.combi.b = backfill.combi.b,
+                                                                                              backfill.size.combi.a = backfill.size.combi.a,
+                                                                                              backfill.size.combi.b = backfill.size.combi.b,
+                                                                                              backfill.prob.combi.a = backfill.prob.combi.a,
+                                                                                              backfill.prob.combi.b = backfill.prob.combi.b,
+                                                                                              backfill.start.mono1.a = backfill.start.mono1.a,
+                                                                                              backfill.start.mono1.b = backfill.start.mono1.b,
+                                                                                              backfill.start.mono2.a = backfill.start.mono2.a,
+                                                                                              backfill.start.mono2.b = backfill.start.mono2.b,
+                                                                                              backfill.start.combi.a1 = backfill.start.combi.a1,
+                                                                                              backfill.start.combi.a2 = backfill.start.combi.a2,
+                                                                                              backfill.start.combi.b1 = backfill.start.combi.b1,
+                                                                                              backfill.start.combi.b2 = backfill.start.combi.b2,
 
+                                                                                              two_sided1 = two_sided1,
+                                                                                              two_sided2 = two_sided2,
+                                                                                              covar.mono1.a = covar.mono1.a,
+                                                                                              covar.mono1.b = covar.mono1.b,
+                                                                                              covar.mono2.a = covar.mono2.a,
+                                                                                              covar.mono2.b = covar.mono2.b,
+                                                                                              covar.combi.a = covar.combi.a,
+                                                                                              covar.combi.b = covar.combi.b,
 
-  #clusters need to be stopped
-  if(n.cores>1){stopCluster(cl_foreach)}
+                                                                                              working.path = working.path,
+                                                                                              file.name = file.name,
+                                                                                              chains = chains,
+                                                                                              iter = iter,
+                                                                                              refresh = refresh,
+                                                                                              adapt_delta = adapt_delta,
+                                                                                              warmup = warmup,
+                                                                                              max_treedepth = max_treedepth
+                                                       ))
+                                                     })
+                                                     #inner foreach
+                                                   }
+                                  #outer forach
+                                }
+
   #---------------------------------------------------------------------------
   #Post-Processing the results
   #---------------------------------------------------------------------------

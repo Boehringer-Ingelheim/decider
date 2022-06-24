@@ -40,8 +40,9 @@
 #'activate the corresponding trials via the \code{active.[...]} arguments.}
 #'\item{Set the number of trials to be simulated.}
 #'\item{Optional: Specify additional options for the simulations.}
-#'\item{Optional but strongly recommended: Enable parallel simulation and specify the number of cores, and supply a path for a working directory
-#'for saving and re-loading MCMC results. When a working directory is supplied, be aware that the function will delete or modify
+#'\item{Optional: Register a parallel backend for the \code{foreach} framework, cf. \code{\link[foreach:foreach]{foreach-package}}.
+#'Alternatively or additionally, when only a small number of cores is available, consider to supply a path for a working directory
+#'for saving and re-loading MCMC results. When a working directory is supplied, be aware that the function may delete or modify
 #'existing .RData files containing "_tmp" and the supplied \code{file.name} in their name from the working directory to avoid
 #'re-loading MCMC runs from previous simulations.
 #'Refer to the documentation below for more detail.}
@@ -190,7 +191,6 @@
 #'    backfill.start.combi.b1 = NULL,
 #'    backfill.start.combi.b2 = NULL,
 #'    n.studies = 1,
-#'    n.cores = 1,
 #'    seed = sample.int(.Machine$integer.max, 1),
 #'    chains = 4,
 #'    iter = 13500,
@@ -521,8 +521,8 @@
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}. Due to the long simulation time, it is recommended
 #'to first try lower numbers to obtain an estimation of the run-time for larger numbers of studies. Typically, about 1000 studies are recommended to obtain
 #'acceptably accurate simulation results.
-#'@param n.cores Optional positive integer, defaults to \code{1}. Enables parallelized simulation and specifies the number of cores to be used. If a value greater
-#'than 1 is given, the function will process the simulations in parallel using the given number of cores.
+# #'@param n.cores Optional positive integer, defaults to \code{1}. Enables parallelized simulation and specifies the number of cores to be used. If a value greater
+# #'than 1 is given, the function will process the simulations in parallel using the given number of cores.
 #'@param seed Optional positive integer that specified the seed to be used for the simulation. The default is \code{sample.int(.Machine$integer.max, 1)}.
 #'Note that reproducibility can only be obtained when the function is executed on exactly the same computing architecture, using identical software versions
 #'(e.g. of the compiler, Stan, and R), and the same input specifications. This is due to the internal use of \code{\link[rstan:rstan]{rstan-package}} for MCMC sampling, which is
@@ -646,7 +646,7 @@
 #' \code{\link[rstan:rstan]{rstan-package}}.
 #'
 #'@export
-sim_jointBLRM <- function(active.mono1.a = FALSE,
+sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                           active.mono1.b = FALSE,
                           active.mono2.a = FALSE,
                           active.mono2.b = FALSE,
@@ -804,7 +804,7 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                           backfill.start.combi.b2 = NULL,
 
                           n.studies = 1,
-                          n.cores = 1,
+                          #n.cores = 1,
                           seed = sample.int(.Machine$integer.max, 1),
                           chains = 4,
                           iter = 13500,
@@ -916,12 +916,12 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     stop("`iter` must be larger than `warmup` by at least 1000.")
   }
 
-  if(!is.wholenumber(n.cores)){
-    stop("`n.cores` needs to be an integer.")
-  }
-  if(!n.cores>=0 | !length(n.cores)==1){
-    stop("`n.cores` must have length 1 and be larger or equal than 0.")
-  }
+  # if(!is.wholenumber(n.cores)){
+  #   stop("`n.cores` needs to be an integer.")
+  # }
+  # if(!n.cores>=0 | !length(n.cores)==1){
+  #   stop("`n.cores` must have length 1 and be larger or equal than 0.")
+  # }
 
   if(!is.wholenumber(max.n)){
     stop("`max.n` needs to be an integer.")
@@ -2232,42 +2232,98 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
 
 
   #sample seeds for each trial
-  trial_seeds = sample.int(.Machine$integer.max, n.studies)
+  #trial_seeds = sample.int(.Machine$integer.max, n.studies)
   #Note: this ensures that the trials will be based on the same seeds, regardless
   #of whether the simulation is parallelized or not.
 
-  #parallelization
-  if(n.cores>1){
-    cl_foreach <- makeCluster(n.cores)
-    registerDoParallel(cl_foreach)
-    message("Parallel simulation with ", n.cores, " cores started.")
-  }else{
-    registerDoSEQ()
-    message("Sequential simulation started.")
+  # #parallelization
+  # if(n.cores>1){
+  #   cl_foreach <- makeCluster(n.cores)
+  #   registerDoParallel(cl_foreach)
+  #   message("Parallel simulation with ", n.cores, " cores started.")
+  # }else{
+  #   registerDoSEQ()
+  #   message("Sequential simulation started.")
+  # }
+
+
+  ##New: use nested foreach
+  ## R CMD check appeasement for forach loop
+  #utils::globalVariables("k")
+  #utils::globalVariables("i")
+
+  ## required functions
+  "%dorng%" <- doRNG::"%dorng%"
+  "%dopar%" <- foreach::"%dopar%"
+  if(!foreach::getDoParRegistered()) {
+
+    message("\nCaution: No parallel backend detected for the 'foreach' framework.",
+            " For parallel execution of the function, register a parallel backend.\n",
+            " This can be accomplished e.g. with: \n",
+            "   doFuture::registerDoFuture()\n",
+            "   future::plan(future::multisession)\n")
+
+    tt <- suppressWarnings(foreach::foreach(k = 1:2) %dopar% {k^k^k})
+    rm(tt)
+
   }
 
+  ## Code inspired by https://stackoverflow.com/questions/3318333/split-a-vector-into-chunks
+  ## Answer by mathheadinclouds
+  chunkVector <- function(x, n_chunks) {
+
+    if (n_chunks <= 1) {
+
+      chunk_list <- list(x)
+
+    } else {
+
+      chunk_list <- unname(split(x, cut(seq_along(x), n_chunks, labels = FALSE)))
+
+    }
+
+    return (chunk_list)
+
+  }
+
+  #distribute number of studies across nodes
+  chunks_outer <- chunkVector(seq_len(n.studies), foreach::getDoParWorkers())
 
   # ----------------------------------------------------------------------------
   # ACTUAL SIMULATION
   # ----------------------------------------------------------------------------
-  #foreach loop over the desired number of trials.
-     res.list <- foreach( i = 1:n.studies,
+  #foreach loop over the available number of nodes
+     res.list <- foreach::foreach( kpar = chunks_outer,
                           .packages = c("OncoBLRM"),
-                          .export = c("stanmodels"),
-                          #.packages = c("openxlsx", "flock", "rstan", "openssl"),
-                          # .export = c("get_int_probs_BLRM", "inv_logit", "logit",
-                          #             "main_jointBLRM", "post_tox_jointBLRM_sim",
-                          #             "trial_jointBLRM", "harmonize_vecnames_jointBLRM",
-                          #             "get_dloss_dec_jointBLRM", "get_loss_dec_jointBLRM",
-                          #             "get_ewoc_dec_jointBLRM"),
+                          .export = c("stanmodels", "trial_jointBLRM_par"),
                           .errorhandling = "pass",
-                          .inorder = FALSE)%dopar%
-  # res.list <- list()
-  # for(i in 1:n.studies)
-      {
+                          .inorder = FALSE,
+                          .combine = c) %dorng% {
 
-        res<- OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
-              #OncoBLRM:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
+          #distribute number of trials for this node among workers
+          chunks_inner <- chunkVector(kpar, foreach::getDoParWorkers())
+
+          #parallel foreach across number of workers
+          foreach::foreach(ipar = chunks_inner,
+                           .combine = c,
+                           .errorhandling = "pass") %dorng% {
+
+              #return list of outputs from trial_jointBLRM
+              lapply(ipar, function(j){
+
+                #write progress if monitor path is given
+                if(!is.null(file.name)&!is.null(monitor.path)){
+                  if(dir.exists(file.path(monitor.path))){
+                    write.table(matrix("Processing...", nrow=1, ncol=1),
+                                file=paste(file.path(monitor.path),
+                                           "/trial-",j, "_", file.name,".txt", sep=""),
+                                row.names = F, col.names = F, append = FALSE)
+                  }
+                }
+                #call function
+                # return(OncoBLRM:::trial_jointBLRM_par(
+                  return(trial_jointBLRM_par(
+                                doses.mono1.a = doses.mono1.a,
                                 doses.mono2.a = doses.mono2.a,
                                 doses.combi.a = doses.combi.a,
                                 doses.mono1.b = doses.mono1.b,
@@ -2281,8 +2337,8 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                                 start.dose.combi.a2= start.dose.combi.a2,
                                 start.dose.combi.b1 = start.dose.combi.b1,
                                 start.dose.combi.b2 = start.dose.combi.b2,
-                                seed = trial_seeds[i],
-              #BLRM = BLRM,
+                                #seed = trial_seeds[i],
+                                #BLRM = BLRM,
 
                                 historical.data= historical.data,
 
@@ -2402,24 +2458,15 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                                 refresh = refresh,
                                 adapt_delta = adapt_delta,
                                 warmup = warmup,
-                                max_treedepth = max_treedepth
-      )
+                                max_treedepth = max_treedepth))
 
-      if(!is.null(file.name)&!is.null(monitor.path)){
-        if(dir.exists(file.path(monitor.path))){
-          write.table(matrix("Done", nrow=1, ncol=1),
-                     file=paste(file.path(monitor.path),
-                                "/trial-",i, "_", file.name,".txt", sep=""),
-                     row.names = F, col.names = F, append = FALSE)
-        }
-      }
+              })
 
-      return(res)
+    #end inner foreach
     }
+  #end outer foreach
+  }
 
-
-  #clusters need to be stopped
-  if(n.cores>1){stopCluster(cl_foreach)}
   #---------------------------------------------------------------------------
   #Post-Processing the results
   #---------------------------------------------------------------------------

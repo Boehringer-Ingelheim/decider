@@ -17,7 +17,7 @@ trial_covariate_jointBLRM<- function(
                                      start.dose.combi.a2= NULL,
                                      start.dose.combi.b1 = NULL,
                                      start.dose.combi.b2 = NULL,
-                                     seed = as.numeric(Sys.time()),
+                                     #seed = as.numeric(Sys.time()),
 
                                      historical.data= NULL,
 
@@ -166,7 +166,7 @@ trial_covariate_jointBLRM<- function(
 ){
 
 
-    set.seed(seed)
+    #set.seed(seed)
 
     #--------------------------------------
     #preparations to start the actual trial

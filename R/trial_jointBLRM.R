@@ -2,7 +2,7 @@
 #function: trial_jointBLRM
 #----------------------------------------
 #'@keywords internal
-trial_jointBLRM<- function(          doses.mono1.a = c(0),
+trial_jointBLRM_par<- function(          doses.mono1.a = c(0),
                                      doses.mono2.a = c(1),
                                      doses.combi.a = rbind(c(1), c(1)),
                                      doses.mono1.b = c(0),
@@ -16,7 +16,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                      start.dose.combi.a2= NULL,
                                      start.dose.combi.b1 = NULL,
                                      start.dose.combi.b2 = NULL,
-                                     seed = as.numeric(Sys.time()),
+                                     #seed = as.numeric(Sys.time()),
 
                                      historical.data= NULL,
 
@@ -156,7 +156,7 @@ trial_jointBLRM<- function(          doses.mono1.a = c(0),
 ){
 
 
-    set.seed(seed)
+    #set.seed(seed)
 
     #--------------------------------------
     #preparations to start the actual trial
