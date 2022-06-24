@@ -2044,7 +2044,7 @@ sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
 
 
   #sample seeds for each trial
-  trial_seeds = sample.int(.Machine$integer.max, n.studies)
+  #trial_seeds = sample.int(.Machine$integer.max, n.studies)
   #Note: this ensures that the trials will be based on the same seeds, regardless
   #of whether the simulation is parallelized or not.
 
@@ -2132,7 +2132,7 @@ sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
                                                                                               start.dose.combi.a2= start.dose.combi.a2,
                                                                                               start.dose.combi.b1 = start.dose.combi.b1,
                                                                                               start.dose.combi.b2 = start.dose.combi.b2,
-                                                                                              seed = trial_seeds[i],
+                                                                                              #seed = trial_seeds[i],
                                                                                               #BLRM = BLRM,
 
                                                                                               historical.data= historical.data,
