@@ -41,7 +41,6 @@
 #' @import flock
 #' @import doRNG
 #' @importFrom rstan sampling
-#' @importFrom RBesT mixfit
 #' @importFrom stats rbinom sd family quantile median
 #' @importFrom parallel makeCluster stopCluster
 #' @importFrom foreach foreach registerDoSEQ "%dopar%"
