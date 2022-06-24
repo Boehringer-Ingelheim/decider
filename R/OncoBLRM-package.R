@@ -43,7 +43,7 @@
 #' @importFrom rstan sampling
 #' @importFrom stats rbinom sd family quantile median
 #' @importFrom parallel makeCluster stopCluster
-#' @importFrom foreach foreach registerDoSEQ "%dopar%"
+#' @importFrom foreach foreach registerDoSEQ "%dopar%" getDoParRegistered
 #' @importFrom doParallel registerDoParallel
 #' @importFrom gridExtra grid.arrange
 #' @importFrom scales breaks_extended
