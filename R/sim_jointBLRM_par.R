@@ -40,8 +40,9 @@
 #'activate the corresponding trials via the \code{active.[...]} arguments.}
 #'\item{Set the number of trials to be simulated.}
 #'\item{Optional: Specify additional options for the simulations.}
-#'\item{Optional but strongly recommended: Enable parallel simulation and specify the number of cores, and supply a path for a working directory
-#'for saving and re-loading MCMC results. When a working directory is supplied, be aware that the function will delete or modify
+#'\item{Optional: Register a parallel backend for the \code{foreach} framework, cf. \code{\link[foreach:foreach]{foreach-package}}.
+#'Alternatively or additionally, when only a small number of cores is available, consider to supply a path for a working directory
+#'for saving and re-loading MCMC results. When a working directory is supplied, be aware that the function may delete or modify
 #'existing .RData files containing "_tmp" and the supplied \code{file.name} in their name from the working directory to avoid
 #'re-loading MCMC runs from previous simulations.
 #'Refer to the documentation below for more detail.}
@@ -190,7 +191,6 @@
 #'    backfill.start.combi.b1 = NULL,
 #'    backfill.start.combi.b2 = NULL,
 #'    n.studies = 1,
-#'    n.cores = 1,
 #'    seed = sample.int(.Machine$integer.max, 1),
 #'    chains = 4,
 #'    iter = 13500,
@@ -521,8 +521,8 @@
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}. Due to the long simulation time, it is recommended
 #'to first try lower numbers to obtain an estimation of the run-time for larger numbers of studies. Typically, about 1000 studies are recommended to obtain
 #'acceptably accurate simulation results.
-#'@param n.cores Optional positive integer, defaults to \code{1}. Enables parallelized simulation and specifies the number of cores to be used. If a value greater
-#'than 1 is given, the function will process the simulations in parallel using the given number of cores.
+# #'@param n.cores Optional positive integer, defaults to \code{1}. Enables parallelized simulation and specifies the number of cores to be used. If a value greater
+# #'than 1 is given, the function will process the simulations in parallel using the given number of cores.
 #'@param seed Optional positive integer that specified the seed to be used for the simulation. The default is \code{sample.int(.Machine$integer.max, 1)}.
 #'Note that reproducibility can only be obtained when the function is executed on exactly the same computing architecture, using identical software versions
 #'(e.g. of the compiler, Stan, and R), and the same input specifications. This is due to the internal use of \code{\link[rstan:rstan]{rstan-package}} for MCMC sampling, which is
@@ -804,7 +804,7 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                           backfill.start.combi.b2 = NULL,
 
                           n.studies = 1,
-                          n.cores = 1,
+                          #n.cores = 1,
                           seed = sample.int(.Machine$integer.max, 1),
                           chains = 4,
                           iter = 13500,
@@ -916,12 +916,12 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
     stop("`iter` must be larger than `warmup` by at least 1000.")
   }
 
-  if(!is.wholenumber(n.cores)){
-    stop("`n.cores` needs to be an integer.")
-  }
-  if(!n.cores>=0 | !length(n.cores)==1){
-    stop("`n.cores` must have length 1 and be larger or equal than 0.")
-  }
+  # if(!is.wholenumber(n.cores)){
+  #   stop("`n.cores` needs to be an integer.")
+  # }
+  # if(!n.cores>=0 | !length(n.cores)==1){
+  #   stop("`n.cores` must have length 1 and be larger or equal than 0.")
+  # }
 
   if(!is.wholenumber(max.n)){
     stop("`max.n` needs to be an integer.")

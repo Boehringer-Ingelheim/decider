@@ -171,7 +171,6 @@
 #'    covar.combi.a = FALSE,
 #'    covar.combi.b = FALSE,
 #'    n.studies = 1,
-#'    n.cores = 1,
 #'    seed = sample.int(.Machine$integer.max, 1),
 #'    chains = 4,
 #'    iter = 13500,
@@ -309,8 +308,8 @@
 #'joint BLRM without covariate.
 #'@param n.studies Positive integer that specifies the number of studies to be simulated, defaults to \code{1}.
 #'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
-#'@param n.cores Optional positive integer, defaults to \code{1}.
-#'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
+# #'@param n.cores Optional positive integer, defaults to \code{1}.
+# #'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param seed Optional positive integer that specified the seed to be used for the simulation.
 #'Refer to \code{\link[OncoBLRM:sim_jointBLRM]{sim_jointBLRM}()} for details.
 #'@param chains Optional positive integer that specifies the number of Markov chains to be used during MCMC sampling, defaults to \code{4}.
@@ -575,7 +574,7 @@ sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
                           covar.combi.b = FALSE,
 
                           n.studies = 1,
-                          n.cores = 1,
+                          #n.cores = 1,
                           seed = sample.int(.Machine$integer.max, 1),
                           chains = 4,
                           iter = 13500,
@@ -704,12 +703,12 @@ sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
     stop("`iter` must be larger than `warmup` by at least 1000.")
   }
 
-  if(!is.wholenumber(n.cores)){
-    stop("`n.cores` needs to be an integer.")
-  }
-  if(!n.cores>=0 | !length(n.cores)==1){
-    stop("`n.cores` must have length 1 and be larger or equal than 0.")
-  }
+  # if(!is.wholenumber(n.cores)){
+  #   stop("`n.cores` needs to be an integer.")
+  # }
+  # if(!n.cores>=0 | !length(n.cores)==1){
+  #   stop("`n.cores` must have length 1 and be larger or equal than 0.")
+  # }
 
   if(!is.wholenumber(max.n)){
     stop("`max.n` needs to be an integer.")
