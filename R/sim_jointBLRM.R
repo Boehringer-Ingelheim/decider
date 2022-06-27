@@ -646,7 +646,7 @@
 #' \code{\link[rstan:rstan]{rstan-package}}.
 #'
 #'@export
-sim_jointBLRM_par <- function(active.mono1.a = FALSE,
+sim_jointBLRM <- function(active.mono1.a = FALSE,
                           active.mono1.b = FALSE,
                           active.mono2.a = FALSE,
                           active.mono2.b = FALSE,
@@ -2295,7 +2295,7 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
   #foreach loop over the available number of nodes
      res.list <- foreach::foreach( kpar = chunks_outer,
                           .packages = c("decider"),
-                          .export = c("stanmodels", "trial_jointBLRM_par"),
+                          .export = c("stanmodels", "trial_jointBLRM"),
                           .errorhandling = "pass",
                           .inorder = FALSE,
                           .combine = c) %dorng% {
@@ -2321,8 +2321,8 @@ sim_jointBLRM_par <- function(active.mono1.a = FALSE,
                   }
                 }
                 #call function
-                # return(decider:::trial_jointBLRM_par(
-                  return(trial_jointBLRM_par(
+                # return(decider:::trial_jointBLRM(
+                  return(trial_jointBLRM(
                                 doses.mono1.a = doses.mono1.a,
                                 doses.mono2.a = doses.mono2.a,
                                 doses.combi.a = doses.combi.a,

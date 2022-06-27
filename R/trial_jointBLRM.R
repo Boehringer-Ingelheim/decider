@@ -2,7 +2,7 @@
 #function: trial_jointBLRM
 #----------------------------------------
 #'@keywords internal
-trial_jointBLRM_par<- function(          doses.mono1.a = c(0),
+trial_jointBLRM<- function(          doses.mono1.a = c(0),
                                      doses.mono2.a = c(1),
                                      doses.combi.a = rbind(c(1), c(1)),
                                      doses.mono1.b = c(0),
