@@ -16,7 +16,7 @@
 #'\code{combi.b}.
 #'
 #'@usage
-#'sim_covariate_jointBLRM_par(
+#'sim_covariate_jointBLRM(
 #'    active.mono1.a = FALSE,
 #'    active.mono1.b = FALSE,
 #'    active.mono2.a = FALSE,
@@ -401,7 +401,7 @@
 #' \code{\link[rstan:rstan]{rstan-package}}, \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()},
 #'
 #'@export
-sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
+sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
                           active.mono1.b = FALSE,
                           active.mono2.a = FALSE,
                           active.mono2.b = FALSE,
@@ -2090,7 +2090,7 @@ sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
   #foreach loop over the available number of nodes
   res.list <- foreach::foreach( kpar = chunks_outer,
                                 .packages = c("decider"),
-                                .export = c("stanmodels", "trial_covariate_jointBLRM_par"),
+                                .export = c("stanmodels", "trial_covariate_jointBLRM"),
                                 .errorhandling = "pass",
                                 .inorder = FALSE,
                                 .combine = c) %dorng% {
@@ -2116,7 +2116,7 @@ sim_covariate_jointBLRM_par <- function(active.mono1.a = FALSE,
                                                          }
                                                        }
 
-                                                       return(trial_covariate_jointBLRM_par(  doses.mono1.a = doses.mono1.a,
+                                                       return(trial_covariate_jointBLRM(  doses.mono1.a = doses.mono1.a,
                                                                                               #decider:::trial_jointBLRM(  doses.mono1.a = doses.mono1.a,
                                                                                               doses.mono2.a = doses.mono2.a,
                                                                                               doses.combi.a = doses.combi.a,
