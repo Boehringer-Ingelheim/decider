@@ -3655,7 +3655,7 @@ sim_covariate_jointBLRM <- function(active.mono1.a = FALSE,
       file.remove(list.files(working.path, full.names = T, pattern = paste0("^", file.name, "_tmp.")))
     }
   }
-  #monitor dir
+  #monitor dir cleaned up
   if(!is.null(monitor.path) & !is.null(file.name)){
     if(clean.working.path){
       message("Cleaning up temporary data from monitoring directory.")
