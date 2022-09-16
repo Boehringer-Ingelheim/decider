@@ -3845,6 +3845,15 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       file.remove(list.files(working.path, full.names = T, pattern = paste0("^", file.name, "_tmp.")))
     }
   }
+  if(!is.null(monitor.path) & !is.null(file.name)){
+    if(clean.working.path){
+      message("Cleaning up temporary data from monitoring directory.")
+      #cleanup of working directory
+      file.remove(list.files(monitor.path, full.names = T, pattern = paste0("^trial-.")))
+    }
+  }
+
+
 
   #-------------------------------------
   # Write the results to an excel-file
