@@ -59,6 +59,7 @@
 #'    adapt_delta = 0.8,
 #'    max_treedepth = 15,
 #'    chains = 4,
+#'    digits = 5,
 #'    seed=sample.int(.Machine$integer.max, 1),
 #'    path = NULL,
 #'    file.name = NULL,
@@ -217,6 +218,8 @@
 #'@param adapt_delta Optional numeric between 0.6 and 1, default is 0.8. Given to Stan's \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} method in the \code{control} argument of Stan.
 #'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param max_treedepth Optional integer, defaults to 15.
+#'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'@param digits Optional integer, defaults to 5.
 #'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
 #'@param seed Optional positive integer that specifies the seed to be used for the simulation.
 #'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
@@ -516,6 +519,7 @@ scenario_covariate_jointBLRM <- function(
                                adapt_delta = 0.8,
                                max_treedepth = 15,
                                chains = 4,
+                               digits = 5,
                                seed=sample.int(.Machine$integer.max, 1),
 
                                path = NULL,
@@ -533,6 +537,13 @@ scenario_covariate_jointBLRM <- function(
 {
 
 
+
+  if(!is.wholenumber(digits)){
+    stop("`digits` must be a whole number.")
+  }
+  if(!digits >0 ){
+    stop("`digits` must be a positive, whole number.")
+  }
 
   #--------------------------------------------------------------------------------------------------
   #Input checks and handling of special cases
@@ -1766,7 +1777,9 @@ scenario_covariate_jointBLRM <- function(
         #summ_plot <- summ.current.std[, c(1:(length(summ.current.std)-1))]
       }
 
-      summary_list[[str_curr]] <- summ.current.std
+      #round and add to summary list
+      summary_list[[str_curr]] <- round(summ.current.std, digits = digits)
+
 
       if(plot.decisions){
         if(is.null(file.name)){
@@ -1784,7 +1797,7 @@ scenario_covariate_jointBLRM <- function(
         if(missing(plot.width)|missing(plot.height)|missing(plot.unit)){
 
           plot_list[[plotstr_curr]] <- plot_decisions_jointBLRM_int(
-            summary=res_raw[[paste0(std)]][rows_curr, ],
+            summary=round(res_raw[[paste0(std)]][rows_curr, ], digits = digits),
             probs=probs,
             type=type,
             dosing.intervals=dosing.intervals.internal,
@@ -1809,7 +1822,7 @@ scenario_covariate_jointBLRM <- function(
           }
 
           plot_list[[plotstr_curr]] <- plot_decisions_jointBLRM_int(
-            summary=res_raw[[paste0(std)]][rows_curr, ],
+            summary=round(res_raw[[paste0(std)]][rows_curr, ], digits = digits),
             probs=probs,
             type=type,
             dosing.intervals=dosing.intervals.internal,

@@ -47,6 +47,7 @@
 #'    adapt_delta = 0.8,
 #'    max_treedepth = 15,
 #'    chains = 4,
+#'    digits = 4,
 #'    seed=sample.int(.Machine$integer.max, 1),
 #'    path = NULL,
 #'    file.name = NULL,
@@ -275,6 +276,7 @@
 #'See also \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()} for details on \code{max_treedepth}.
 #'Note: The maximum treedepth should usually not be reached during sampling, otherwise Stan will print a warning.
 #'In this case, it is recommended to increase its value.
+#'@param digits Optional positive integer that specified the number of digits used in the outputs. Defaults to 5.
 #'@param seed Optional positive integer that specifies the seed to be used for the simulation. The default is \code{sample.int(.Machine$integer.max, 1)}.
 #'Note that reproducibility can only be obtained when the function is executed on exactly the same computing architecture, using identical software versions
 #'(e.g. of the compiler, Stan, and R), and the same input specifications. This is due to the internal use of \code{\link[rstan:rstan]{rstan-package}} for MCMC sampling, which is
@@ -626,6 +628,7 @@ scenario_jointBLRM <- function(data=NULL,
                                adapt_delta = 0.8,
                                max_treedepth = 15,
                                chains = 4,
+                               digits = 5,
                                seed=sample.int(.Machine$integer.max, 1),
 
                                path = NULL,
@@ -709,6 +712,13 @@ scenario_jointBLRM <- function(data=NULL,
 
       stop("observation with `n.pat`<`n.dlt` detected in `data`.")
     }
+  }
+
+  if(!is.wholenumber(digits)){
+    stop("`digits` must be a whole number.")
+  }
+  if(!digits >0 ){
+    stop("`digits` must be a positive, whole number.")
   }
 
   if(!is.wholenumber(seed)){
@@ -1754,7 +1764,8 @@ scenario_jointBLRM <- function(data=NULL,
 
     }
 
-    summary_list[[str_curr]] <- summ.current.std
+    #round and add to summary list
+    summary_list[[str_curr]] <- round(summ.current.std, digits = digits)
 
     if(plot.decisions){
       if(is.null(file.name)){
@@ -1767,7 +1778,7 @@ scenario_jointBLRM <- function(data=NULL,
       if(missing(plot.width)|missing(plot.height)|missing(plot.unit)){
 
         plot_list[[plotstr_curr]] <- plot_decisions_jointBLRM_int(
-          summary=res_raw[[paste0(std)]],
+          summary=round(res_raw[[paste0(std)]], digits = digits),
           probs=probs,
           type=type,
           dosing.intervals=dosing.intervals.internal,
@@ -1792,7 +1803,7 @@ scenario_jointBLRM <- function(data=NULL,
         }
 
         plot_list[[plotstr_curr]] <- plot_decisions_jointBLRM_int(
-                                       summary=res_raw[[paste0(std)]],
+                                       summary=round(res_raw[[paste0(std)]], digits = digits),
                                        probs=probs,
                                        type=type,
                                        dosing.intervals=dosing.intervals.internal,
