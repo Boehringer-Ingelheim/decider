@@ -41,6 +41,7 @@ scenario_jointBLRM(
    adapt_delta = 0.8,
    max_treedepth = 15,
    chains = 4,
+   digits = 4,
    seed=sample.int(.Machine$integer.max, 1),
    path = NULL,
    file.name = NULL,
@@ -232,6 +233,8 @@ Note: The maximum treedepth should usually not be reached during sampling, other
 In this case, it is recommended to increase its value.}
 
 \item{chains}{Optional integer. Number of Markov chains constructed by Stan. Defaults to 4.}
+
+\item{digits}{Optional positive integer that specified the number of digits used in the outputs. Defaults to 5.}
 
 \item{seed}{Optional positive integer that specifies the seed to be used for the simulation. The default is \code{sample.int(.Machine$integer.max, 1)}.
 Note that reproducibility can only be obtained when the function is executed on exactly the same computing architecture, using identical software versions

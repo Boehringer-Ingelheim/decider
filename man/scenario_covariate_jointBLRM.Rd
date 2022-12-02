@@ -50,6 +50,7 @@ scenario_covariate_jointBLRM(
    adapt_delta = 0.8,
    max_treedepth = 15,
    chains = 4,
+   digits = 5,
    seed=sample.int(.Machine$integer.max, 1),
    path = NULL,
    file.name = NULL,
@@ -211,6 +212,9 @@ See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
 See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
 
 \item{chains}{Optional integer. Number of Markov chains constructed by Stan. Defaults to 4.}
+
+\item{digits}{Optional integer, defaults to 5.
+See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
 
 \item{seed}{Optional positive integer that specifies the seed to be used for the simulation.
 See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
