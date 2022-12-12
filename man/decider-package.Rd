@@ -59,7 +59,7 @@ Clinical Cancer Research, 24(21), 5483-5484 <doi: 10.1158/1078-0432.ccr-18-0168>
 }
 \seealso{
 \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
-\code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()},\code{\link[decider:fit_jointBLRM]{fit_jointBLRM}()},
+\code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()},
 \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}},
 \code{\link[rstan:rstan]{rstan-package}}.
 }

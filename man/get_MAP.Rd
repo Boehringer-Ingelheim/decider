@@ -218,7 +218,7 @@ Neuenschwander, B., Roychoudhury, S., & Schmidli, H. (2016). On the use of co-da
 Statistics in Biopharmaceutical Research, 8(3), 345-354, \url{doi:10.1080/19466315.2016.1174149}.
 }
 \seealso{
-\code{\link[decider:get_pred_tox]{get_pred_tox}()}, \code{\link[decider:fit_jointBLRM]{fit_jointBLRM}()},
+\code{\link[decider:get_pred_tox]{get_pred_tox}()},
 \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
 \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}}.
 }

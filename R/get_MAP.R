@@ -78,7 +78,7 @@
 #' and \eqn{log(\beta)} are needed to model the DLT rate of each dose level.
 #' Besides this, the same hierarchical model structure as described in
 #' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} is used.
-#' @seealso  \code{\link[decider:get_pred_tox]{get_pred_tox}()}, \code{\link[decider:fit_jointBLRM]{fit_jointBLRM}()},
+#' @seealso  \code{\link[decider:get_pred_tox]{get_pred_tox}()},
 #' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
 #' \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}}.
 #' @references

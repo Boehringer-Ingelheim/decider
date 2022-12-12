@@ -4,16 +4,15 @@ Version: 0.0.0.9008
 Authors@R: 
     c(person(given = "Boehringer Ingelheim",
            family = "Pharma GmbH & Co. KG",
-           role = c("cph"),
-           email = "no-email-available@no-domain.com")
-      ,person(given = "Daniela",
-           family = "Maier",
-           role = c("aut"),
-           email = "daniela_2.maier@boehringer-ingelheim.com")
-      ,person(given = "Lukas",
+           role = c("cph", "fnd"))
+     ,person(given = "Lukas",
            family = "Schroeter",
            role = c("aut", "cre"),
-           email = "lukas.schroeter@boehringer-ingelheim.com"))
+           email = "lukas.schroeter@boehringer-ingelheim.com")
+      ,person(given = "Daniela",
+           family = "Maier",
+           role = c("ctb"),
+           email = "daniela_2.maier@boehringer-ingelheim.com"))
 Description: Provides functions that allow to compute posterior distributions of 
   Bayesian logistic regression models (BLRMs) for monotherapy and combination 
   therapy dose-finding trials and summarizing them via dosing 

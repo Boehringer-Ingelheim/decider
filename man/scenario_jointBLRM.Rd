@@ -41,7 +41,7 @@ scenario_jointBLRM(
    adapt_delta = 0.8,
    max_treedepth = 15,
    chains = 4,
-   digits = 4,
+   digits = 5,
    seed=sample.int(.Machine$integer.max, 1),
    path = NULL,
    file.name = NULL,

@@ -2263,7 +2263,7 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
             "   doFuture::registerDoFuture()\n",
             "   future::plan(future::multisession)\n")
 
-    tt <- suppressWarnings(foreach::foreach(k = 1:2) %dopar% {k^k^k})
+    tt <- suppressWarnings(foreach::foreach(kpar = 1:2) %dopar% {kpar^kpar^kpar})
     rm(tt)
 
   }

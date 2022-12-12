@@ -82,8 +82,7 @@
 #'
 #'The function \code{get_pred_tox()} can optionally return the samples from the
 #'predictive distribution, which can in turn be used to perform single-dose analyses
-#'using a binomial-beta-mixture model. Refer to the documentation of \code{\link[decider:binomial_betamix]{binomial_betamix}()}
-#'and the vignette on single dose confirmation for details.
+#'using e.g. a binomial-beta-mixture model.
 #'@usage
 #'get_pred_tox(
 #'  doses.of.interest,
@@ -112,8 +111,7 @@
 #'  dosing.intervals = c(0.16, 0.33),
 #'  ...
 #')
-#' @seealso  \code{\link[decider:get_MAP]{get_MAP}()},\code{\link[decider:binomial_betamix]{binomial_betamix}()},
-#' \code{\link[decider:fit_jointBLRM]{fit_jointBLRM}()},
+#' @seealso  \code{\link[decider:get_MAP]{get_MAP}()},
 #' \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()},
 #' \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()}, \code{\link[rstan:rstan]{rstan-package}}.
 #' @references
