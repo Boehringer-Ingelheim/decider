@@ -180,8 +180,7 @@ of the DLT rates.
 
 The function \code{get_pred_tox()} can optionally return the samples from the
 predictive distribution, which can in turn be used to perform single-dose analyses
-using a binomial-beta-mixture model. Refer to the documentation of \code{\link[decider:binomial_betamix]{binomial_betamix}()}
-and the vignette on single dose confirmation for details.
+using e.g. a binomial-beta-mixture model.
 }
 \examples{
 \dontrun{
