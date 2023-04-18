@@ -8,3 +8,4 @@
 ^doc$
 ^Meta$
 [.]o$
+^cran-comments\.md$
