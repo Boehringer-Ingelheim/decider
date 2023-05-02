@@ -1,0 +1,1264 @@
+---
+title: "Evaluate prior specifications of a joint BLRM for oncology dose finding"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{evaluate_prior_specs_jointBLRM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r options, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+options(width=120)
+```
+
+This vignette illustrates the usage of package `decider` for setting up and evaluating
+prior distributions for joint Bayesian logistic regression model (BLRM)-based dose-finding trials with one or more monotherapy
+and/or two-compund combination therapy trials that may run sequentially or in parallel. It will
+be assumed that the reader is familiar with the general process of dose-limiting toxicity (DLT)-based
+dose-finding trials with the aim of determining a maximum-tolerated dose (MTD) and with
+the BLRM and its meta-analytic extensions (joint BLRM) for DLT-based dose finding.
+For an introduction to these topics, refer to [@neuenschwander08], [@neuenschwander14], [@neuenschwander16].
+While this terminology and the applied methods mainly originated in the context
+of oncology dose finding, the methods contained in this vignette can also be
+applied to other therapeutic areas. Note that different therapeutic areas
+may be using a slightly different notions instead of e.g. DLT and MTD.
+
+Note further that the term "trial" may also refer to a trial arm (e.g. monotherapy
+and combination therapy), and that the model will not differentiate between these notions.
+Moreover, the term "study" will refer to the complete conduct of all jointly modeled
+trials. That is, simulating e.g. 10 studies means that all involved trials are simulated in
+the specified order and under the remaining specified assumptions for in total
+10 times.
+
+## Overview of the main tools
+The package ships with two main functions, which are called `scenario_jointBLRM`
+and `sim_jointBLRM`. The former is essentially a high-level wrapper for fitting
+a joint BLRM to a concrete data scenario, while the latter allows to simulate
+the course of a number of dose-finding trials under the assumption of a specific
+dose-toxicity scenario, i.e. a specification of the DLT rates of the involved dose
+levels.
+
+### `scenario_jointBLRM`
+The function `scenario_jointBLRM` is essentially a wrapper for a Stan model of
+the joint BLRM, which is internally used to sample from the posterior distribution
+given a set of input data using the so-called No-U-Turn sampler (NUTS) algorithm.
+For details on the technicalities behind Stan, a good starting place is Stan's
+[homepage](https://mc-stan.org).
+
+However, besides fitting the model, the function will also perform a number of
+further evaluations based on the posterior. Most importantly, the posterior
+(predictive) distribution of the DLT rates (referred to as posterior toxicities
+in the following) for a given set of dose levels is
+determined based on the fitted model. In actual dose-finding trials these
+distributions will form the basis of the recommended dose level for the next cohort.
+
+The output of `scenario_jointBLRM` consist of a summary of these posterior
+toxicities, as well as an evaluation of them in terms of an specific escalation rule.
+Here, the term escalation rule refers to a method that derives a dosing recommendation
+based on the fitted BLRM. Currently, the `decider` package supports the popular escalation
+with overdose control (EWOC)-based escalation rules [@babb98], as well as loss-based
+escalation rules, which are however not considered in this vignette.
+Note that EWOC-based escalation is the default setting of all functions, so that without further
+specifications, the functions will assume that EWOC is applied. Essentially, EWOC computes
+the probability that the DLT rate of a dose lies above a prespecified target dosing interval
+(often from 16\% to 33\% DLT rate), and demands that this probability does not exceed
+a certain boundary, typically 0.25 (the default). Both the interval and the boundary
+can be adapted by the user. For EWOC-based escalation, the summary that `scenario_jointBLRM`
+creates will contain the resulting posterior interval probabilities of underdosing, target dosing,
+and overdosing, as well as summary statistics of the posterior of the DLT rates of
+a given set of doses of interest (which are usually the set of possible dose levels in the trial).
+
+Additionally, plots of the posterior interval probabilities can be created,
+which visualize the EWOC principle and the set of doses that
+is allowed by EWOC based on the given data.
+
+The main uses of `scenario_jointBLRM` are the evaluation of actual and hypothetical
+data scenarios and the determination of the resulting posterior. Actual data
+scenarios refer here to data that was observed during a trial, while hypothetical
+data scenarios are a way of evaluating the on-trial behavior of the BLRM with some
+escalation rule in a concrete setting. These are particularly important at the
+planning stage of dose-finding trials, as they allow to monitor the performance
+of the model in scenarios that are assumed to potentially occur during the trial. Based
+on these evaluations, the prior distribution of the BLRM can be adapted to obtain
+appropriate escalation behavior.
+
+For evaluating a prior specification at the planning stage of a trial, one will typically
+need to consider a whole set of different scenarios that test the model and its recommendation
+in a broad spectrum of possible situations. Specifically for this setting, the additional
+function `scenario_list_jointBLRM()` is provided, which allows to evaluate a list of
+arbitrarily many scenarios via `scenario_jointBLRM()` in parallel.
+
+### `sim_jointBLRM`
+When a prior with appropriate on-trial behavior is established, one may want to conduct
+more thorough evaluation of the performance of the resulting model. A widely-accepted
+way of achieving this are trial simulations. For this, one assumes concrete "true" DLT
+rates for the dose levels available in a trial (referred to as dose-toxicity scenario)
+and repeatedly simulates the number of DLTs that are observed in cohorts of patients.
+Based on this data, the BLRM is fitted and the escalation rule is applied to determine
+the dose level for the next cohort, or, potentially, if the trial needs to be stopped early
+(this can e.g. happen when the lowest available dose does not satisfy the EWOC criterion).
+This process is repeated until a prespecified condition for the declaration of the
+MTD is reached, or until the trial is stopped without declaring an MTD (either due to
+stopping early or due to reaching the maximum number of patients that can be enrolled).
+
+Such trial simulation can then be used to determine the operating characteristics of the trial
+design in specific dose-toxicity scenarios. That is, one simulates a number of trials, e.g. 1000,
+and determines the ratio of MTDs declared at specific dose levels (e.g., MTDs at target doses),
+as well as further quantities like the average number of patients treated with a specific dose
+or the average number of DLTs that occurred during the trial.
+
+This process is then repeated for a number of different scenarios, containing e.g.
+low-toxicity scenarios (all doses have DLT rate below the targeted interval), moderate scenarios
+(DLT rates range from underdoses over target doses to overdoses), highly toxic scenarios,
+and further extreme cases, like e.g. one trial being considerably more toxic than another one.
+
+The function `sim_jointBLRM()` is designed to perform these simulations in a convenient manner and
+generate output tables that summarize the operating characteristics of a specified trial design
+in concrete dose-toxicity scenarios. It provides the option two simulate up to six trials
+running in parallel (which can be activated independently of each other),
+namely two monotherapy trials for each involved compound, and two
+combination therapy trias which are all included in a joint meta-analytic BLRM which is specified
+according to [@neuenschwander14], [@neuenschwander16].
+
+The priors used by the model and the order in which cohorts arrive can be freely specified by the user,
+as well as many further options, including escalation rules, MTD selection, starting doses, and additional restrictions
+on the increment between escalations. Furthermore, the function allows to include data
+from arbitrarily many historical trials (not actively simulated) for the involved compounds.
+
+## Setting up and evaluating priors using `scenario_jointBLRM`
+Assume in the following that we are interested in setting up an oncology dose-finding
+study that includes two different trials, referred to as Arm A and Arm B in the following.
+Suppose that Arm A investigates on some treatment, say compound 1, in a first-in-human
+monotherapy setting, while Arm B shall consider combination therapy with compound 1 and
+some combination partner, say compound 2. We assume that previous dose-finding trials
+for compound 2 were already conducted, so that DLT data is available for monotherapy
+with compound 2 from earlier clinical investigations.
+
+Assume further that Arm A and Arm B shall run partially in parallel, or, more precisely,
+that Arm B will be initiated before Arm A has concluded (before the trial declared an MTD), provided
+that the involved doses of compound 1 were already tested in monotherapy.
+To allow exchange of information across Arms A and B, and further the inclusion of
+the historical data for compound 2, we will model both trials and the historical
+trials in a joint BLRM. The following sections provide an overview how the
+function `scenario_jointBLRM` can be set up for this situation, and how it is used
+to specify and evaluate an appropriate prior distribution and conduct analyses to
+determine the next dose level during the trial.
+
+Before you continue, do not forget to load the `decider` package.
+```{r setup}
+library(decider)
+```
+
+### Basic specifications of `scenario_jointBLRM`
+As a first step, we will determine the necessary fixed input data, consisting of
+a set of available dose levels for Arms A ad B, the set of historical data,
+and reference dose levels for both compounds.
+
+First, assume that from an historical monotherapy trial for compound 2, the clinical
+data given below is available. Dose levels of the same compound are assumed to be
+stated in some fixed unit of measurement, e.g. mg or mg/kg, which is not explicitly
+denoted for simplicity.
+
+Dose  | #Patients | #DLT
+------|-----------|------
+2     | 3         |0
+4     | 3         |0
+8     | 3         |0
+12    | 9         |1
+16    | 12        |2
+
+It is further assumed that all of these observations originate from a single
+historical trial, although this could easily be extended to multiple historical
+trials (described below).
+
+The given data now needs to be written in the format that `scenario_jointBLRM`
+accepts, which is a named list containing the entries `dose1`, `dose2`, `n.pat`,
+`n.dlt`, and `trial`. For the data given above, use
+```{r historical-data}
+historical.data = list(
+  dose1 = c( 0,    0,    0,    0,    0),
+  dose2 = c( 2,    4,    8,    12,   16),
+  n.pat = c( 3,    3,    3,    9,    12),
+  n.dlt = c( 0,    0,    0,    1,    2),
+  trial = c("H1", "H1", "H1", "H1", "H1")
+)
+```
+Here, each column in the structure given above translates to the data observed
+at one dose level during a specific historical trial. Note that the dose levels
+of compound 2 are given in the entry `dose2`, while the entry of `dose1` is `0`
+to indicate that the cohorts received monotherapy with compound 2.
+
+In the example here, only the data from one historical trial is included. For this,
+the same entry of `historical.data$trial` is given for each historical cohort,
+which tells the function that all of these cohorts belong to the same trial.
+The entry `"H1"` is an arbitrarily chosen trial name for the historical trial,
+note that one could also use a specific number or some other string as trial name.
+When data for multiple historical trials in given, multiple trial names need to
+be used to indicate this.
+
+As a next step, we need to specify reference dose levels and the set of available
+dose levels for the trial. Although the set of investigational dose levels can be flexible
+in practice (i.e., does not need full specification at the planning stage), for prior
+evaluations, a hypothetical set of doses that are planned to be used in the
+trial need to be specified to allow evaluating the hypothetical on-trial behavior
+of the model.
+
+We will in the following assume that the planned monotherapy doses for compound 1
+are
+```{r doses1}
+d1 = c(0.1, 0.2, 0.4, 0.8, 1.6, 2.4, 3.6, 5, 6)
+```
+where we have again left out the unit of measurement (e.g. g or mg/kg) for simplicity.
+Regarding combination therapy, suppose that it is planned to consider all combinations
+of the monotherapy doses of compound 1 with the dose levels
+```{r doses2}
+d2 = c(8, 12)
+```
+of compound 2 (given in the same unit of measurement as the doses in the historical data).
+
+The planned monotherapy and combination therapy doses should be given to the function
+via the argument `doses.of.interest`, which specifies which dose levels need to be
+evaluated. The argument needs to be a matrix with two rows and one column for each
+dose level, where monotherapy doses are indicated by placing `0` or `NA` in the entry
+of the other compound.
+
+In the setting specified above, this results in
+```{r doses-of-interest}
+doses.of.interest = rbind( c(d1,                  rep(d1, times=length(d2))),
+                           c(rep(0, length(d1)),  rep(d2, each=length(d1))) )
+
+#monotherapy compound 1.
+doses.of.interest[, 1:length(d1)]
+
+#combinations of compound 1 with dose 8 of compound 2.
+doses.of.interest[, (length(d1)+1):(2*length(d1))]
+
+#combinations of compound 1 with dose 12 of compound 2.
+doses.of.interest[, (2*length(d1)+1):(3*length(d1))]
+```
+
+Next, we need to specify the reference doses used by the joint BLRM. We assume that
+for compound 1 the dose `6` and for compound 2 the dose `12` was selected for this:
+```{r reference-doses}
+dose.ref1 = 6
+dose.ref2 = 12
+```
+
+To explicitly tell the function that we are interested in two trials
+which consider monotherapy for compound 1, respectively combination therapy, we now
+include the following optional arguments:
+```{r trials-of-interest}
+trials.of.interest = c("A",     "B")
+types.of.interest =  c("mono1", "combi")
+```
+
+The trial names `"A"` and `"B"` are arbitrary and tell the function that this is
+how we will indicate the two trials in the data. The types `"mono1"` and `"combi"`
+specify that only the `doses.of.interest` for the corresponding trial type
+need to be analyzed for the corresponding trial. That is, trial `"A"` is the
+trial of type `"mono1"` and will only consider monotherapy with compound 1,
+while `"combi"` indicates that trial `"B"` will only consider combination
+therapy doses. There is also the type `"all"` which will cause the function to
+analyze all given doses of interest for a trial.
+
+If the trials of interest or their type are not explicitly specified,
+the function will use all trial names given in data and historical data
+(in our case, including the trial `"H1"` from the historical data), and further
+try to infer the type from the given data for this trial. If this is not possible,
+(e.g. when no data is given yet), the function will provide posteriors for all
+doses of interest for this trial. Therefore, specifying trials of interest and
+their types allows to control which output is included in a more precise fashion.
+
+Furthermore, when we do not provide data for trial `"A"` or `"B"` yet (e.g. to obtain
+the predictive distribution induced by the data from the other included trials), the function
+would not include the posterior of the trial in the output unless its name is specified
+explicitly as a trial of interest. For instance, when only the historical data
+is given, the function would only estimate the posterior of the historical trials
+but not estimate the predictive distribution of a new trial based on the historical data.
+
+At this point, we could in principle already run the function to produce posterior
+predictive distributions for the trials `"A"` and `"B"` purely from the historical data of trial `"H1"`
+(which is equivalent to a meta-analytic predictive prior, cf. [@neuenschwander16]).
+However, we still have not specified a (hyper-)prior distribution for the model,
+so that the function would apply the default prior configuration (refer to the documentation
+of `scenario_jointBLRM`). While the default prior is weakly informative and was
+found to be quite flexible across different situations, it is still recommended
+to specify a prior manually to ensure good on-trial behavior of the model
+This will be the subject of the next section.
+
+### Specifying a prior for the joint BLRM
+Refer to the section Detail in the documentation of `scenario_jointBLRM` for a model
+specification of the joint BLRM and explanations what the model does. For the
+following, it is only important to know that the prior specifications consist
+of two parts, namely, a prior for the hyper-means (argument `prior.mu`) and a prior
+for the between-trial heterogeneities (argument `prior.tau`), where the hyper-mean
+is the shared mean of the parameters across trials and the between-trial heterogeneity
+is the standard deviation across trials. Recall the five
+different parameters of the joint BLRM: two parameters for each compound
+(more precisely, the intercept $log(\alpha_i)$ and the log-slope $log(\beta_i)$ for
+compound $i$), and the interaction parameter, $\eta$. Hence, the prior specification
+must specify the distribution of the hypermean and between-trial heterogeneity
+for these five parameters.
+
+For this, it is assumed that all hypermeans follow normal distributions with some
+fixed mean and SD (which are therefore the input required to specify the distribution of
+each hypermean), while the heterogeneities are assumed to follow log-normal distributions,
+whose mean and SD (on log-scale) need to be given to the function. Technically, it is
+further assumed that for each $i$, $log(\alpha_i)$ and $log(\beta_i)$ may be correlated
+with some correlation coefficient $\rho$, but this hyperparameter is automatically
+assigned a uniform distribution on the interval $[-1, 1]$, so that its prior does
+not need to be specified.
+
+#### Prior for the hypermeans: `prior.mu`
+First, consider the prior for the hypermeans, which is encoded in the argument
+`prior.mu`. This must be a list with five named entries, where each entry provides
+the mean and SD of the distribution of one of the five hypermeans.
+
+The expected format of this argument is:
+```{r prior-mu}
+#               Parameter    Mean        SD
+prior.mu = list(mu_a1  =  c(-0.7081851, 2),
+                mu_b1  =  c(0,          1),
+                mu_a2  =  c(-0.7081851, 2),
+                mu_b2  =  c(0,          1),
+                mu_eta =  c(0,          1.121))
+```
+
+Here, the prefix `mu` indicates that this is a hypermean, while the
+suffixes correspond to the parameters as given in the following table.
+
+Parameter       | Suffix
+----------      |-------
+$log(\alpha_1)$ | `_a1`
+$log(\beta_1)$  | `_b1`
+$log(\alpha_2)$ | `_a2`
+$log(\beta_2)$  | `_b2`
+$\eta$          | `_eta`
+
+In the prior list, each of the entries should be of the form `c(x, y)`, where `x`
+gives the mean and `y` the SD of the normal distribution assumed for the hypermean
+of the corresponding parameter.
+
+The default values were oriented towards [@neuenschwander14] and [@neuenschwander16],
+and represent a relatively flexible, weakly informative prior distribution. It
+is recommended that this is used as a starting point for adapting the prior
+to a given setting, as specific modifations to match the setting of a concrete
+trial will most likely provide better performance than the default prior.
+
+Regarding the interpretation of the parameter, $log(\alpha_i)$ gives the median
+log-odds of experiencing a DLT following treatment at the reference dose. The value
+`-0.7081851` corresponds to
+```{r logit}
+logit(0.33)
+```
+
+which means that one assumes the reference dose to have in median a DLT rate of 33%.
+This corresponds precisely to the upper boundary of the default target interval
+(from 16% to 33%), so that the prior expresses the assumption that the reference
+dose is a priori a possible candidate for the MTD (note that the reference dose
+should be chosen accordingly).
+
+The default value of the SD of the hypermeans of $log(\alpha_i)$ is `2`, which
+represents a relatively large uncertainty and leads to relatively flexible prior.
+Note however that depending on the dosing range and other specifications of the
+trial, one might want to deviate from this default value. For instance, we may
+want to assume a slightly larger uncertainty regarding the intercept to obtain a more conservative setup, e.g. via
+```{r prior-mu-alt}
+prior.mu = list(mu_a1  =  c(-0.7081851, 3),
+                mu_b1  =  c(0,          1),
+                mu_a2  =  c(-0.7081851, 3),
+                mu_b2  =  c(0,          1),
+                mu_eta =  c(0,          1.121))
+```
+
+Regarding the hyperpriors for $log(\beta)$, a standard normal distribution is assumed.
+This covers a relatively broad range of slopes, although one may want to select a
+larger or smaller SD in certain cases. Regarding the mean, it is typically
+not necessary to deviate from the default of `0` unless there is very concrete
+information about the shape of the dose-toxicity relationship.
+
+For the interaction parameter, recall that negative values of $\eta$ express a
+lower DLT rate of dose combinations than the interaction free-case (in which the
+compounds would cause DLT fully independently from each other), while positive
+values lead to a larger DLT rate compared to the interaction-free case.
+The default value of $0$ for the mean expresses that both positive and
+negative interactions may occur, while the SD of 1.121 is selected so that the
+95% credible interval of the interaction-parameters corresponds to an increase
+up to 9-fold (or decrease by factor of 9) of the odds for a DLT at the reference
+dose. Larger or lower values of mean and SD can be used to obtain more aggressive
+or conservative behavior of combination trials. Refer e.g. to [@neuenschwander14]
+for more detail on this.
+
+#### Prior for the between-trial heterogeneities: `prior.tau`
+
+The prior parameters for the between-trial heterogeneity control the amount of borrowing
+that is performed across trials. In this context, the assumption of a larger
+heterogeneity for a parameter allows this parameter to show larger variance
+across trials, and, consequently, reduces the influence that data from other
+trials have on each jointly modeled trial.
+
+The decider package assumes that the between-trial heterogeneities follow
+log-normal distributions, which are specified by providing their mean and SD
+on log-scale.
+
+The default value and required format of `prior.tau` is:
+```{r prior-tau}
+#                Parameter    Mean        SD
+prior.tau = list(tau_a1  =  c(log(0.25),  log(2)/1.96),
+                 tau_b1  =  c(log(0.125), log(2)/1.96),
+                 tau_a2  =  c(log(0.25),  log(2)/1.96),
+                 tau_b2  =  c(log(0.125), log(2)/1.96),
+                 tau_eta =  c(log(0.125), log(2)/1.96))
+```
+
+The naming conventions are the same as for `prior.mu`.
+
+Note that a value of `c(x,y)` as `tau_[...]` provides the mean `x` and SD `y` on
+log-scale, i.e. if the corresponding hyperparameter is denoted as $\tau$, the
+function assumes that $\tau=exp(\psi)$ for some random variable $\psi$ that is
+normally distributed with mean `x` and SD `y`.
+
+The default values are oriented towards [@neuenschwander14]. Note that
+the SDs are typically all set to either `log(2)/1.96` or `log(4)/1.96` (larger
+uncertainty), other values are usually not needed.
+
+To specify the mean for the between-trial heterogeneities, one typically assumes
+a specific degree of heterogeneity (cf. table below). By default, `scenario_jointBLRM`
+assumes the mean to be `log(0.25)` for the between-trial heterogeneity of
+$log(\alpha_i)$, and `log(0.125)` for the heterogeneity of the remaining
+parameters. On natural (non-log) scale, this means that differences of the
+parameters across trials are in median expected to be 0.25, respectively 0.125.
+This is usually referred to as "moderate" between-trial heterogeneity, other
+potential values for the mean can be found in the following table.
+
+Heterogeneity   | $log(\alpha_i)$ | $log(\beta_i)$ / $\eta$
+----------      |---------------- | -----------------------
+Small           | `log(0.125)`    | `log(0.0625)`
+Moderate        | `log(0.25)`     | `log(0.125)`
+Substantial     | `log(0.5)`      | `log(0.25)`
+Large           | `log(1)`        | `log(0.5)`
+
+Regarding the prior setup for the between-trial heterogeneity, the chosen prior
+should depend on the expected differences across trials and the number of patients
+in the included co-data (larger number of patients may require more heterogeneity
+to ensure sufficient robustness). For many situations, the moderate and substantial
+configurations from the above table provide acceptable robustness, so that these are
+typically considered to be good starting points for prior evaluations. Besides
+the evaluations of hypothetical scenarios and simulations (covered in the following
+sections), prior effective sample sizes also provide a good way of evaluating
+the influence of co-data on the trial of interest and adjusting the priors for
+the between-trial heterogeneity accordingly. Refer to [@neuenschwander20a]
+for more detail on this type of method for assessing the information
+included in the prior.
+
+### Using `scenario_jointBLRM` to evaluate hypothetical data scenarios
+Hypothetical data scenarios evaluate the decisions of the BLRM in a number of
+concrete situations that might occur in the trial that is planned. While one can
+usually not foresee and evaluate all possible situations (mostly due to there
+being too many of them), one restricts these evaluations to important classes of
+settings. These include but are not limited to:
+
+* Early scenarios that assess the decisions within the first few cohorts of a
+  trial, especially scenarios that assume early DLTs.
+
+* Late scenarios that assess the resulting MTD estimates based on the planned
+  number of patients (or slightly fewer).
+
+* Scenarios that assess specific critical dosing recommendations, e.g. whether the
+  escalation rule ceases to increase the dose when observing certain DLT rates.
+
+* Scenarios that assume heterogeneous co-data. Here, it is e.g. assessed whether
+  the decision rule can correctly decide in settings where the involved trials
+  or trials show substantially different toxicities.
+
+* Similarly to the previous point, if multiple parallel trials are involved
+  that start at different points in time, it should be assessed how the co-data
+  influences the start of the trials. For instance, it can happen that the
+  combination trial is not allowed to be started at the planned starting dose due
+  to toxic monotherapy data. It should therefore be assessed (and aligned with
+  ones recommendations) which co-data is needed to allow the planned starting
+  dose, and in which cases this would not be recommended by the model.
+
+As an example, consider the scenario that the first cohort of 3 patients was
+treated at the dose 0.1 of compound 1 and a second cohort at the dose 0.2. We
+assume further that no DLT occurred in the first cohort, while one of the patients
+of the second cohort experienced DLT. This translates to the data scenario:
+```{r scenario1}
+scenario1 = list(
+  dose1 = c( 0.1,  0.2),
+  dose2 = c( 0,    0),
+  n.pat = c( 3,    3),
+  n.dlt = c( 0,    1),
+  trial = c("A",  "A")
+)
+```
+
+Note that `"A"` was used as trial name for the monotherapy trial for compound 1,
+as this needs to match the name specified in the `trials.of.interest` argument.
+
+Now, the scenario function can be called. Using the previously specified
+objects, the function can be applied via
+```{r example-scenario_jointBLRM, eval=T, warning=F}
+result1 <- scenario_jointBLRM(
+  data = scenario1,
+  historical.data = historical.data,
+  doses.of.interest = doses.of.interest,
+  dose.ref1 = dose.ref1,
+  dose.ref2 = dose.ref2,
+  trials.of.interest = trials.of.interest,
+  types.of.interest = types.of.interest,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau
+)
+
+print(result1)
+```
+
+Note that the output contains two entries, one for each trial of interest. As we
+previously specified the types of these trials, the posterior toxicities of
+trial `"A"` are only computed for the doses of interest that represent
+monotherapy with compound 1, while the posteriors for trial `"B"` only contain
+the combination therapy dose levels.
+
+For each of these doses, the interval probabilities are computed, as well as
+summary statistics of the posterior toxicities. By default, the considered
+interval probabilities assume a target interval (range of DLT rates considered
+to be appropriate as MTD) of $[0.16, 0.33)$. However, if
+one is interested in some different interval, say, $[0.2, 0.3)$, this can be
+achieved by supplying the optional argument `dosing.intervals = c(0.2, 0.3)`.
+In this context, the underdosing, respectively overdosing intervals contain
+the DLT rates below, respectively above the target interval.
+
+Further customization of the output can be achieved by supplying the argument
+`probs`, which specifies the quantiles listed in the output tables. By default,
+the reported quantiles are 2.5\%, 50\%, and 97.5\%. If additional quantiles
+shall be computed, say, 25\% and 75\%, this can be achieved e.g. with
+`probs = c(0.025, 0.25, 0.5, 0.75, 0.975)`.
+
+If additional output plots shall be created (not required for prior evaluation,
+but potentially helpful for actual analyses), one can activate this via
+`plot.decisions = TRUE`. Usually, simple bar plots are created by this argument
+for monotherapy, and a heatmap for combination therapy. By additionally setting
+`plot.return = TRUE`, the plots will be contained in the results list in the form
+of `ggplot` objects. Refer to the documentation of the `ggplot2` package for detail
+on this type of object. The `ggplot2` package also provides a broad range of
+functions that can be used to customize the returned plots further. If `plot.return`
+is not specified, the function will only print the plots and potentially
+save them if the user specified a path for outputs.
+```{r scenario-call2, eval=T, fig.show = 'hide', warning=F}
+result1a <- scenario_jointBLRM(
+  data = scenario1,
+  historical.data = historical.data,
+  doses.of.interest = doses.of.interest,
+  dose.ref1 = dose.ref1,
+  dose.ref2 = dose.ref2,
+  trials.of.interest = trials.of.interest,
+  types.of.interest = types.of.interest,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau,
+  plot.decisions = TRUE,
+  plot.return = TRUE,
+  ewoc.threshold = 0.25
+)
+```
+
+The generated plots are shown in the plot panel in RStudio. To explicitly display
+the returned `ggplot` objects, one can access them as follows.
+```{r scenario-plots, fig.width=6, fig.height=4}
+plot(result1a$plots$"trial-A")
+plot(result1a$plots$"trial-B")
+```
+
+Note that we supplied an additional argument, `ewoc.threshold`, to the call to
+`scenario_jointBLRM`. This argument states
+the feasibility bound of the EWOC criterion (cf. Babb et al. (1998)) and is
+displayed by the plots to indicate which doses are fulfilling the EWOC criterion
+(and could be used for the next cohort). This argument is optional and defaults
+to `0.25` if not specified, so that it is actually not needed unless a different
+value shall be used as feasibility bound of the EWOC criterion.
+
+There are further options for customizing plots, e.g. to indicate which type of
+plots is used for combination therapy trials (heatmap or bar diagram). Detail on
+this and further arguments for the output plots are specified in the
+documentation.
+
+One can also enable automatic saving of the posterior summaries by
+supplying the optional arguments `file.name` and `path`. If the latter specifies
+a valid (writable) directory, the output will be saved as `.xlsx` file under
+the specified `file.name`. Additionally, one can save the output plots by further
+specifying `plots.save = TRUE` (provided a valid `path` and `file.name` were
+supplied). In this case, it is recommended to specify the format of the output
+plots via `plot.unit`,  `plot.width`, and  `plot.height`. Refer to the
+documentation for detail on this.
+
+### Evaluating mutliple scenarios in parallel
+When setting up a prior, one will typically want to evaluate a number of
+scenarios at once, but, as Bayesian computation tends to take relatively long,
+this may be rather slow for e.g. 10 or more scenarios. Additionally, one would
+need e.g. 10 (or more) calls to `scenario_jointBLRM`, which may not be practical
+if the same scenarios are repeatedly evaluated for slightly altered prior
+specifications.
+
+To provide slightly more convenience for these types of exercise, the function
+`scenario_list_jointBLRM` allows to perform multiple calls to
+`scenario_jointBLRM` in parallel for a list of data scenarios, which both speeds
+up the computation and simplifies the evaluation of a number of hypothetical
+settings. Please note that a parallel backend needs to be registered to
+leverage the parallelization, otherwise the function will be executed sequentially.
+An example is provided below.
+
+To use this, consider first a (numbered) list of data scenarios. This is
+specified as a list of lists, where each sublist must be of the format
+expected by the `data` argument of `scenario_jointBLRM`.
+For instance, a list with 8 scenarios could look like this:
+```{r scenarios}
+data.list = list(
+
+  #Scenario 1
+  list(
+    dose1 = c( 0.1),
+    dose2 = c( 0),
+    n.pat = c( 3),
+    n.dlt = c( 0),
+    trial = c("A")),
+
+  #Scenario 2
+  list(
+    dose1 = c( 0.1),
+    dose2 = c( 0),
+    n.pat = c( 3),
+    n.dlt = c( 1),
+    trial = c("A")),
+
+  #Scenario 3
+  list(
+    dose1 = c( 0.1),
+    dose2 = c( 0),
+    n.pat = c( 3),
+    n.dlt = c( 2),
+    trial = c("A")),
+
+  #Scenario 4
+  list(
+    dose1 = c( 0.1,  0.2),
+    dose2 = c( 0,    0),
+    n.pat = c( 3,    3),
+    n.dlt = c( 0,    1),
+    trial = c("A",  "A")),
+
+  #Scenario 5
+  list(
+    dose1 = c( 0.1,  0.2),
+    dose2 = c( 0,    0),
+    n.pat = c( 3,    3),
+    n.dlt = c( 0,    2),
+    trial = c("A",  "A")),
+
+  #Scenario 6
+  list(
+    dose1 = c( 0.1,  0.2,  0.4),
+    dose2 = c( 0,    0,    0),
+    n.pat = c( 3,    3,    3),
+    n.dlt = c( 0,    0,    1),
+    trial = c("A",  "A",  "A")),
+
+  #Scenario 7
+  list(
+    dose1 = c( 0.1,  0.2,  0.4),
+    dose2 = c( 0,    0,    0),
+    n.pat = c( 3,    3,    6),
+    n.dlt = c( 0,    0,    1),
+    trial = c("A",  "A",  "A")),
+
+  #Scenario 8
+  list(
+    dose1 = c( 0.1,  0.2,  0.4,     0.2),
+    dose2 = c( 0,    0,    0,       8),
+    n.pat = c( 3,    3,    6,       3),
+    n.dlt = c( 0,    0,    1,       0),
+    trial = c("A",  "A",  "A",     "B"))
+)
+```
+
+Note that Scenario 8 also contains cohorts from the combination therapy trial, encoded
+with the trial name `"B"` as specified previously. The cohorts can be given in
+arbitrary order.
+
+To run the evaluations in parallel, one can additionally register a paralell backend.
+There are various existing packages than can achieve this. A basic construct to
+register a parallel backend using the `doFuture` package is the following
+```{r n-cores}
+library(doFuture)
+
+#specify number of cores -- here, only 1 for a sequential exacution
+n.cores <- 1
+
+#register backend for parallel execution and plan multisession
+doFuture::registerDoFuture()
+future::plan(future::multisession, workers=n.cores)
+```
+
+In this example, only 1 core is selected, which is identical to a sequential execution.
+In practice, `n.cores` can be set depending on the available processor on which
+the function is running.
+
+Note on more advanced parallelization: For evaluation of hypothetical scenarios,
+please note that the parallelization is set up to use only a single node, i.e.,
+no cluster architecture with multiple nodes of a given number of cores is supported
+in the current version. This was done as for scenarios, one will rarely require to
+evaluate more than a couple dozen. However, for trial simulations (mentioned below), the
+package implements a nested foreach loop, so that parallelization with arbitrarily many
+nodes and several cores per node can be used.
+
+Now, coming back to the evaluation of scenarios, after registration of the
+parallel backend one can simply use
+```{r scenario-call3, eval=T, warning=F}
+results <- scenario_list_jointBLRM(
+  data.list = data.list,
+  n.cores = n.cores,
+
+  historical.data = historical.data,
+  doses.of.interest = doses.of.interest,
+  dose.ref1 = dose.ref1,
+  dose.ref2 = dose.ref2,
+  trials.of.interest = trials.of.interest,
+  types.of.interest = types.of.interest,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau
+)
+
+print(results)
+```
+
+Here, except for the first argument, `data.list`, we have
+provided precisely the same arguments as for the call to `scenario_jointBLRM`
+from the previous section.
+This would also work for all other (optional) arguments of `scenario_jointBLRM`,
+except for `file.name`. Instead of this argument, `scenario_list_jointBLRM`
+uses the optional argument `file.names` (notice the plural), which has the same
+function as `file.name` for `scenario_jointBLRM`, but needs to contain a vector
+with a file name for each scenario instead. As before, the argument is
+ignored unless you want to save the output and have supplied a `path`.
+
+Note further that the historical data provided to `scenario_list_jointBLRM`
+is included in the posterior evaluations for every scenario, i.e., the historical
+data is interpreted in the same fashion as for `scenario_jointBLRM`, and does
+not vary across the scenarios in the list.
+
+To obtain a prior configuration, it is now recommended to create a sufficiently
+large number of scenarios, and repeatedly evaluate the scenarios to gradually
+alter the prior distribution and obtain an appropriate setup and behavior in
+the considered scenarios. However, as mentioned before, one will probably not
+be able to consider every potential scenario in advance, so that this is
+mostly a heuristic check and is not guaranteed to yield an optimal prior. Due to this,
+further evaluation of the prior should be performed to confirm that it shows
+appropriate operating characteristics in the long-run. This will be the subject
+of the following section.
+
+## Simulating dose-finding trials with `sim_jointBLRM`
+Simulations of trials usually aim to estimate the operating characteristics (OC)
+of a dose-finding trial design, which includes e.g. the ratio of MTDs declared
+on each dose (or on doses with DLT rate in a specific dosing interval), the number
+of patients per dose and the number of DLTs in the trial, as well as further
+metrics for the simulation results.
+
+While there are simulation-free approaches to estimating OCs
+of certain model-based trial designs for dose finding, no such method is currently
+known for the BLRM
+(cf. Braun (2020)), and even less so for its more involved variants like the
+joint BLRM. Hence, the only available method for this are simulated trials.
+That is, one assumes a fixed set of available dose levels and a fixed
+dose-toxicity scenario -- i.e. a specification of the DLT rate for each available
+dose level -- and simulates a number of trials in this setting. This allows to
+e.g. estimate the average number of MTDs in the correct interval or the number
+of patients treated at overly toxic doses for this specific dose-toxicity
+scenario.
+
+As it is of course not possible to test all possible dose-toxicity scenarios,
+one will typically confine oneself to a selected number of scenarios that
+illustrate different possible cases. These should usually range from scenarios
+that follow the prior expectations, over more extreme scenarios that assume
+the involved drugs to be considerably more (or less) toxic than expected by
+the prior, up to scenarios that deliberately assume the trials to result
+in heterogeneous data or that the true dose-toxicity relationship does not follow
+the logistic model of the BLRM (i.e. one assumes the BLRM to be misspecified).
+
+As an example how such simulations can be performed via `sim_jointBLRM`, we will
+again consider the setting of the previous section. For this, recall that a
+monotherapy and combination therapy trial shall run (partially) in parallel,
+where we wanted to consider the dose levels given in the variable
+`doses.of.interest` and use the data from a historical trial as given in the
+`historical.data` argument.
+
+The function `sim_jointBLRM` supports simulation of (parallel) monotherapy or
+combination therapy trials. Internally, it is differentiated between three types,
+namely monotherapy for compound 1 (`"mono1"`), monotherapy for compound 2 (`"mono2"`),
+and combination therapy with compounds 1 and 2 (`"combi"`). For each of these types,
+the function can actively simulate 2 trials (i.e., six parallel trials in total),
+and the order in which cohorts are enrolled in each of the up to six trials
+can be specified freely. The simulated trials can be activated independently of
+each other, i.e. one can choose how many of the parallel trials are simulated.
+
+Additionally, historical data from arbitrarily many trials that are already
+concluded can be given, and furthermore, data that was observed in the actively
+simulated trials before the start of the simulation can be included as well
+(which allows to simulate how one or more trials might continue after
+already having observed a specific data scenario).
+
+### Naming conventions for `sim_jointBLRM`
+The function features a large number of optional parameters to allow
+relatively flexible customization of the simulated trials, e.g. regarding the
+number of patients per cohort, criteria for MTD selection, escalation rules, and
+further topics. Refer to the documentation for more detail and the parameters that
+are not discussed in this vignette.
+
+To allow some settings to deviate across the simulated trials, many of the
+arguments of `sim_jointBLRM` exist in six variations, one for each simulated trial.
+To differentiate between these, the arguments feature trial-specific suffixes as
+given in the following table.
+
+Trial | Suffix of function arguments
+----------|:---------------------:
+1st monotherapy trial for compound 1 | `mono1.a`
+1st monotherapy trial for compound 2 | `mono2.a`
+1st combination therapy trial        | `combi.a`
+2nd monotherapy trial for compound 1 | `mono1.b`
+2nd monotherapy trial for compound 2 | `mono2.b`
+2nd combination therapy trial        | `combi.b`
+
+Here, the first and second trial for a specific trial type mean simply that these
+are independently escalating trials of the same type, but does not imply a
+specific order or some other dependency across the first and second trial (except
+that they are jointly modeled in the BLRM). It is for instance possible to just
+simulate the `mono2.b` trial and deactivate all other trials.
+
+The take away message from these naming conventions is that one needs to use the
+parameter with the corresponding suffix when an specific option shall only
+affect one specific trial but not the others. Arguments that do not have a
+suffix will in general always affect all simulated trials.
+
+Apart from the argument names, the suffixes for the six potentially simulated trials
+are also used to refer to the corresponding trial when the order in which the trials
+enroll cohorts is specified. Furthermore, they are also used to encode the trials
+when historical data that was previously recorded in an actively simulated trial
+shall be included. Refer to the documentation for more detail.
+
+### Configuring the trial simulations
+First and foremost, one needs to decide which of the possible six trials
+need to be simulated and activate the corresponding trials. For the example in this
+vignette, an monotherapy trial for compound 1 and a combination therapy trial
+shall be included. We will assume that we have chosen to utilize the `mono1.a`
+and `combi.a` trials to represent these trials (although it would be
+equivalent to use the `mono1.b` and `combi.b` trials or even a combination of
+`mono1.b` and `combi.a`). To activate the trials, we can supply the arguments
+```{r active-trials}
+active.mono1.a = TRUE
+active.combi.a = TRUE
+```
+
+Now, we specify the corresponding available dose levels. For this, we will use
+the same doses as specified previously:
+```{r available-doses}
+doses.mono1.a = c(0.1, 0.2, 0.4, 0.8, 1.6, 2.4, 3.6, 5, 6)
+
+doses.combi.a = rbind(
+  rep(doses.mono1.a, times=2),
+  rep(c(8, 12),      each = length(doses.mono1.a)))
+```
+
+Note that `doses.mono1.a` is a vector, while `doses.combi.a` needs
+to be a matrix with two rows, so that each column specifies a dose combination
+to be considered in the combination therapy trial. The code above generated
+every possible combination of the doses from the monotherapy trial for
+compound 1 with the doses 8 and 12 for compound 2.
+
+As for the function `scenario_jointBLRM`, one again needs to specify reference
+doses and a prior distribution for the BLRM. For this, the same argument names
+and formats as for `scenario_jointBLRM` are used, i.e. the arguments
+`dose.ref1`, `dose.ref2`, `prior.mu`, and `prior.tau` can be used in the form
+that was specified in the previous section. The same holds for the historical data,
+for which we will assume that the same observations as before are used, namely
+```{r historical-data2}
+historical.data
+```
+
+Additionally, we need to provide starting dose levels for each activated trials.
+Note that these must be elements of the set of available dose levels, otherwise
+the function will report an error. We will assume that the monotherapy trial
+will start with the lowest available dose, 0.1, which is specified via
+```{r start-mono1-a}
+start.dose.mono1.a = 0.1
+```
+
+We will later assume additionally that the monotherapy trial enrolls at least 3
+or 4 cohorts before the first combination therapy cohort is processed, and due
+to this, we assume the combination trial to use a slightly larger starting dose.
+For instance, suppose that the combination therapy shall begin with the dose
+combination of 0.2 of compound 1 and 8 of compound 2. This is expressed by
+using
+```{r start-combi-a}
+start.dose.combi.a1 = 0.2
+start.dose.combi.a2 = 8
+```
+
+Note that two arguments need to be specified for this, with suffix `.combi.a1`
+for the first compound and `.combi.a2` for the second compound. Both
+of these arguments belong to the `combi.a` trial, while the endings
+`.a1`  and `.a2` are used to differentiate between the setting for the first
+and second compound of the `combi.a` trial. They are also used for other
+arguments that may need different settings for the two combination therapy
+partners in the same combination therapy trial.
+
+#### Optional general specification
+As a next step, the general course of the trial can be defined, consisting
+of the number of patients per cohort, the maximum number of patients in the
+trial, and the order in which cohorts are enrolled. All of these arguments
+are optional, and relatively sensible defaults will be used when they are
+not specified.
+
+First, to set the number of patients per cohort, one can use e.g.
+```{r cohort-size}
+cohort.size = 3
+```
+
+Note that `cohort.size` is the global variant of this argument, i.e. it affects all
+simulated trials. If it is not provided explicitly, the function will use the default
+value of 3. If a specific trial shall deviate from this value, one can
+use the trial-specific parameter with the corresponding trial suffix, e.g.
+```{r cohort-size-example}
+cohort.size.mono1.b = 4
+```
+
+Note that this would only affect the `mono1.b` trial, which we do not plan to
+simulate in the current example. For the `mono1.a` and  `combi.a` trial, which
+we do want to simulate, the global cohort size of 3 is still in effect. The same
+would apply if `cohort.size` is not given to the function, as the default value
+would have been used in this case.
+
+One can also provide a vector of multiple cohort sizes, in which case the function will
+randomly select one of the given cohort sizes for each cohort. The cohort sizes
+will then be drawn uniformly at random from the possible numbers specified in
+'cohort.size' if no further options are given. If it is desired to draw each
+cohort size with a specific probability, one can use the optional argument
+`cohort.prob` to provide the probability for each cohort size, e.g. by setting
+```{r cohort-prob-example}
+cohort.size.mono1.b = c(2,    3,    4)
+cohort.prob.mono1.b = c(0.05, 0.85, 0.1)
+```
+
+In this example, the `mono1.b` trial would select the size of each cohort
+randomly according to the corresponding probabilities, i.e. a cohort size of 2
+is drawn with a probability of 0.05, a size of 3 with probability 0.85, and a
+cohort size of 4 will be chosen with a probability of 0.1. As before, there is a
+global and trial-specific version of the argument `cohort.prob`.
+
+As a next step, we want to set the maximum number of patients for each trial.
+We will assume the maximum number of patients to be 36 for the
+combination therapy trial and 45 for the monotherapy trial. This can be set
+via the trial-specific arguments
+```{r max-n}
+max.n.mono1.a = 45
+max.n.combi.a = 36
+```
+
+Note that there is also a global argument `max.n`, which will not be used in this
+example.
+
+Now, the order in which cohorts are enrolled is specified. For this,
+the function uses the argument `cohort.queue`, which provides, as the name says,
+a queue of cohorts that is processed during the simulation. This can be done
+by supplying a simple pattern which is automatically repeated (note however that
+the function will drop a warning in this case) or by supplying a complex pattern
+that already contains every cohort that may potentially be arriving throughout
+the trial. For instance, to simply simulate cohorts for `mono1.a` and `combi.a`
+alternately, one can use
+```{r cohort-queue1}
+cohort.queue = c("mono1.a", "combi.a")
+```
+
+This order would then be repeated until both trials concluded due to being stopped
+early, having found an MTD, or reaching the maximum patient number.
+
+The cohort queue is mostly used to enforce a specific order of the cohorts in
+a trial. For this, consider again the example from the previous section, where
+a monotherapy and combination trial shall be simulated in parallel. Assume for
+instance that one wants to start the combination therapy trial after the first
+four monotherapy cohorts were processed, and, afterwards, the trials shall
+enroll cohorts alternately. This is expressed by setting the queue to
+```{r cohort-queue2}
+cohort.queue = c("mono1.a", "mono1.a", "mono1.a", rep(c("mono1.a", "combi.a"),
+                                                      times=12))
+head(cohort.queue, 9)
+```
+
+Note that `c("mono1.a", "combi.a")` is repeated 12 times, which translates to
+12 `"combi.a"` and 15 `"mono1.a"` cohorts in the queue. As the cohort size was
+previously set to 3 patients, this results in a total of 36 patients for
+`combi.a` in the queue and 45 patients for `mono1.a`, i.e. precisely the maximum
+sample size that was specified. This ensures that the function will not need to
+repeat the queue automatically. Note that it would not be a problem to provide
+a cohort queue containing more patients than required, as the function will simply
+ignore cohorts for each simulated trial once it has concluded. Therefore, it is
+also possible to use e.g.
+```{r cohort-queue3}
+cohort.queue = c("mono1.a", "mono1.a", "mono1.a", rep(c("mono1.a", "combi.a"),
+                                                      times=100))
+```
+
+Here, we supplied much more cohorts than needed (100 for combination therapy),
+which is still equivalent to the previous queue. Only supplying lower numbers
+of cohorts will cause the function to operate differently, as it will repeat the
+cohort queue until all trials concluded.
+
+Note that the trials in the cohort queue can also be indicated with numbers (which
+usually leads to shorter code than the full trial names), as stated in the following
+table.
+
+Trial | Suffix of function arguments | Number
+----------|:---------------------:  |:-------------:
+1st monotherapy trial for compound 1 | `mono1.a` | 1
+1st monotherapy trial for compound 2 | `mono2.a` | 2
+1st combination therapy trial        | `combi.a` | 3
+2nd monotherapy trial for compound 1 | `mono1.b` | 4
+2nd monotherapy trial for compound 2 | `mono2.b` | 5
+2nd combination therapy trial        | `combi.b` | 6
+
+Hence, the previous cohort queue could be equivalently written as
+```{r  cohort-queue4}
+cohort.queue = c(1, 1, 1, rep(c(1, 3), times=100))
+```
+
+#### Escalation decisions in simulted trials
+As a next step, we specify rules for dose escalation decisions. As mentioned
+before, the function will by default apply EWOC-based escalation, which means
+that only doses can be chosen for which the posterior probability of overdosing
+is below 0.25. This boundary could also be altered, by using the argument
+```{r ewoc-threshold}
+ewoc.threshold = 0.25
+```
+
+As EWOC only states an upper boundary, the function will afterwards maximize the
+probability of having a DLT rate within the target interval among the doses that
+satisfy EWOC. If this still leads to
+multiple possible doses, the function will subsequently maximize the dose of the
+first compound among the doses with the same probability of target dosing.
+To maximize the second compound instead, one can set the argument
+`esc.comp.max`, which may have the values `1` or `2` and indicates which
+component the function will maximize in case of draws. Note that one can also
+deviate from maximizing the target probability and maximize directly the dose
+among the levels that satisfy EWOC, but this is not covered in this vignette.
+Refer to the documentation of the argument `esc.rule` for information on this.
+
+@neuenschwander14 recommend to impose a maximum increment of the
+dose additionally to EWOC, in order to avoid overly large dosing steps during
+dose escalations. This can be realized by using the `esc.step` family of
+arguments, which is available as a global variant and six trial-specific
+parameters. The escalation step is interpreted as the maximum factor of dose
+escalation. For instance, when an escalation step is set to the value 2, the dose
+can at most be doubled in each escalation decision. If no escalation step is
+given, the function will set it to the maximum factor between subsequent dose
+levels as an additional constrain on the escalation.
+
+However, there might be situations in which one may not want a fixed maximum
+factor between escalations, e.g. if a factor cannot express the increments
+between planned dose levels. Consider for instance a trial with planned doses of
+10, 20, 30, and 40 mg. In order to allow escalating from 10 to 20, the escalation
+step would need to be set to 2, but this would also allow escalating from 20
+to 40 without enrolling patients at 30. To prevent this, one can set
+```{r esc-constrain}
+esc.constrain = TRUE
+```
+
+This argument constrains escalations to the given set of dose levels, i.e. only
+the next larger prespecified dose can be used. If activated, `esc.constrain`
+causes the function to ignore any given escalation step and always restrict
+escalation decisions to the next larger dose (but does not pose a boundary
+when deescalating the dose). As before, `esc.constrain` is the global variant,
+while additional arguments like `esc.constrain.mono1.b` only affect the
+corresponding trial.
+
+#### MTD selection
+It now remains to specify the rules for MTD selection in the trial.
+
+There are two different arguments that control how the function selects the MTD
+of a simulated trial, namely `mtd.decision` and `mtd.enforce`. Both are available
+as global arguments without suffix and as trial-specific argument with the
+corresponding suffix. The argument `mtd.decision` is a named list with five
+entries of the form
+```{r mtd-decision}
+mtd.decision = list(
+  min.dlt     = 1,
+  pat.at.mtd  = 6,
+  min.pat     = 12,
+  target.prob = 0.5,
+  rule        = 2
+)
+```
+
+The list stated above is also the default argument. The first four list entries
+correspond to the demanded boundaries of four different conditions that are
+used to determine an MTD. The last entry, `mtd.decision$rule` does not pose
+a condition itself, but dictates which of the other conditions are mandatory instead.
+
+During the simulation, the MTD can only be determined as the dose that was used
+for the last cohort, which is always the current candidate for the MTD.
+For MTD selection, the function will then first demand that the current dose level
+is also recommended for the next cohort again (so-called stabilization criterion).
+If this is the case, it will check whether the current dose also satisfies the
+conditions determined by `mtd.decision`, and, if these are satisfied, declare the
+current dose to be the MTD of this trial. The precise conditions and the
+corresponding entries in `mtd.decision` are listed in the following table.
+
+No.     | List entry    |  Condition
+:--------|:-----------  |:-----------------------
+1       | `min.dlt`     | At least `min.dlt` patients with DLTs were observed in the trial.
+2       | `pat.at.mtd`  | At least `pat.at.mtd` patients were treated with the current dose.
+3       | `min.pat`     | At least `min.pat` patients were treated in the current trial.
+4       | `target.prob` | The probability that the current dose has DLT rate in the target interval is at least `target.prob`.
+
+In terms of the effect of the entry `rule`, the following to possibilities are supported
+
+* __If `rule` is `1`__: Conditions 1 and 2 are necessary, and at least one of conditions 3 and 4 must be satisfied as well.
+
+* __If `rule` is `2`__: Conditions 1 and 3 are necessary, and at least one of conditions 2 and 4 must be satisfied as well.
+
+Other decision rule specifications may be supported in the future.
+
+The second argument that affects MTD selection, `mtd.enforce`, is a logical
+value that controls how the function behaves when a trial reaches the specified
+maximum sample size. By default, `mtd.enforce` is `FALSE`, which causes trials
+that reach the maximum sample size to be considered as not having found an MTD,
+which will also be noted in the output. If the parameter is instead `TRUE`, the
+current dose will be considered the MTD when the maximum sample size is reached
+before the conditions for MTD selections are satisfied. This can e.g. be used if
+one wants to approximate the average dosing recommendations after a specific
+number of cohorts based on simulations. For instance, when `max.n = 15`,
+`mtd.enforce = TRUE`, one can set `mtd.decision` to values that cannot be
+reached within 15 patients (e.g., `mtd.decision$rule = 2` and `mtd.decision$min.pat = 16`),
+so that the function will simply report the dosing recommendation after 15
+patients as the MTD and not apply the MTD decision rule. This option can also be
+set for individual trials (via the parameters with the corresponding suffix).
+
+#### Dose-toxicity scenarios and trial simulations
+It remains to specify a dose-toxicity scenario before the simulation can be started.
+That is, a DLT rate for each dose level is assumed, which is then used by the
+function to simulate the number of patients experiencing DLT in each cohort.
+
+The arguments for specifying the DLT rate in one of the simulated trials
+are named according to the pattern `tox.[...]`, where `[...]` can be any of the
+trial-specific suffixes. Note that there is no global variant of this argument.
+For the situation discussed in the previous chapters, the required arguments are
+therefore `tox.mono1.a` and `tox.combi.a`.
+
+First, recall the specification of the dose levels for the monotherapy trial:
+```{r doses-mono1-a}
+doses.mono1.a
+```
+
+The DLT rates (or toxicities) must therefore be specified for 9 dose levels. This
+is done by supplying a vector of this length, so that the entry `tox.mono1.a[i]`
+specifies the DLT rate of the dose given in `doses.mono1.a[i]`. In our case,
+this could e.g. be
+```{r tox-mono1-a}
+#Compound 1:     0.1   0.2   0.4   0.8   1.6   2.4   3.6   5     6
+tox.mono1.a = c(0.01, 0.02, 0.03, 0.05, 0.09, 0.12, 0.19, 0.29, 0.43)
+```
+
+Similarly, for the combination therapy trial, the dose levels were given as
+```{r doses-combi-a}
+doses.combi.a
+```
+
+Here, each column specifies a dose, so that the argument `tox.combi.a` needs one
+entry for each column, i.e. 18 entries in our example. Similarly to before,
+entry `i` of the argument provides the DLT rate of the dose given in column `i`
+of `doses.combi.a`. Hence, a dose-toxicity scenario for this case could be
+```{r tox-combi-a}
+#Compound 1:     0.1   0.2   0.4   0.8   1.6   2.4   3.6   5     6        0.1   0.2   0.4   0.8   1.6   2.4   3.6   5     6
+#compound 2:     8     8     8     8     8     8     8     8     8        12    12    12    12    12    12    12    12    12
+tox.combi.a = c(0.02, 0.03, 0.04, 0.08, 0.14, 0.21, 0.32, 0.39, 0.47,    0.04, 0.06, 0.09, 0.12, 0.17, 0.29, 0.45, 0.52, 0.61)
+```
+
+Note that one will usually consider multiple different dose toxicity scenarios
+to assess the performance of the prior in different settings and situations. In
+the following, we will only consider the scenario specified above for simplicity.
+
+This completes the setup and specification of the trials that are to be simulated.
+As a last step, it remains to specify the number of simulated studies via the
+parameter `n.studies`. As an example, 1 study will be used in the following.
+Note however that this is of course by far not sufficient for a proper evaluation
+of the prior, where one should simulate something around the order of e.g. 1000
+to 10000 studies. However, be aware that depending on the specifications, each study will
+require up to multiple minutes of run time for the repeated calls to Stan, so
+that 1000 or more trials may take multiple hours or even nearly a day to simulate. It is
+therefore recommended to run the simulation in parallel.
+
+If a cluster is available, a parallel backend consisting of multiple nodes
+with multiple cores can be registered, so that the function can leverage the
+capabilities of a cluster with a nested foreach loop. This is however purely optional.
+Further, when
+running simulations in parallel with a moderate number of cores, it is
+recommended to consider the argument `working.path` in the documentation, as this
+allows to save a reload MCMC results across nodes and cores.
+
+At last, one can also optionally specify the arguments `path` and `file.name`,
+which will cause the function to automatically write the summarized simulation results
+to a `.xlsx` file of the specified name under the specified path. Otherwise, the
+simulation results are only returned to R.
+
+Putting all of the previous explanations together, the call to `sim_jointBLRM`
+would therefore be:
+```{r simulation-call, eval=T, warning = F}
+sim_result <- sim_jointBLRM(
+  active.mono1.a = TRUE,
+  active.combi.a = TRUE,
+
+  doses.mono1.a = doses.mono1.a,
+  doses.combi.a = doses.combi.a,
+  dose.ref1 = dose.ref1,
+  dose.ref2 = dose.ref2,
+  start.dose.mono1.a = start.dose.mono1.a,
+  start.dose.combi.a1 = start.dose.combi.a1,
+  start.dose.combi.a2 = start.dose.combi.a2,
+
+  tox.mono1.a = tox.mono1.a,
+  tox.combi.a = tox.combi.a,
+
+  historical.data = historical.data,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau,
+
+  max.n.mono1.a = max.n.mono1.a,
+  max.n.combi.a = max.n.combi.a,
+  cohort.size = cohort.size,
+  cohort.queue = cohort.queue,
+  ewoc.threshold = ewoc.threshold,
+  esc.constrain = esc.constrain,
+  mtd.decision = mtd.decision,
+
+  n.studies = 1
+)
+
+print(sim_result)
+```
+
+This completes the setup of the simulation function for prior evaluations. As
+mentioned before, it is recommended to evaluate multiple different scenarios for
+at least multiple hundred studies when assessing the performance of an actual design.
+
+
+## References
+
+<div id="refs"></div>
+
+## Session info
+
+```{r}
+sessionInfo()
+```
+

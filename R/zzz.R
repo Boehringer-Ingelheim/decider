@@ -1,5 +1,5 @@
 #' @keywords internal
 .onAttach <- function(libname, pkgname){
-  packageStartupMessage("This is version `0.0.0.9008` of the `decider` package:")
+  packageStartupMessage("This is development version `0.0.0.9008` of the `decider` package:")
   packageStartupMessage("DECIsion making in oncology Dose Escalation trials with logistic Regression.")
 }

@@ -1,0 +1,1842 @@
+---
+title: "Evaluate prior specifications of a joint BLRM for oncology dose finding"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{evaluate_prior_specs_jointBLRM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+
+This vignette illustrates the usage of package `decider` for setting up and evaluating
+prior distributions for joint Bayesian logistic regression model (BLRM)-based dose-finding trials with one or more monotherapy
+and/or two-compund combination therapy trials that may run sequentially or in parallel. It will
+be assumed that the reader is familiar with the general process of dose-limiting toxicity (DLT)-based
+dose-finding trials with the aim of determining a maximum-tolerated dose (MTD) and with
+the BLRM and its meta-analytic extensions (joint BLRM) for DLT-based dose finding.
+For an introduction to these topics, refer to [@neuenschwander08], [@neuenschwander14], [@neuenschwander16].
+While this terminology and the applied methods mainly originated in the context
+of oncology dose finding, the methods contained in this vignette can also be
+applied to other therapeutic areas. Note that different therapeutic areas
+may be using a slightly different notions instead of e.g. DLT and MTD.
+
+Note further that the term "trial" may also refer to a trial arm (e.g. monotherapy
+and combination therapy), and that the model will not differentiate between these notions.
+Moreover, the term "study" will refer to the complete conduct of all jointly modeled
+trials. That is, simulating e.g. 10 studies means that all involved trials are simulated in
+the specified order and under the remaining specified assumptions for in total
+10 times.
+
+## Overview of the main tools
+The package ships with two main functions, which are called `scenario_jointBLRM`
+and `sim_jointBLRM`. The former is essentially a high-level wrapper for fitting
+a joint BLRM to a concrete data scenario, while the latter allows to simulate
+the course of a number of dose-finding trials under the assumption of a specific
+dose-toxicity scenario, i.e. a specification of the DLT rates of the involved dose
+levels.
+
+### `scenario_jointBLRM`
+The function `scenario_jointBLRM` is essentially a wrapper for a Stan model of
+the joint BLRM, which is internally used to sample from the posterior distribution
+given a set of input data using the so-called No-U-Turn sampler (NUTS) algorithm.
+For details on the technicalities behind Stan, a good starting place is Stan's
+[homepage](https://mc-stan.org).
+
+However, besides fitting the model, the function will also perform a number of
+further evaluations based on the posterior. Most importantly, the posterior
+(predictive) distribution of the DLT rates (referred to as posterior toxicities
+in the following) for a given set of dose levels is
+determined based on the fitted model. In actual dose-finding trials these
+distributions will form the basis of the recommended dose level for the next cohort.
+
+The output of `scenario_jointBLRM` consist of a summary of these posterior
+toxicities, as well as an evaluation of them in terms of an specific escalation rule.
+Here, the term escalation rule refers to a method that derives a dosing recommendation
+based on the fitted BLRM. Currently, the `decider` package supports the popular escalation
+with overdose control (EWOC)-based escalation rules [@babb98], as well as loss-based
+escalation rules, which are however not considered in this vignette.
+Note that EWOC-based escalation is the default setting of all functions, so that without further
+specifications, the functions will assume that EWOC is applied. Essentially, EWOC computes
+the probability that the DLT rate of a dose lies above a prespecified target dosing interval
+(often from 16\% to 33\% DLT rate), and demands that this probability does not exceed
+a certain boundary, typically 0.25 (the default). Both the interval and the boundary
+can be adapted by the user. For EWOC-based escalation, the summary that `scenario_jointBLRM`
+creates will contain the resulting posterior interval probabilities of underdosing, target dosing,
+and overdosing, as well as summary statistics of the posterior of the DLT rates of
+a given set of doses of interest (which are usually the set of possible dose levels in the trial).
+
+Additionally, plots of the posterior interval probabilities can be created,
+which visualize the EWOC principle and the set of doses that
+is allowed by EWOC based on the given data.
+
+The main uses of `scenario_jointBLRM` are the evaluation of actual and hypothetical
+data scenarios and the determination of the resulting posterior. Actual data
+scenarios refer here to data that was observed during a trial, while hypothetical
+data scenarios are a way of evaluating the on-trial behavior of the BLRM with some
+escalation rule in a concrete setting. These are particularly important at the
+planning stage of dose-finding trials, as they allow to monitor the performance
+of the model in scenarios that are assumed to potentially occur during the trial. Based
+on these evaluations, the prior distribution of the BLRM can be adapted to obtain
+appropriate escalation behavior.
+
+For evaluating a prior specification at the planning stage of a trial, one will typically
+need to consider a whole set of different scenarios that test the model and its recommendation
+in a broad spectrum of possible situations. Specifically for this setting, the additional
+function `scenario_list_jointBLRM()` is provided, which allows to evaluate a list of
+arbitrarily many scenarios via `scenario_jointBLRM()` in parallel.
+
+### `sim_jointBLRM`
+When a prior with appropriate on-trial behavior is established, one may want to conduct
+more thorough evaluation of the performance of the resulting model. A widely-accepted
+way of achieving this are trial simulations. For this, one assumes concrete "true" DLT
+rates for the dose levels available in a trial (referred to as dose-toxicity scenario)
+and repeatedly simulates the number of DLTs that are observed in cohorts of patients.
+Based on this data, the BLRM is fitted and the escalation rule is applied to determine
+the dose level for the next cohort, or, potentially, if the trial needs to be stopped early
+(this can e.g. happen when the lowest available dose does not satisfy the EWOC criterion).
+This process is repeated until a prespecified condition for the declaration of the
+MTD is reached, or until the trial is stopped without declaring an MTD (either due to
+stopping early or due to reaching the maximum number of patients that can be enrolled).
+
+Such trial simulation can then be used to determine the operating characteristics of the trial
+design in specific dose-toxicity scenarios. That is, one simulates a number of trials, e.g. 1000,
+and determines the ratio of MTDs declared at specific dose levels (e.g., MTDs at target doses),
+as well as further quantities like the average number of patients treated with a specific dose
+or the average number of DLTs that occurred during the trial.
+
+This process is then repeated for a number of different scenarios, containing e.g.
+low-toxicity scenarios (all doses have DLT rate below the targeted interval), moderate scenarios
+(DLT rates range from underdoses over target doses to overdoses), highly toxic scenarios,
+and further extreme cases, like e.g. one trial being considerably more toxic than another one.
+
+The function `sim_jointBLRM()` is designed to perform these simulations in a convenient manner and
+generate output tables that summarize the operating characteristics of a specified trial design
+in concrete dose-toxicity scenarios. It provides the option two simulate up to six trials
+running in parallel (which can be activated independently of each other),
+namely two monotherapy trials for each involved compound, and two
+combination therapy trias which are all included in a joint meta-analytic BLRM which is specified
+according to [@neuenschwander14], [@neuenschwander16].
+
+The priors used by the model and the order in which cohorts arrive can be freely specified by the user,
+as well as many further options, including escalation rules, MTD selection, starting doses, and additional restrictions
+on the increment between escalations. Furthermore, the function allows to include data
+from arbitrarily many historical trials (not actively simulated) for the involved compounds.
+
+## Setting up and evaluating priors using `scenario_jointBLRM`
+Assume in the following that we are interested in setting up an oncology dose-finding
+study that includes two different trials, referred to as Arm A and Arm B in the following.
+Suppose that Arm A investigates on some treatment, say compound 1, in a first-in-human
+monotherapy setting, while Arm B shall consider combination therapy with compound 1 and
+some combination partner, say compound 2. We assume that previous dose-finding trials
+for compound 2 were already conducted, so that DLT data is available for monotherapy
+with compound 2 from earlier clinical investigations.
+
+Assume further that Arm A and Arm B shall run partially in parallel, or, more precisely,
+that Arm B will be initiated before Arm A has concluded (before the trial declared an MTD), provided
+that the involved doses of compound 1 were already tested in monotherapy.
+To allow exchange of information across Arms A and B, and further the inclusion of
+the historical data for compound 2, we will model both trials and the historical
+trials in a joint BLRM. The following sections provide an overview how the
+function `scenario_jointBLRM` can be set up for this situation, and how it is used
+to specify and evaluate an appropriate prior distribution and conduct analyses to
+determine the next dose level during the trial.
+
+Before you continue, do not forget to load the `decider` package.
+
+```r
+library(decider)
+```
+
+### Basic specifications of `scenario_jointBLRM`
+As a first step, we will determine the necessary fixed input data, consisting of
+a set of available dose levels for Arms A ad B, the set of historical data,
+and reference dose levels for both compounds.
+
+First, assume that from an historical monotherapy trial for compound 2, the clinical
+data given below is available. Dose levels of the same compound are assumed to be
+stated in some fixed unit of measurement, e.g. mg or mg/kg, which is not explicitly
+denoted for simplicity.
+
+Dose  | #Patients | #DLT
+------|-----------|------
+2     | 3         |0
+4     | 3         |0
+8     | 3         |0
+12    | 9         |1
+16    | 12        |2
+
+It is further assumed that all of these observations originate from a single
+historical trial, although this could easily be extended to multiple historical
+trials (described below).
+
+The given data now needs to be written in the format that `scenario_jointBLRM`
+accepts, which is a named list containing the entries `dose1`, `dose2`, `n.pat`,
+`n.dlt`, and `trial`. For the data given above, use
+
+```r
+historical.data = list(
+  dose1 = c( 0,    0,    0,    0,    0),
+  dose2 = c( 2,    4,    8,    12,   16),
+  n.pat = c( 3,    3,    3,    9,    12),
+  n.dlt = c( 0,    0,    0,    1,    2),
+  trial = c("H1", "H1", "H1", "H1", "H1")
+)
+```
+Here, each column in the structure given above translates to the data observed
+at one dose level during a specific historical trial. Note that the dose levels
+of compound 2 are given in the entry `dose2`, while the entry of `dose1` is `0`
+to indicate that the cohorts received monotherapy with compound 2.
+
+In the example here, only the data from one historical trial is included. For this,
+the same entry of `historical.data$trial` is given for each historical cohort,
+which tells the function that all of these cohorts belong to the same trial.
+The entry `"H1"` is an arbitrarily chosen trial name for the historical trial,
+note that one could also use a specific number or some other string as trial name.
+When data for multiple historical trials in given, multiple trial names need to
+be used to indicate this.
+
+As a next step, we need to specify reference dose levels and the set of available
+dose levels for the trial. Although the set of investigational dose levels can be flexible
+in practice (i.e., does not need full specification at the planning stage), for prior
+evaluations, a hypothetical set of doses that are planned to be used in the
+trial need to be specified to allow evaluating the hypothetical on-trial behavior
+of the model.
+
+We will in the following assume that the planned monotherapy doses for compound 1
+are
+
+```r
+d1 = c(0.1, 0.2, 0.4, 0.8, 1.6, 2.4, 3.6, 5, 6)
+```
+where we have again left out the unit of measurement (e.g. g or mg/kg) for simplicity.
+Regarding combination therapy, suppose that it is planned to consider all combinations
+of the monotherapy doses of compound 1 with the dose levels
+
+```r
+d2 = c(8, 12)
+```
+of compound 2 (given in the same unit of measurement as the doses in the historical data).
+
+The planned monotherapy and combination therapy doses should be given to the function
+via the argument `doses.of.interest`, which specifies which dose levels need to be
+evaluated. The argument needs to be a matrix with two rows and one column for each
+dose level, where monotherapy doses are indicated by placing `0` or `NA` in the entry
+of the other compound.
+
+In the setting specified above, this results in
+
+```r
+doses.of.interest = rbind( c(d1,                  rep(d1, times=length(d2))),
+                           c(rep(0, length(d1)),  rep(d2, each=length(d1))) )
+
+#monotherapy compound 1.
+doses.of.interest[, 1:length(d1)]
+#>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
+#> [1,]  0.1  0.2  0.4  0.8  1.6  2.4  3.6    5    6
+#> [2,]  0.0  0.0  0.0  0.0  0.0  0.0  0.0    0    0
+
+#combinations of compound 1 with dose 8 of compound 2.
+doses.of.interest[, (length(d1)+1):(2*length(d1))]
+#>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
+#> [1,]  0.1  0.2  0.4  0.8  1.6  2.4  3.6    5    6
+#> [2,]  8.0  8.0  8.0  8.0  8.0  8.0  8.0    8    8
+
+#combinations of compound 1 with dose 12 of compound 2.
+doses.of.interest[, (2*length(d1)+1):(3*length(d1))]
+#>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
+#> [1,]  0.1  0.2  0.4  0.8  1.6  2.4  3.6    5    6
+#> [2,] 12.0 12.0 12.0 12.0 12.0 12.0 12.0   12   12
+```
+
+Next, we need to specify the reference doses used by the joint BLRM. We assume that
+for compound 1 the dose `6` and for compound 2 the dose `12` was selected for this:
+
+```r
+dose.ref1 = 6
+dose.ref2 = 12
+```
+
+To explicitly tell the function that we are interested in two trials
+which consider monotherapy for compound 1, respectively combination therapy, we now
+include the following optional arguments:
+
+```r
+trials.of.interest = c("A",     "B")
+types.of.interest =  c("mono1", "combi")
+```
+
+The trial names `"A"` and `"B"` are arbitrary and tell the function that this is
+how we will indicate the two trials in the data. The types `"mono1"` and `"combi"`
+specify that only the `doses.of.interest` for the corresponding trial type
+need to be analyzed for the corresponding trial. That is, trial `"A"` is the
+trial of type `"mono1"` and will only consider monotherapy with compound 1,
+while `"combi"` indicates that trial `"B"` will only consider combination
+therapy doses. There is also the type `"all"` which will cause the function to
+analyze all given doses of interest for a trial.
+
+If the trials of interest or their type are not explicitly specified,
+the function will use all trial names given in data and historical data
+(in our case, including the trial `"H1"` from the historical data), and further
+try to infer the type from the given data for this trial. If this is not possible,
+(e.g. when no data is given yet), the function will provide posteriors for all
+doses of interest for this trial. Therefore, specifying trials of interest and
+their types allows to control which output is included in a more precise fashion.
+
+Furthermore, when we do not provide data for trial `"A"` or `"B"` yet (e.g. to obtain
+the predictive distribution induced by the data from the other included trials), the function
+would not include the posterior of the trial in the output unless its name is specified
+explicitly as a trial of interest. For instance, when only the historical data
+is given, the function would only estimate the posterior of the historical trials
+but not estimate the predictive distribution of a new trial based on the historical data.
+
+At this point, we could in principle already run the function to produce posterior
+predictive distributions for the trials `"A"` and `"B"` purely from the historical data of trial `"H1"`
+(which is equivalent to a meta-analytic predictive prior, cf. [@neuenschwander16]).
+However, we still have not specified a (hyper-)prior distribution for the model,
+so that the function would apply the default prior configuration (refer to the documentation
+of `scenario_jointBLRM`). While the default prior is weakly informative and was
+found to be quite flexible across different situations, it is still recommended
+to specify a prior manually to ensure good on-trial behavior of the model
+This will be the subject of the next section.
+
+### Specifying a prior for the joint BLRM
+Refer to the section Detail in the documentation of `scenario_jointBLRM` for a model
+specification of the joint BLRM and explanations what the model does. For the
+following, it is only important to know that the prior specifications consist
+of two parts, namely, a prior for the hyper-means (argument `prior.mu`) and a prior
+for the between-trial heterogeneities (argument `prior.tau`), where the hyper-mean
+is the shared mean of the parameters across trials and the between-trial heterogeneity
+is the standard deviation across trials. Recall the five
+different parameters of the joint BLRM: two parameters for each compound
+(more precisely, the intercept $log(\alpha_i)$ and the log-slope $log(\beta_i)$ for
+compound $i$), and the interaction parameter, $\eta$. Hence, the prior specification
+must specify the distribution of the hypermean and between-trial heterogeneity
+for these five parameters.
+
+For this, it is assumed that all hypermeans follow normal distributions with some
+fixed mean and SD (which are therefore the input required to specify the distribution of
+each hypermean), while the heterogeneities are assumed to follow log-normal distributions,
+whose mean and SD (on log-scale) need to be given to the function. Technically, it is
+further assumed that for each $i$, $log(\alpha_i)$ and $log(\beta_i)$ may be correlated
+with some correlation coefficient $\rho$, but this hyperparameter is automatically
+assigned a uniform distribution on the interval $[-1, 1]$, so that its prior does
+not need to be specified.
+
+#### Prior for the hypermeans: `prior.mu`
+First, consider the prior for the hypermeans, which is encoded in the argument
+`prior.mu`. This must be a list with five named entries, where each entry provides
+the mean and SD of the distribution of one of the five hypermeans.
+
+The expected format of this argument is:
+
+```r
+#               Parameter    Mean        SD
+prior.mu = list(mu_a1  =  c(-0.7081851, 2),
+                mu_b1  =  c(0,          1),
+                mu_a2  =  c(-0.7081851, 2),
+                mu_b2  =  c(0,          1),
+                mu_eta =  c(0,          1.121))
+```
+
+Here, the prefix `mu` indicates that this is a hypermean, while the
+suffixes correspond to the parameters as given in the following table.
+
+Parameter       | Suffix
+----------      |-------
+$log(\alpha_1)$ | `_a1`
+$log(\beta_1)$  | `_b1`
+$log(\alpha_2)$ | `_a2`
+$log(\beta_2)$  | `_b2`
+$\eta$          | `_eta`
+
+In the prior list, each of the entries should be of the form `c(x, y)`, where `x`
+gives the mean and `y` the SD of the normal distribution assumed for the hypermean
+of the corresponding parameter.
+
+The default values were oriented towards [@neuenschwander14] and [@neuenschwander16],
+and represent a relatively flexible, weakly informative prior distribution. It
+is recommended that this is used as a starting point for adapting the prior
+to a given setting, as specific modifations to match the setting of a concrete
+trial will most likely provide better performance than the default prior.
+
+Regarding the interpretation of the parameter, $log(\alpha_i)$ gives the median
+log-odds of experiencing a DLT following treatment at the reference dose. The value
+`-0.7081851` corresponds to
+
+```r
+logit(0.33)
+#> [1] -0.7081851
+```
+
+which means that one assumes the reference dose to have in median a DLT rate of 33%.
+This corresponds precisely to the upper boundary of the default target interval
+(from 16% to 33%), so that the prior expresses the assumption that the reference
+dose is a priori a possible candidate for the MTD (note that the reference dose
+should be chosen accordingly).
+
+The default value of the SD of the hypermeans of $log(\alpha_i)$ is `2`, which
+represents a relatively large uncertainty and leads to relatively flexible prior.
+Note however that depending on the dosing range and other specifications of the
+trial, one might want to deviate from this default value. For instance, we may
+want to assume a slightly larger uncertainty regarding the intercept to obtain a more conservative setup, e.g. via
+
+```r
+prior.mu = list(mu_a1  =  c(-0.7081851, 3),
+                mu_b1  =  c(0,          1),
+                mu_a2  =  c(-0.7081851, 3),
+                mu_b2  =  c(0,          1),
+                mu_eta =  c(0,          1.121))
+```
+
+Regarding the hyperpriors for $log(\beta)$, a standard normal distribution is assumed.
+This covers a relatively broad range of slopes, although one may want to select a
+larger or smaller SD in certain cases. Regarding the mean, it is typically
+not necessary to deviate from the default of `0` unless there is very concrete
+information about the shape of the dose-toxicity relationship.
+
+For the interaction parameter, recall that negative values of $\eta$ express a
+lower DLT rate of dose combinations than the interaction free-case (in which the
+compounds would cause DLT fully independently from each other), while positive
+values lead to a larger DLT rate compared to the interaction-free case.
+The default value of $0$ for the mean expresses that both positive and
+negative interactions may occur, while the SD of 1.121 is selected so that the
+95% credible interval of the interaction-parameters corresponds to an increase
+up to 9-fold (or decrease by factor of 9) of the odds for a DLT at the reference
+dose. Larger or lower values of mean and SD can be used to obtain more aggressive
+or conservative behavior of combination trials. Refer e.g. to [@neuenschwander14]
+for more detail on this.
+
+#### Prior for the between-trial heterogeneities: `prior.tau`
+
+The prior parameters for the between-trial heterogeneity control the amount of borrowing
+that is performed across trials. In this context, the assumption of a larger
+heterogeneity for a parameter allows this parameter to show larger variance
+across trials, and, consequently, reduces the influence that data from other
+trials have on each jointly modeled trial.
+
+The decider package assumes that the between-trial heterogeneities follow
+log-normal distributions, which are specified by providing their mean and SD
+on log-scale.
+
+The default value and required format of `prior.tau` is:
+
+```r
+#                Parameter    Mean        SD
+prior.tau = list(tau_a1  =  c(log(0.25),  log(2)/1.96),
+                 tau_b1  =  c(log(0.125), log(2)/1.96),
+                 tau_a2  =  c(log(0.25),  log(2)/1.96),
+                 tau_b2  =  c(log(0.125), log(2)/1.96),
+                 tau_eta =  c(log(0.125), log(2)/1.96))
+```
+
+The naming conventions are the same as for `prior.mu`.
+
+Note that a value of `c(x,y)` as `tau_[...]` provides the mean `x` and SD `y` on
+log-scale, i.e. if the corresponding hyperparameter is denoted as $\tau$, the
+function assumes that $\tau=exp(\psi)$ for some random variable $\psi$ that is
+normally distributed with mean `x` and SD `y`.
+
+The default values are oriented towards [@neuenschwander14]. Note that
+the SDs are typically all set to either `log(2)/1.96` or `log(4)/1.96` (larger
+uncertainty), other values are usually not needed.
+
+To specify the mean for the between-trial heterogeneities, one typically assumes
+a specific degree of heterogeneity (cf. table below). By default, `scenario_jointBLRM`
+assumes the mean to be `log(0.25)` for the between-trial heterogeneity of
+$log(\alpha_i)$, and `log(0.125)` for the heterogeneity of the remaining
+parameters. On natural (non-log) scale, this means that differences of the
+parameters across trials are in median expected to be 0.25, respectively 0.125.
+This is usually referred to as "moderate" between-trial heterogeneity, other
+potential values for the mean can be found in the following table.
+
+Heterogeneity   | $log(\alpha_i)$ | $log(\beta_i)$ / $\eta$
+----------      |---------------- | -----------------------
+Small           | `log(0.125)`    | `log(0.0625)`
+Moderate        | `log(0.25)`     | `log(0.125)`
+Substantial     | `log(0.5)`      | `log(0.25)`
+Large           | `log(1)`        | `log(0.5)`
+
+Regarding the prior setup for the between-trial heterogeneity, the chosen prior
+should depend on the expected differences across trials and the number of patients
+in the included co-data (larger number of patients may require more heterogeneity
+to ensure sufficient robustness). For many situations, the moderate and substantial
+configurations from the above table provide acceptable robustness, so that these are
+typically considered to be good starting points for prior evaluations. Besides
+the evaluations of hypothetical scenarios and simulations (covered in the following
+sections), prior effective sample sizes also provide a good way of evaluating
+the influence of co-data on the trial of interest and adjusting the priors for
+the between-trial heterogeneity accordingly. Refer to [@neuenschwander20a]
+for more detail on this type of method for assessing the information
+included in the prior.
+
+### Using `scenario_jointBLRM` to evaluate hypothetical data scenarios
+Hypothetical data scenarios evaluate the decisions of the BLRM in a number of
+concrete situations that might occur in the trial that is planned. While one can
+usually not foresee and evaluate all possible situations (mostly due to there
+being too many of them), one restricts these evaluations to important classes of
+settings. These include but are not limited to:
+
+* Early scenarios that assess the decisions within the first few cohorts of a
+  trial, especially scenarios that assume early DLTs.
+
+* Late scenarios that assess the resulting MTD estimates based on the planned
+  number of patients (or slightly fewer).
+
+* Scenarios that assess specific critical dosing recommendations, e.g. whether the
+  escalation rule ceases to increase the dose when observing certain DLT rates.
+
+* Scenarios that assume heterogeneous co-data. Here, it is e.g. assessed whether
+  the decision rule can correctly decide in settings where the involved trials
+  or trials show substantially different toxicities.
+
+* Similarly to the previous point, if multiple parallel trials are involved
+  that start at different points in time, it should be assessed how the co-data
+  influences the start of the trials. For instance, it can happen that the
+  combination trial is not allowed to be started at the planned starting dose due
+  to toxic monotherapy data. It should therefore be assessed (and aligned with
+  ones recommendations) which co-data is needed to allow the planned starting
+  dose, and in which cases this would not be recommended by the model.
+
+As an example, consider the scenario that the first cohort of 3 patients was
+treated at the dose 0.1 of compound 1 and a second cohort at the dose 0.2. We
+assume further that no DLT occurred in the first cohort, while one of the patients
+of the second cohort experienced DLT. This translates to the data scenario:
+
+```r
+scenario1 = list(
+  dose1 = c( 0.1,  0.2),
+  dose2 = c( 0,    0),
+  n.pat = c( 3,    3),
+  n.dlt = c( 0,    1),
+  trial = c("A",  "A")
+)
+```
+
+Note that `"A"` was used as trial name for the monotherapy trial for compound 1,
+as this needs to match the name specified in the `trials.of.interest` argument.
+
+Now, the scenario function can be called. Using the previously specified
+objects, the function can be applied via
+
+```r
+result1 <- scenario_jointBLRM(
+  data = scenario1,
+  historical.data = historical.data,
+  doses.of.interest = doses.of.interest,
+  dose.ref1 = dose.ref1,
+  dose.ref2 = dose.ref2,
+  trials.of.interest = trials.of.interest,
+  types.of.interest = types.of.interest,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau
+)
+
+print(result1)
+#> $`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.11812 0.11339 0.00287 0.08274 0.42046     0.73116        0.20675     0.06209
+#> 0.2+0 0.16801 0.14039 0.00642 0.13054 0.52135     0.57988        0.28392     0.13620
+#> 0.4+0 0.23933 0.17967 0.01209 0.19959 0.66447     0.41309        0.31168     0.27523
+#> 0.8+0 0.32815 0.22503 0.01971 0.28816 0.82034     0.28594        0.27566     0.43840
+#> 1.6+0 0.42203 0.26253 0.02927 0.39389 0.92716     0.19858        0.22421     0.57721
+#> 2.4+0 0.47446 0.27773 0.03539 0.45944 0.96081     0.16288        0.19759     0.63953
+#> 3.6+0 0.52322 0.28791 0.04212 0.52488 0.98002     0.13449        0.17256     0.69295
+#> 5+0   0.55958 0.29291 0.04781 0.57680 0.98883     0.11583        0.15572     0.72845
+#> 6+0   0.57849 0.29459 0.05106 0.60505 0.99187     0.10727        0.14649     0.74624
+#> 
+#> $`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.18584 0.13471 0.02358 0.15164 0.53776     0.52834        0.33529     0.13637
+#> 0.2+8  0.23038 0.15839 0.03132 0.19191 0.63362     0.40758        0.36832     0.22410
+#> 0.4+8  0.29239 0.18871 0.04207 0.25032 0.74905     0.28849        0.35781     0.35370
+#> 0.8+8  0.37100 0.22274 0.05473 0.33079 0.86013     0.19399        0.30485     0.50116
+#> 1.6+8  0.45757 0.25359 0.06801 0.42963 0.93868     0.13277        0.23836     0.62887
+#> 2.4+8  0.50693 0.26788 0.07359 0.49301 0.96648     0.11029        0.20280     0.68691
+#> 3.6+8  0.55271 0.27966 0.07569 0.55826 0.98324     0.09656        0.17272     0.73072
+#> 5+8    0.58599 0.28853 0.07293 0.61198 0.99108     0.09284        0.15115     0.75601
+#> 6+8    0.60262 0.29377 0.06910 0.64240 0.99396     0.09385        0.14042     0.76573
+#> 0.1+12 0.22122 0.13498 0.04628 0.19132 0.56445     0.39179        0.42532     0.18289
+#> 0.2+12 0.26384 0.15638 0.05542 0.22996 0.65357     0.29195        0.42831     0.27974
+#> 0.4+12 0.32320 0.18437 0.06712 0.28610 0.76184     0.20041        0.38599     0.41360
+#> 0.8+12 0.39849 0.21655 0.08097 0.36297 0.86784     0.13343        0.31081     0.55576
+#> 1.6+12 0.48130 0.24716 0.09152 0.45767 0.94314     0.09544        0.23285     0.67171
+#> 2.4+12 0.52816 0.26292 0.09163 0.51888 0.96971     0.08506        0.19501     0.71993
+#> 3.6+12 0.57078 0.27834 0.08343 0.58422 0.98588     0.08501        0.16271     0.75228
+#> 5+12   0.60042 0.29236 0.06936 0.63971 0.99309     0.09303        0.14128     0.76569
+#> 6+12   0.61432 0.30138 0.05816 0.66963 0.99562     0.10115        0.13094     0.76791
+```
+
+Note that the output contains two entries, one for each trial of interest. As we
+previously specified the types of these trials, the posterior toxicities of
+trial `"A"` are only computed for the doses of interest that represent
+monotherapy with compound 1, while the posteriors for trial `"B"` only contain
+the combination therapy dose levels.
+
+For each of these doses, the interval probabilities are computed, as well as
+summary statistics of the posterior toxicities. By default, the considered
+interval probabilities assume a target interval (range of DLT rates considered
+to be appropriate as MTD) of $[0.16, 0.33)$. However, if
+one is interested in some different interval, say, $[0.2, 0.3)$, this can be
+achieved by supplying the optional argument `dosing.intervals = c(0.2, 0.3)`.
+In this context, the underdosing, respectively overdosing intervals contain
+the DLT rates below, respectively above the target interval.
+
+Further customization of the output can be achieved by supplying the argument
+`probs`, which specifies the quantiles listed in the output tables. By default,
+the reported quantiles are 2.5\%, 50\%, and 97.5\%. If additional quantiles
+shall be computed, say, 25\% and 75\%, this can be achieved e.g. with
+`probs = c(0.025, 0.25, 0.5, 0.75, 0.975)`.
+
+If additional output plots shall be created (not required for prior evaluation,
+but potentially helpful for actual analyses), one can activate this via
+`plot.decisions = TRUE`. Usually, simple bar plots are created by this argument
+for monotherapy, and a heatmap for combination therapy. By additionally setting
+`plot.return = TRUE`, the plots will be contained in the results list in the form
+of `ggplot` objects. Refer to the documentation of the `ggplot2` package for detail
+on this type of object. The `ggplot2` package also provides a broad range of
+functions that can be used to customize the returned plots further. If `plot.return`
+is not specified, the function will only print the plots and potentially
+save them if the user specified a path for outputs.
+
+```r
+result1a <- scenario_jointBLRM(
+  data = scenario1,
+  historical.data = historical.data,
+  doses.of.interest = doses.of.interest,
+  dose.ref1 = dose.ref1,
+  dose.ref2 = dose.ref2,
+  trials.of.interest = trials.of.interest,
+  types.of.interest = types.of.interest,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau,
+  plot.decisions = TRUE,
+  plot.return = TRUE,
+  ewoc.threshold = 0.25
+)
+```
+
+The generated plots are shown in the plot panel in RStudio. To explicitly display
+the returned `ggplot` objects, one can access them as follows.
+
+```r
+plot(result1a$plots$"trial-A")
+```
+
+![Plot generated by `scenario_jointBLRM()` for trial `"A"`](scenario-plots-1.png)
+
+```r
+plot(result1a$plots$"trial-B")
+```
+
+![Plot generated by `scenario_jointBLRM()` for trial `"B"`](scenario-plots-2.png)
+
+Note that we supplied an additional argument, `ewoc.threshold`, to the call to
+`scenario_jointBLRM`. This argument states
+the feasibility bound of the EWOC criterion (cf. Babb et al. (1998)) and is
+displayed by the plots to indicate which doses are fulfilling the EWOC criterion
+(and could be used for the next cohort). This argument is optional and defaults
+to `0.25` if not specified, so that it is actually not needed unless a different
+value shall be used as feasibility bound of the EWOC criterion.
+
+There are further options for customizing plots, e.g. to indicate which type of
+plots is used for combination therapy trials (heatmap or bar diagram). Detail on
+this and further arguments for the output plots are specified in the
+documentation.
+
+One can also enable automatic saving of the posterior summaries by
+supplying the optional arguments `file.name` and `path`. If the latter specifies
+a valid (writable) directory, the output will be saved as `.xlsx` file under
+the specified `file.name`. Additionally, one can save the output plots by further
+specifying `plots.save = TRUE` (provided a valid `path` and `file.name` were
+supplied). In this case, it is recommended to specify the format of the output
+plots via `plot.unit`,  `plot.width`, and  `plot.height`. Refer to the
+documentation for detail on this.
+
+### Evaluating mutliple scenarios in parallel
+When setting up a prior, one will typically want to evaluate a number of
+scenarios at once, but, as Bayesian computation tends to take relatively long,
+this may be rather slow for e.g. 10 or more scenarios. Additionally, one would
+need e.g. 10 (or more) calls to `scenario_jointBLRM`, which may not be practical
+if the same scenarios are repeatedly evaluated for slightly altered prior
+specifications.
+
+To provide slightly more convenience for these types of exercise, the function
+`scenario_list_jointBLRM` allows to perform multiple calls to
+`scenario_jointBLRM` in parallel for a list of data scenarios, which both speeds
+up the computation and simplifies the evaluation of a number of hypothetical
+settings. Please note that a parallel backend needs to be registered to
+leverage the parallelization, otherwise the function will be executed sequentially.
+An example is provided below.
+
+To use this, consider first a (numbered) list of data scenarios. This is
+specified as a list of lists, where each sublist must be of the format
+expected by the `data` argument of `scenario_jointBLRM`.
+For instance, a list with 8 scenarios could look like this:
+
+```r
+data.list = list(
+
+  #Scenario 1
+  list(
+    dose1 = c( 0.1),
+    dose2 = c( 0),
+    n.pat = c( 3),
+    n.dlt = c( 0),
+    trial = c("A")),
+
+  #Scenario 2
+  list(
+    dose1 = c( 0.1),
+    dose2 = c( 0),
+    n.pat = c( 3),
+    n.dlt = c( 1),
+    trial = c("A")),
+
+  #Scenario 3
+  list(
+    dose1 = c( 0.1),
+    dose2 = c( 0),
+    n.pat = c( 3),
+    n.dlt = c( 2),
+    trial = c("A")),
+
+  #Scenario 4
+  list(
+    dose1 = c( 0.1,  0.2),
+    dose2 = c( 0,    0),
+    n.pat = c( 3,    3),
+    n.dlt = c( 0,    1),
+    trial = c("A",  "A")),
+
+  #Scenario 5
+  list(
+    dose1 = c( 0.1,  0.2),
+    dose2 = c( 0,    0),
+    n.pat = c( 3,    3),
+    n.dlt = c( 0,    2),
+    trial = c("A",  "A")),
+
+  #Scenario 6
+  list(
+    dose1 = c( 0.1,  0.2,  0.4),
+    dose2 = c( 0,    0,    0),
+    n.pat = c( 3,    3,    3),
+    n.dlt = c( 0,    0,    1),
+    trial = c("A",  "A",  "A")),
+
+  #Scenario 7
+  list(
+    dose1 = c( 0.1,  0.2,  0.4),
+    dose2 = c( 0,    0,    0),
+    n.pat = c( 3,    3,    6),
+    n.dlt = c( 0,    0,    1),
+    trial = c("A",  "A",  "A")),
+
+  #Scenario 8
+  list(
+    dose1 = c( 0.1,  0.2,  0.4,     0.2),
+    dose2 = c( 0,    0,    0,       8),
+    n.pat = c( 3,    3,    6,       3),
+    n.dlt = c( 0,    0,    1,       0),
+    trial = c("A",  "A",  "A",     "B"))
+)
+```
+
+Note that Scenario 8 also contains cohorts from the combination therapy trial, encoded
+with the trial name `"B"` as specified previously. The cohorts can be given in
+arbitrary order.
+
+To run the evaluations in parallel, one can additionally register a paralell backend.
+There are various existing packages than can achieve this. A basic construct to
+register a parallel backend using the `doFuture` package is the following
+
+```r
+library(doFuture)
+
+#specify number of cores -- here, only 1 for a sequential exacution
+n.cores <- 1
+
+#register backend for parallel execution and plan multisession
+doFuture::registerDoFuture()
+future::plan(future::multisession, workers=n.cores)
+#> Error in base::options(...future.oldOptions): invalid value for 'error'
+```
+
+In this example, only 1 core is selected, which is identical to a sequential execution.
+In practice, `n.cores` can be set depending on the available processor on which
+the function is running.
+
+Note on more advanced parallelization: For evaluation of hypothetical scenarios,
+please note that the parallelization is set up to use only a single node, i.e.,
+no cluster architecture with multiple nodes of a given number of cores is supported
+in the current version. This was done as for scenarios, one will rarely require to
+evaluate more than a couple dozen. However, for trial simulations (mentioned below), the
+package implements a nested foreach loop, so that parallelization with arbitrarily many
+nodes and several cores per node can be used.
+
+Now, coming back to the evaluation of scenarios, after registration of the
+parallel backend one can simply use
+
+```r
+results <- scenario_list_jointBLRM(
+  data.list = data.list,
+  n.cores = n.cores,
+
+  historical.data = historical.data,
+  doses.of.interest = doses.of.interest,
+  dose.ref1 = dose.ref1,
+  dose.ref2 = dose.ref2,
+  trials.of.interest = trials.of.interest,
+  types.of.interest = types.of.interest,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau
+)
+
+print(results)
+#> [[1]]
+#> [[1]]$`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.02656 0.06982 0.00000 0.00110 0.24250     0.95249        0.03438     0.01313
+#> 0.2+0 0.03851 0.09048 0.00000 0.00248 0.33083     0.92555        0.04934     0.02511
+#> 0.4+0 0.05782 0.12074 0.00000 0.00566 0.45873     0.88398        0.06736     0.04866
+#> 0.8+0 0.08887 0.16261 0.00000 0.01326 0.61958     0.82278        0.08815     0.08907
+#> 1.6+0 0.13800 0.21479 0.00000 0.03189 0.79138     0.73630        0.11005     0.15365
+#> 2.4+0 0.17926 0.24864 0.00004 0.05490 0.87517     0.66899        0.12331     0.20770
+#> 3.6+0 0.23414 0.28390 0.00025 0.09679 0.93668     0.58696        0.13594     0.27710
+#> 5+0   0.29219 0.31246 0.00073 0.15493 0.96887     0.50620        0.14352     0.35028
+#> 6+0   0.33055 0.32809 0.00106 0.20058 0.98114     0.45738        0.14354     0.39908
+#> 
+#> [[1]]$`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.09639 0.09274 0.00617 0.07082 0.35202     0.84106        0.12924     0.02970
+#> 0.2+8  0.10781 0.10872 0.00682 0.07606 0.42348     0.80826        0.14636     0.04538
+#> 0.4+8  0.12579 0.13252 0.00775 0.08419 0.53358     0.76277        0.16366     0.07357
+#> 0.8+8  0.15441 0.16633 0.00913 0.09682 0.67488     0.69654        0.18582     0.11764
+#> 1.6+8  0.20019 0.21078 0.01133 0.11875 0.82300     0.60816        0.20209     0.18975
+#> 2.4+8  0.23917 0.24116 0.01312 0.14176 0.89466     0.54161        0.21068     0.24771
+#> 3.6+8  0.29159 0.27387 0.01503 0.18135 0.94679     0.46075        0.21375     0.32550
+#> 5+8    0.34737 0.30146 0.01616 0.23684 0.97499     0.39008        0.20448     0.40544
+#> 6+8    0.38398 0.31713 0.01620 0.28094 0.98567     0.35201        0.19291     0.45508
+#> 0.1+12 0.13577 0.09921 0.02340 0.11154 0.39940     0.70752        0.24613     0.04635
+#> 0.2+12 0.14670 0.11295 0.02433 0.11743 0.46059     0.67537        0.25929     0.06534
+#> 0.4+12 0.16396 0.13416 0.02559 0.12599 0.55843     0.63198        0.27189     0.09613
+#> 0.8+12 0.19163 0.16536 0.02730 0.13953 0.69298     0.57020        0.28394     0.14586
+#> 1.6+12 0.23648 0.20795 0.02862 0.16354 0.83436     0.48967        0.28483     0.22550
+#> 2.4+12 0.27519 0.23826 0.02825 0.18883 0.90491     0.43241        0.27593     0.29166
+#> 3.6+12 0.32760 0.27226 0.02591 0.23217 0.95435     0.36981        0.25222     0.37797
+#> 5+12   0.38285 0.30223 0.02173 0.29163 0.97956     0.32262        0.21638     0.46100
+#> 6+12   0.41832 0.31960 0.01855 0.33825 0.98884     0.30082        0.19178     0.50740
+#> 
+#> 
+#> [[2]]
+#> [[2]]$`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.26858 0.20945 0.00972 0.22044 0.75949     0.38986        0.27567     0.33447
+#> 0.2+0 0.33309 0.22838 0.01668 0.29733 0.81836     0.28660        0.25981     0.45359
+#> 0.4+0 0.40580 0.24753 0.02574 0.38671 0.87936     0.20381        0.22516     0.57103
+#> 0.8+0 0.48036 0.26329 0.03761 0.48096 0.93124     0.14554        0.18392     0.67054
+#> 1.6+0 0.55068 0.27280 0.05104 0.57453 0.96644     0.10530        0.14776     0.74694
+#> 2.4+0 0.58833 0.27523 0.05995 0.62615 0.97915     0.08815        0.12971     0.78214
+#> 3.6+0 0.62300 0.27559 0.06897 0.67458 0.98741     0.07485        0.11318     0.81197
+#> 5+0   0.64888 0.27458 0.07710 0.71083 0.99185     0.06554        0.10246     0.83200
+#> 6+0   0.66240 0.27360 0.08094 0.72938 0.99359     0.06110        0.09703     0.84187
+#> 
+#> [[2]]$`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.31831 0.21214 0.03967 0.27036 0.80939     0.28013        0.31565     0.40422
+#> 0.2+8  0.37479 0.22757 0.05069 0.33703 0.85876     0.20324        0.28641     0.51035
+#> 0.4+8  0.43954 0.24214 0.06503 0.41687 0.90431     0.14156        0.24306     0.61538
+#> 0.8+8  0.50806 0.25407 0.07981 0.50661 0.94310     0.09788        0.19466     0.70746
+#> 1.6+8  0.57431 0.26211 0.09338 0.59635 0.97125     0.06932        0.15385     0.77683
+#> 2.4+8  0.60978 0.26535 0.10008 0.64606 0.98222     0.05997        0.13318     0.80685
+#> 3.6+8  0.64156 0.26872 0.10240 0.69378 0.98959     0.05539        0.11570     0.82891
+#> 5+8    0.66373 0.27287 0.09855 0.73046 0.99367     0.05537        0.10594     0.83869
+#> 6+8    0.67426 0.27634 0.09272 0.75022 0.99537     0.05740        0.10062     0.84198
+#> 0.1+12 0.34807 0.20592 0.06503 0.30533 0.81874     0.19806        0.34490     0.45704
+#> 0.2+12 0.40207 0.22018 0.07763 0.36877 0.86507     0.13995        0.29917     0.56088
+#> 0.4+12 0.46397 0.23377 0.09304 0.44463 0.90964     0.09587        0.24456     0.65957
+#> 0.8+12 0.52940 0.24526 0.10837 0.52919 0.94662     0.06543        0.19168     0.74289
+#> 1.6+12 0.59222 0.25431 0.11799 0.61493 0.97330     0.04969        0.14754     0.80277
+#> 2.4+12 0.62516 0.25970 0.11869 0.66378 0.98396     0.04703        0.12676     0.82621
+#> 3.6+12 0.65335 0.26750 0.10833 0.70986 0.99121     0.05007        0.11161     0.83832
+#> 5+12   0.67113 0.27771 0.09103 0.74660 0.99514     0.05913        0.10257     0.83830
+#> 6+12   0.67838 0.28563 0.07775 0.76568 0.99668     0.06720        0.09853     0.83427
+#> 
+#> 
+#> [[3]]
+#> [[3]]$`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.55340 0.23606 0.10541 0.56467 0.94609     0.05494        0.14867     0.79639
+#> 0.2+0 0.62059 0.22543 0.14740 0.64827 0.96006     0.02962        0.09772     0.87266
+#> 0.4+0 0.68234 0.21504 0.19160 0.72459 0.97217     0.01688        0.06385     0.91927
+#> 0.8+0 0.73539 0.20470 0.23570 0.78770 0.98297     0.01045        0.04331     0.94624
+#> 1.6+0 0.77917 0.19401 0.27806 0.83795 0.99058     0.00695        0.03063     0.96242
+#> 2.4+0 0.80084 0.18763 0.30232 0.86219 0.99358     0.00557        0.02532     0.96911
+#> 3.6+0 0.81997 0.18122 0.32630 0.88311 0.99574     0.00443        0.02121     0.97436
+#> 5+0   0.83380 0.17605 0.34556 0.89779 0.99700     0.00386        0.01856     0.97758
+#> 6+0   0.84090 0.17320 0.35621 0.90511 0.99755     0.00359        0.01728     0.97913
+#> 
+#> [[3]]$`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.56910 0.23900 0.11963 0.58378 0.95517     0.04753        0.14654     0.80593
+#> 0.2+8  0.63035 0.22816 0.16110 0.66032 0.96646     0.02465        0.10102     0.87433
+#> 0.4+8  0.68897 0.21576 0.20664 0.73160 0.97682     0.01275        0.06595     0.92130
+#> 0.8+8  0.74100 0.20341 0.25074 0.79358 0.98541     0.00695        0.04352     0.94953
+#> 1.6+8  0.78405 0.19266 0.29010 0.84399 0.99189     0.00460        0.03018     0.96522
+#> 2.4+8  0.80453 0.18815 0.30842 0.86807 0.99451     0.00417        0.02617     0.96966
+#> 3.6+8  0.82099 0.18644 0.31395 0.88936 0.99656     0.00436        0.02392     0.97172
+#> 5+8    0.83064 0.18881 0.30524 0.90417 0.99782     0.00570        0.02438     0.96992
+#> 6+8    0.83415 0.19239 0.29021 0.91179 0.99832     0.00706        0.02550     0.96744
+#> 0.1+12 0.58779 0.22988 0.15053 0.60270 0.95715     0.02941        0.13362     0.83697
+#> 0.2+12 0.64635 0.21932 0.19289 0.67586 0.96805     0.01444        0.08937     0.89619
+#> 0.4+12 0.70236 0.20742 0.23634 0.74390 0.97797     0.00714        0.05668     0.93618
+#> 0.8+12 0.75185 0.19604 0.27874 0.80303 0.98626     0.00414        0.03664     0.95922
+#> 1.6+12 0.79201 0.18768 0.31035 0.85126 0.99248     0.00316        0.02681     0.97003
+#> 2.4+12 0.81002 0.18637 0.31605 0.87470 0.99512     0.00347        0.02472     0.97181
+#> 3.6+12 0.82258 0.19070 0.29942 0.89513 0.99711     0.00556        0.02578     0.96866
+#> 5+12   0.82715 0.20117 0.26222 0.90992 0.99832     0.00933        0.02985     0.96082
+#> 6+12   0.82679 0.21072 0.23057 0.91746 0.99882     0.01311        0.03384     0.95305
+#> 
+#> 
+#> [[4]]
+#> [[4]]$`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.11831 0.11403 0.00286 0.08252 0.42303     0.73127        0.20663     0.06210
+#> 0.2+0 0.16777 0.14088 0.00630 0.12992 0.52140     0.57914        0.28449     0.13637
+#> 0.4+0 0.23824 0.18001 0.01207 0.19772 0.66428     0.41990        0.30506     0.27504
+#> 0.8+0 0.32587 0.22501 0.01976 0.28490 0.81794     0.29222        0.27302     0.43476
+#> 1.6+0 0.41877 0.26231 0.02897 0.38820 0.92630     0.20311        0.22655     0.57034
+#> 2.4+0 0.47084 0.27746 0.03517 0.45330 0.96028     0.16617        0.19901     0.63482
+#> 3.6+0 0.51945 0.28764 0.04174 0.51889 0.97934     0.13638        0.17487     0.68875
+#> 5+0   0.55581 0.29270 0.04725 0.57099 0.98815     0.11829        0.15689     0.72482
+#> 6+0   0.57476 0.29446 0.05025 0.59952 0.99139     0.10944        0.14859     0.74197
+#> 
+#> [[4]]$`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.18639 0.13538 0.02408 0.15179 0.54178     0.52741        0.33483     0.13776
+#> 0.2+8  0.23066 0.15899 0.03178 0.19185 0.63448     0.40981        0.36362     0.22657
+#> 0.4+8  0.29201 0.18918 0.04249 0.24985 0.74714     0.29195        0.35513     0.35292
+#> 0.8+8  0.36947 0.22279 0.05564 0.32909 0.85841     0.19693        0.30446     0.49861
+#> 1.6+8  0.45495 0.25316 0.06836 0.42668 0.93809     0.13371        0.24225     0.62404
+#> 2.4+8  0.50391 0.26733 0.07412 0.48988 0.96614     0.11104        0.20725     0.68171
+#> 3.6+8  0.54944 0.27907 0.07575 0.55554 0.98282     0.09764        0.17607     0.72629
+#> 5+8    0.58264 0.28796 0.07250 0.60847 0.99069     0.09369        0.15293     0.75338
+#> 6+8    0.59925 0.29322 0.06809 0.63777 0.99362     0.09409        0.14204     0.76387
+#> 0.1+12 0.22196 0.13552 0.04603 0.19181 0.56692     0.39029        0.42408     0.18563
+#> 0.2+12 0.26431 0.15681 0.05520 0.23027 0.65290     0.29249        0.42572     0.28179
+#> 0.4+12 0.32302 0.18463 0.06776 0.28581 0.75962     0.20207        0.38453     0.41340
+#> 0.8+12 0.39719 0.21635 0.08155 0.36128 0.86581     0.13363        0.31471     0.55166
+#> 1.6+12 0.47895 0.24644 0.09103 0.45551 0.94269     0.09477        0.23715     0.66808
+#> 2.4+12 0.52543 0.26211 0.09145 0.51778 0.96939     0.08523        0.19821     0.71656
+#> 3.6+12 0.56780 0.27755 0.08259 0.58169 0.98527     0.08522        0.16471     0.75007
+#> 5+12   0.59731 0.29167 0.06840 0.63407 0.99262     0.09381        0.14183     0.76436
+#> 6+12   0.61116 0.30081 0.05730 0.66399 0.99530     0.10179        0.13104     0.76717
+#> 
+#> 
+#> [[5]]
+#> [[5]]$`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.25072 0.15948 0.02841 0.22241 0.62447     0.34268        0.37778     0.27954
+#> 0.2+0 0.33417 0.17729 0.05345 0.31550 0.71211     0.18084        0.34738     0.47178
+#> 0.4+0 0.43270 0.20097 0.08210 0.42504 0.81986     0.09242        0.24538     0.66220
+#> 0.8+0 0.53093 0.22210 0.11231 0.53688 0.91516     0.05132        0.15962     0.78906
+#> 1.6+0 0.61665 0.23287 0.14343 0.64058 0.96820     0.03134        0.10663     0.86203
+#> 2.4+0 0.65932 0.23437 0.16118 0.69576 0.98325     0.02460        0.08615     0.88925
+#> 3.6+0 0.69665 0.23315 0.17941 0.74507 0.99135     0.01939        0.07124     0.90937
+#> 5+0   0.72331 0.23065 0.19440 0.78122 0.99498     0.01642        0.06062     0.92296
+#> 6+0   0.73684 0.22882 0.20281 0.79956 0.99630     0.01496        0.05584     0.92920
+#> 
+#> [[5]]$`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.30636 0.17926 0.05082 0.27391 0.72218     0.23400        0.37675     0.38925
+#> 0.2+8  0.37746 0.19465 0.07464 0.35313 0.79605     0.13262        0.32414     0.54324
+#> 0.4+8  0.46250 0.20956 0.10683 0.44957 0.87212     0.06764        0.23549     0.69687
+#> 0.8+8  0.55191 0.22152 0.14172 0.55584 0.93539     0.03396        0.15355     0.81249
+#> 1.6+8  0.63336 0.22847 0.17131 0.65900 0.97386     0.02077        0.10054     0.87869
+#> 2.4+8  0.67389 0.23070 0.18346 0.71338 0.98566     0.01719        0.08255     0.90026
+#> 3.6+8  0.70803 0.23326 0.18691 0.76249 0.99278     0.01645        0.07142     0.91213
+#> 5+8    0.73038 0.23738 0.18079 0.79906 0.99612     0.01906        0.06618     0.91476
+#> 6+8    0.74040 0.24124 0.17108 0.81809 0.99731     0.02177        0.06500     0.91323
+#> 0.1+12 0.33657 0.17500 0.07734 0.30832 0.73601     0.15625        0.38963     0.45412
+#> 0.2+12 0.40457 0.18897 0.10274 0.38345 0.80629     0.08480        0.31012     0.60508
+#> 0.4+12 0.48588 0.20271 0.13577 0.47520 0.87846     0.04105        0.21303     0.74592
+#> 0.8+12 0.57122 0.21423 0.16961 0.57681 0.93911     0.02088        0.13403     0.84509
+#> 1.6+12 0.64833 0.22261 0.19376 0.67501 0.97591     0.01426        0.08901     0.89673
+#> 2.4+12 0.68574 0.22765 0.19668 0.72787 0.98723     0.01415        0.07598     0.90987
+#> 3.6+12 0.71553 0.23575 0.18303 0.77652 0.99388     0.01857        0.06956     0.91187
+#> 5+12   0.73267 0.24718 0.15413 0.81257 0.99699     0.02701        0.06882     0.90417
+#> 6+12   0.73888 0.25626 0.13131 0.83157 0.99808     0.03453        0.06994     0.89553
+#> 
+#> 
+#> [[6]]
+#> [[6]]$`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.05927 0.06771 0.00067 0.03550 0.25005     0.91481        0.07749     0.00770
+#> 0.2+0 0.09067 0.08750 0.00221 0.06361 0.32660     0.82248        0.15360     0.02392
+#> 0.4+0 0.14539 0.12297 0.00581 0.11205 0.46002     0.64264        0.26573     0.09163
+#> 0.8+0 0.23240 0.18072 0.01187 0.18836 0.67667     0.43607        0.30594     0.25799
+#> 1.6+0 0.34273 0.24287 0.01967 0.29286 0.87650     0.28688        0.26338     0.44974
+#> 2.4+0 0.40863 0.27075 0.02505 0.36589 0.94082     0.22697        0.23066     0.54237
+#> 3.6+0 0.47074 0.29025 0.03075 0.44404 0.97402     0.18297        0.19893     0.61810
+#> 5+0   0.51691 0.30040 0.03576 0.50882 0.98720     0.15487        0.17662     0.66851
+#> 6+0   0.54076 0.30417 0.03872 0.54499 0.99145     0.14222        0.16527     0.69251
+#> 
+#> [[6]]$`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.13192 0.09736 0.01582 0.10820 0.38277     0.70493        0.24969     0.04538
+#> 0.2+8  0.16221 0.11624 0.02161 0.13367 0.46424     0.59695        0.31494     0.08811
+#> 0.4+8  0.21171 0.14636 0.03027 0.17615 0.58963     0.44931        0.36891     0.18178
+#> 0.8+8  0.28755 0.18958 0.04211 0.24301 0.75799     0.29971        0.36266     0.33763
+#> 1.6+8  0.38636 0.23734 0.05465 0.34027 0.90085     0.19171        0.29274     0.51555
+#> 2.4+8  0.44769 0.26148 0.06026 0.41020 0.95086     0.15186        0.24684     0.60130
+#> 3.6+8  0.50617 0.28093 0.06230 0.48674 0.97851     0.12818        0.20348     0.66834
+#> 5+8    0.54914 0.29392 0.06031 0.55234 0.98980     0.11876        0.17109     0.71015
+#> 6+8    0.57075 0.30062 0.05700 0.58933 0.99345     0.11688        0.15647     0.72665
+#> 0.1+12 0.16975 0.10236 0.03594 0.14817 0.42499     0.54979        0.37422     0.07599
+#> 0.2+12 0.19875 0.11858 0.04303 0.17370 0.49720     0.44711        0.42346     0.12943
+#> 0.4+12 0.24619 0.14558 0.05360 0.21510 0.61268     0.32361        0.44012     0.23627
+#> 0.8+12 0.31895 0.18587 0.06674 0.27923 0.77236     0.20985        0.39074     0.39941
+#> 1.6+12 0.41378 0.23227 0.07740 0.37330 0.90813     0.13578        0.29682     0.56740
+#> 2.4+12 0.47240 0.25728 0.07818 0.44158 0.95560     0.11615        0.23975     0.64410
+#> 3.6+12 0.52758 0.27970 0.07100 0.51809 0.98131     0.11031        0.19053     0.69916
+#> 5+12   0.56690 0.29721 0.05864 0.58485 0.99183     0.11475        0.15928     0.72597
+#> 6+12   0.58581 0.30732 0.04928 0.62251 0.99515     0.12045        0.14520     0.73435
+#> 
+#> 
+#> [[7]]
+#> [[7]]$`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.04076 0.04857 0.00043 0.02356 0.17761     0.96523        0.03348     0.00129
+#> 0.2+0 0.06236 0.06252 0.00150 0.04261 0.23171     0.91992        0.07560     0.00448
+#> 0.4+0 0.10203 0.08939 0.00410 0.07680 0.33464     0.78946        0.18398     0.02656
+#> 0.8+0 0.17249 0.14391 0.00872 0.13306 0.54292     0.57534        0.28284     0.14182
+#> 1.6+0 0.27374 0.21639 0.01476 0.21582 0.80128     0.38864        0.28502     0.32634
+#> 2.4+0 0.33900 0.25328 0.01876 0.27670 0.90259     0.31201        0.25733     0.43066
+#> 3.6+0 0.40291 0.28155 0.02322 0.34652 0.95758     0.25282        0.22823     0.51895
+#> 5+0   0.45162 0.29798 0.02719 0.40822 0.97911     0.21547        0.20702     0.57751
+#> 6+0   0.47711 0.30483 0.02948 0.44387 0.98615     0.19753        0.19594     0.60653
+#> 
+#> [[7]]$`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.11281 0.08057 0.01402 0.09447 0.31828     0.78071        0.19806     0.02123
+#> 0.2+8  0.13449 0.09400 0.01874 0.11324 0.37237     0.69593        0.26215     0.04192
+#> 0.4+8  0.17184 0.11838 0.02600 0.14435 0.47836     0.55917        0.34354     0.09729
+#> 0.8+8  0.23430 0.16022 0.03619 0.19419 0.65177     0.39587        0.38007     0.22406
+#> 1.6+8  0.32460 0.21569 0.04712 0.27073 0.84556     0.26135        0.33612     0.40253
+#> 2.4+8  0.38495 0.24728 0.05162 0.32902 0.92196     0.20959        0.29182     0.49859
+#> 3.6+8  0.44509 0.27449 0.05306 0.39848 0.96584     0.17581        0.24429     0.57990
+#> 5+8    0.49088 0.29302 0.05025 0.46020 0.98396     0.16038        0.20723     0.63239
+#> 6+8    0.51451 0.30233 0.04688 0.49783 0.98976     0.15636        0.18745     0.65619
+#> 0.1+12 0.15144 0.08821 0.03364 0.13407 0.36937     0.61958        0.33713     0.04329
+#> 0.2+12 0.17219 0.09925 0.03935 0.15265 0.41707     0.53199        0.39599     0.07202
+#> 0.4+12 0.20802 0.12050 0.04810 0.18345 0.51062     0.40944        0.44772     0.14284
+#> 0.8+12 0.26805 0.15904 0.05882 0.23253 0.67210     0.27937        0.43670     0.28393
+#> 1.6+12 0.35504 0.21263 0.06733 0.30784 0.85631     0.18715        0.35215     0.46070
+#> 2.4+12 0.41316 0.24481 0.06728 0.36587 0.92924     0.15901        0.28967     0.55132
+#> 3.6+12 0.47066 0.27465 0.05991 0.43559 0.97044     0.14785        0.23013     0.62202
+#> 5+12   0.51351 0.29728 0.04816 0.49848 0.98723     0.15036        0.18729     0.66235
+#> 6+12   0.53493 0.30966 0.03974 0.53580 0.99239     0.15650        0.16594     0.67756
+#> 
+#> 
+#> [[8]]
+#> [[8]]$`trial-A`
+#>          mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+0 0.03281 0.03964 0.00034 0.01868 0.14366     0.98288        0.01670     0.00042
+#> 0.2+0 0.05151 0.05230 0.00123 0.03488 0.19291     0.95220        0.04609     0.00171
+#> 0.4+0 0.08728 0.07842 0.00355 0.06467 0.29429     0.84380        0.14205     0.01415
+#> 0.8+0 0.15402 0.13447 0.00757 0.11533 0.51131     0.63217        0.25793     0.10990
+#> 1.6+0 0.25461 0.21173 0.01296 0.19230 0.79087     0.43261        0.27442     0.29297
+#> 2.4+0 0.32112 0.25209 0.01669 0.25107 0.89774     0.34667        0.25539     0.39794
+#> 3.6+0 0.38681 0.28329 0.02047 0.31990 0.95568     0.28103        0.22987     0.48910
+#> 5+0   0.43707 0.30150 0.02395 0.38281 0.97852     0.23963        0.20852     0.55185
+#> 6+0   0.46341 0.30911 0.02585 0.41877 0.98600     0.22020        0.19788     0.58192
+#> 
+#> [[8]]$`trial-B`
+#>           mean      sd  q.2.5%   q.50% q.97.5% P([0,0.16)) P([0.16,0.33)) P([0.33,1])
+#> 0.1+8  0.09129 0.06336 0.01090 0.07745 0.25117     0.86821        0.12638     0.00541
+#> 0.2+8  0.10876 0.07296 0.01497 0.09305 0.29179     0.80017        0.18659     0.01324
+#> 0.4+8  0.14128 0.09448 0.02159 0.12025 0.37945     0.66669        0.28676     0.04655
+#> 0.8+8  0.20061 0.13968 0.03047 0.16564 0.56689     0.48130        0.36255     0.15615
+#> 1.6+8  0.29242 0.20517 0.03975 0.23683 0.80773     0.31910        0.33923     0.34167
+#> 2.4+8  0.35564 0.24295 0.04404 0.29229 0.90622     0.25472        0.29904     0.44624
+#> 3.6+8  0.41933 0.27478 0.04593 0.35996 0.96074     0.21101        0.25338     0.53561
+#> 5+8    0.46818 0.29570 0.04393 0.42289 0.98222     0.18928        0.21458     0.59614
+#> 6+8    0.49352 0.30583 0.04140 0.46200 0.98895     0.18160        0.19489     0.62351
+#> 0.1+12 0.12932 0.07296 0.02868 0.11572 0.30802     0.71878        0.26481     0.01641
+#> 0.2+12 0.14607 0.08050 0.03414 0.13140 0.34172     0.63893        0.33065     0.03042
+#> 0.4+12 0.17730 0.09878 0.04174 0.15854 0.41988     0.50629        0.41506     0.07865
+#> 0.8+12 0.23441 0.14002 0.05198 0.20330 0.59045     0.35160        0.44190     0.20650
+#> 1.6+12 0.32307 0.20290 0.06032 0.27311 0.82172     0.23441        0.36884     0.39675
+#> 2.4+12 0.38416 0.24074 0.06025 0.32938 0.91527     0.19501        0.30601     0.49898
+#> 3.6+12 0.44546 0.27455 0.05410 0.39738 0.96651     0.17530        0.24394     0.58076
+#> 5+12   0.49176 0.29903 0.04353 0.46452 0.98603     0.17260        0.19697     0.63043
+#> 6+12   0.51520 0.31197 0.03607 0.50355 0.99199     0.17534        0.17516     0.64950
+```
+
+Here, except for the first argument, `data.list`, we have
+provided precisely the same arguments as for the call to `scenario_jointBLRM`
+from the previous section.
+This would also work for all other (optional) arguments of `scenario_jointBLRM`,
+except for `file.name`. Instead of this argument, `scenario_list_jointBLRM`
+uses the optional argument `file.names` (notice the plural), which has the same
+function as `file.name` for `scenario_jointBLRM`, but needs to contain a vector
+with a file name for each scenario instead. As before, the argument is
+ignored unless you want to save the output and have supplied a `path`.
+
+Note further that the historical data provided to `scenario_list_jointBLRM`
+is included in the posterior evaluations for every scenario, i.e., the historical
+data is interpreted in the same fashion as for `scenario_jointBLRM`, and does
+not vary across the scenarios in the list.
+
+To obtain a prior configuration, it is now recommended to create a sufficiently
+large number of scenarios, and repeatedly evaluate the scenarios to gradually
+alter the prior distribution and obtain an appropriate setup and behavior in
+the considered scenarios. However, as mentioned before, one will probably not
+be able to consider every potential scenario in advance, so that this is
+mostly a heuristic check and is not guaranteed to yield an optimal prior. Due to this,
+further evaluation of the prior should be performed to confirm that it shows
+appropriate operating characteristics in the long-run. This will be the subject
+of the following section.
+
+## Simulating dose-finding trials with `sim_jointBLRM`
+Simulations of trials usually aim to estimate the operating characteristics (OC)
+of a dose-finding trial design, which includes e.g. the ratio of MTDs declared
+on each dose (or on doses with DLT rate in a specific dosing interval), the number
+of patients per dose and the number of DLTs in the trial, as well as further
+metrics for the simulation results.
+
+While there are simulation-free approaches to estimating OCs
+of certain model-based trial designs for dose finding, no such method is currently
+known for the BLRM
+(cf. Braun (2020)), and even less so for its more involved variants like the
+joint BLRM. Hence, the only available method for this are simulated trials.
+That is, one assumes a fixed set of available dose levels and a fixed
+dose-toxicity scenario -- i.e. a specification of the DLT rate for each available
+dose level -- and simulates a number of trials in this setting. This allows to
+e.g. estimate the average number of MTDs in the correct interval or the number
+of patients treated at overly toxic doses for this specific dose-toxicity
+scenario.
+
+As it is of course not possible to test all possible dose-toxicity scenarios,
+one will typically confine oneself to a selected number of scenarios that
+illustrate different possible cases. These should usually range from scenarios
+that follow the prior expectations, over more extreme scenarios that assume
+the involved drugs to be considerably more (or less) toxic than expected by
+the prior, up to scenarios that deliberately assume the trials to result
+in heterogeneous data or that the true dose-toxicity relationship does not follow
+the logistic model of the BLRM (i.e. one assumes the BLRM to be misspecified).
+
+As an example how such simulations can be performed via `sim_jointBLRM`, we will
+again consider the setting of the previous section. For this, recall that a
+monotherapy and combination therapy trial shall run (partially) in parallel,
+where we wanted to consider the dose levels given in the variable
+`doses.of.interest` and use the data from a historical trial as given in the
+`historical.data` argument.
+
+The function `sim_jointBLRM` supports simulation of (parallel) monotherapy or
+combination therapy trials. Internally, it is differentiated between three types,
+namely monotherapy for compound 1 (`"mono1"`), monotherapy for compound 2 (`"mono2"`),
+and combination therapy with compounds 1 and 2 (`"combi"`). For each of these types,
+the function can actively simulate 2 trials (i.e., six parallel trials in total),
+and the order in which cohorts are enrolled in each of the up to six trials
+can be specified freely. The simulated trials can be activated independently of
+each other, i.e. one can choose how many of the parallel trials are simulated.
+
+Additionally, historical data from arbitrarily many trials that are already
+concluded can be given, and furthermore, data that was observed in the actively
+simulated trials before the start of the simulation can be included as well
+(which allows to simulate how one or more trials might continue after
+already having observed a specific data scenario).
+
+### Naming conventions for `sim_jointBLRM`
+The function features a large number of optional parameters to allow
+relatively flexible customization of the simulated trials, e.g. regarding the
+number of patients per cohort, criteria for MTD selection, escalation rules, and
+further topics. Refer to the documentation for more detail and the parameters that
+are not discussed in this vignette.
+
+To allow some settings to deviate across the simulated trials, many of the
+arguments of `sim_jointBLRM` exist in six variations, one for each simulated trial.
+To differentiate between these, the arguments feature trial-specific suffixes as
+given in the following table.
+
+Trial | Suffix of function arguments
+----------|:---------------------:
+1st monotherapy trial for compound 1 | `mono1.a`
+1st monotherapy trial for compound 2 | `mono2.a`
+1st combination therapy trial        | `combi.a`
+2nd monotherapy trial for compound 1 | `mono1.b`
+2nd monotherapy trial for compound 2 | `mono2.b`
+2nd combination therapy trial        | `combi.b`
+
+Here, the first and second trial for a specific trial type mean simply that these
+are independently escalating trials of the same type, but does not imply a
+specific order or some other dependency across the first and second trial (except
+that they are jointly modeled in the BLRM). It is for instance possible to just
+simulate the `mono2.b` trial and deactivate all other trials.
+
+The take away message from these naming conventions is that one needs to use the
+parameter with the corresponding suffix when an specific option shall only
+affect one specific trial but not the others. Arguments that do not have a
+suffix will in general always affect all simulated trials.
+
+Apart from the argument names, the suffixes for the six potentially simulated trials
+are also used to refer to the corresponding trial when the order in which the trials
+enroll cohorts is specified. Furthermore, they are also used to encode the trials
+when historical data that was previously recorded in an actively simulated trial
+shall be included. Refer to the documentation for more detail.
+
+### Configuring the trial simulations
+First and foremost, one needs to decide which of the possible six trials
+need to be simulated and activate the corresponding trials. For the example in this
+vignette, an monotherapy trial for compound 1 and a combination therapy trial
+shall be included. We will assume that we have chosen to utilize the `mono1.a`
+and `combi.a` trials to represent these trials (although it would be
+equivalent to use the `mono1.b` and `combi.b` trials or even a combination of
+`mono1.b` and `combi.a`). To activate the trials, we can supply the arguments
+
+```r
+active.mono1.a = TRUE
+active.combi.a = TRUE
+```
+
+Now, we specify the corresponding available dose levels. For this, we will use
+the same doses as specified previously:
+
+```r
+doses.mono1.a = c(0.1, 0.2, 0.4, 0.8, 1.6, 2.4, 3.6, 5, 6)
+
+doses.combi.a = rbind(
+  rep(doses.mono1.a, times=2),
+  rep(c(8, 12),      each = length(doses.mono1.a)))
+```
+
+Note that `doses.mono1.a` is a vector, while `doses.combi.a` needs
+to be a matrix with two rows, so that each column specifies a dose combination
+to be considered in the combination therapy trial. The code above generated
+every possible combination of the doses from the monotherapy trial for
+compound 1 with the doses 8 and 12 for compound 2.
+
+As for the function `scenario_jointBLRM`, one again needs to specify reference
+doses and a prior distribution for the BLRM. For this, the same argument names
+and formats as for `scenario_jointBLRM` are used, i.e. the arguments
+`dose.ref1`, `dose.ref2`, `prior.mu`, and `prior.tau` can be used in the form
+that was specified in the previous section. The same holds for the historical data,
+for which we will assume that the same observations as before are used, namely
+
+```r
+historical.data
+#> $dose1
+#> [1] 0 0 0 0 0
+#> 
+#> $dose2
+#> [1]  2  4  8 12 16
+#> 
+#> $n.pat
+#> [1]  3  3  3  9 12
+#> 
+#> $n.dlt
+#> [1] 0 0 0 1 2
+#> 
+#> $trial
+#> [1] "H1" "H1" "H1" "H1" "H1"
+```
+
+Additionally, we need to provide starting dose levels for each activated trials.
+Note that these must be elements of the set of available dose levels, otherwise
+the function will report an error. We will assume that the monotherapy trial
+will start with the lowest available dose, 0.1, which is specified via
+
+```r
+start.dose.mono1.a = 0.1
+```
+
+We will later assume additionally that the monotherapy trial enrolls at least 3
+or 4 cohorts before the first combination therapy cohort is processed, and due
+to this, we assume the combination trial to use a slightly larger starting dose.
+For instance, suppose that the combination therapy shall begin with the dose
+combination of 0.2 of compound 1 and 8 of compound 2. This is expressed by
+using
+
+```r
+start.dose.combi.a1 = 0.2
+start.dose.combi.a2 = 8
+```
+
+Note that two arguments need to be specified for this, with suffix `.combi.a1`
+for the first compound and `.combi.a2` for the second compound. Both
+of these arguments belong to the `combi.a` trial, while the endings
+`.a1`  and `.a2` are used to differentiate between the setting for the first
+and second compound of the `combi.a` trial. They are also used for other
+arguments that may need different settings for the two combination therapy
+partners in the same combination therapy trial.
+
+#### Optional general specification
+As a next step, the general course of the trial can be defined, consisting
+of the number of patients per cohort, the maximum number of patients in the
+trial, and the order in which cohorts are enrolled. All of these arguments
+are optional, and relatively sensible defaults will be used when they are
+not specified.
+
+First, to set the number of patients per cohort, one can use e.g.
+
+```r
+cohort.size = 3
+```
+
+Note that `cohort.size` is the global variant of this argument, i.e. it affects all
+simulated trials. If it is not provided explicitly, the function will use the default
+value of 3. If a specific trial shall deviate from this value, one can
+use the trial-specific parameter with the corresponding trial suffix, e.g.
+
+```r
+cohort.size.mono1.b = 4
+```
+
+Note that this would only affect the `mono1.b` trial, which we do not plan to
+simulate in the current example. For the `mono1.a` and  `combi.a` trial, which
+we do want to simulate, the global cohort size of 3 is still in effect. The same
+would apply if `cohort.size` is not given to the function, as the default value
+would have been used in this case.
+
+One can also provide a vector of multiple cohort sizes, in which case the function will
+randomly select one of the given cohort sizes for each cohort. The cohort sizes
+will then be drawn uniformly at random from the possible numbers specified in
+'cohort.size' if no further options are given. If it is desired to draw each
+cohort size with a specific probability, one can use the optional argument
+`cohort.prob` to provide the probability for each cohort size, e.g. by setting
+
+```r
+cohort.size.mono1.b = c(2,    3,    4)
+cohort.prob.mono1.b = c(0.05, 0.85, 0.1)
+```
+
+In this example, the `mono1.b` trial would select the size of each cohort
+randomly according to the corresponding probabilities, i.e. a cohort size of 2
+is drawn with a probability of 0.05, a size of 3 with probability 0.85, and a
+cohort size of 4 will be chosen with a probability of 0.1. As before, there is a
+global and trial-specific version of the argument `cohort.prob`.
+
+As a next step, we want to set the maximum number of patients for each trial.
+We will assume the maximum number of patients to be 36 for the
+combination therapy trial and 45 for the monotherapy trial. This can be set
+via the trial-specific arguments
+
+```r
+max.n.mono1.a = 45
+max.n.combi.a = 36
+```
+
+Note that there is also a global argument `max.n`, which will not be used in this
+example.
+
+Now, the order in which cohorts are enrolled is specified. For this,
+the function uses the argument `cohort.queue`, which provides, as the name says,
+a queue of cohorts that is processed during the simulation. This can be done
+by supplying a simple pattern which is automatically repeated (note however that
+the function will drop a warning in this case) or by supplying a complex pattern
+that already contains every cohort that may potentially be arriving throughout
+the trial. For instance, to simply simulate cohorts for `mono1.a` and `combi.a`
+alternately, one can use
+
+```r
+cohort.queue = c("mono1.a", "combi.a")
+```
+
+This order would then be repeated until both trials concluded due to being stopped
+early, having found an MTD, or reaching the maximum patient number.
+
+The cohort queue is mostly used to enforce a specific order of the cohorts in
+a trial. For this, consider again the example from the previous section, where
+a monotherapy and combination trial shall be simulated in parallel. Assume for
+instance that one wants to start the combination therapy trial after the first
+four monotherapy cohorts were processed, and, afterwards, the trials shall
+enroll cohorts alternately. This is expressed by setting the queue to
+
+```r
+cohort.queue = c("mono1.a", "mono1.a", "mono1.a", rep(c("mono1.a", "combi.a"),
+                                                      times=12))
+head(cohort.queue, 9)
+#> [1] "mono1.a" "mono1.a" "mono1.a" "mono1.a" "combi.a" "mono1.a" "combi.a" "mono1.a" "combi.a"
+```
+
+Note that `c("mono1.a", "combi.a")` is repeated 12 times, which translates to
+12 `"combi.a"` and 15 `"mono1.a"` cohorts in the queue. As the cohort size was
+previously set to 3 patients, this results in a total of 36 patients for
+`combi.a` in the queue and 45 patients for `mono1.a`, i.e. precisely the maximum
+sample size that was specified. This ensures that the function will not need to
+repeat the queue automatically. Note that it would not be a problem to provide
+a cohort queue containing more patients than required, as the function will simply
+ignore cohorts for each simulated trial once it has concluded. Therefore, it is
+also possible to use e.g.
+
+```r
+cohort.queue = c("mono1.a", "mono1.a", "mono1.a", rep(c("mono1.a", "combi.a"),
+                                                      times=100))
+```
+
+Here, we supplied much more cohorts than needed (100 for combination therapy),
+which is still equivalent to the previous queue. Only supplying lower numbers
+of cohorts will cause the function to operate differently, as it will repeat the
+cohort queue until all trials concluded.
+
+Note that the trials in the cohort queue can also be indicated with numbers (which
+usually leads to shorter code than the full trial names), as stated in the following
+table.
+
+Trial | Suffix of function arguments | Number
+----------|:---------------------:  |:-------------:
+1st monotherapy trial for compound 1 | `mono1.a` | 1
+1st monotherapy trial for compound 2 | `mono2.a` | 2
+1st combination therapy trial        | `combi.a` | 3
+2nd monotherapy trial for compound 1 | `mono1.b` | 4
+2nd monotherapy trial for compound 2 | `mono2.b` | 5
+2nd combination therapy trial        | `combi.b` | 6
+
+Hence, the previous cohort queue could be equivalently written as
+
+```r
+cohort.queue = c(1, 1, 1, rep(c(1, 3), times=100))
+```
+
+#### Escalation decisions in simulted trials
+As a next step, we specify rules for dose escalation decisions. As mentioned
+before, the function will by default apply EWOC-based escalation, which means
+that only doses can be chosen for which the posterior probability of overdosing
+is below 0.25. This boundary could also be altered, by using the argument
+
+```r
+ewoc.threshold = 0.25
+```
+
+As EWOC only states an upper boundary, the function will afterwards maximize the
+probability of having a DLT rate within the target interval among the doses that
+satisfy EWOC. If this still leads to
+multiple possible doses, the function will subsequently maximize the dose of the
+first compound among the doses with the same probability of target dosing.
+To maximize the second compound instead, one can set the argument
+`esc.comp.max`, which may have the values `1` or `2` and indicates which
+component the function will maximize in case of draws. Note that one can also
+deviate from maximizing the target probability and maximize directly the dose
+among the levels that satisfy EWOC, but this is not covered in this vignette.
+Refer to the documentation of the argument `esc.rule` for information on this.
+
+@neuenschwander14 recommend to impose a maximum increment of the
+dose additionally to EWOC, in order to avoid overly large dosing steps during
+dose escalations. This can be realized by using the `esc.step` family of
+arguments, which is available as a global variant and six trial-specific
+parameters. The escalation step is interpreted as the maximum factor of dose
+escalation. For instance, when an escalation step is set to the value 2, the dose
+can at most be doubled in each escalation decision. If no escalation step is
+given, the function will set it to the maximum factor between subsequent dose
+levels as an additional constrain on the escalation.
+
+However, there might be situations in which one may not want a fixed maximum
+factor between escalations, e.g. if a factor cannot express the increments
+between planned dose levels. Consider for instance a trial with planned doses of
+10, 20, 30, and 40 mg. In order to allow escalating from 10 to 20, the escalation
+step would need to be set to 2, but this would also allow escalating from 20
+to 40 without enrolling patients at 30. To prevent this, one can set
+
+```r
+esc.constrain = TRUE
+```
+
+This argument constrains escalations to the given set of dose levels, i.e. only
+the next larger prespecified dose can be used. If activated, `esc.constrain`
+causes the function to ignore any given escalation step and always restrict
+escalation decisions to the next larger dose (but does not pose a boundary
+when deescalating the dose). As before, `esc.constrain` is the global variant,
+while additional arguments like `esc.constrain.mono1.b` only affect the
+corresponding trial.
+
+#### MTD selection
+It now remains to specify the rules for MTD selection in the trial.
+
+There are two different arguments that control how the function selects the MTD
+of a simulated trial, namely `mtd.decision` and `mtd.enforce`. Both are available
+as global arguments without suffix and as trial-specific argument with the
+corresponding suffix. The argument `mtd.decision` is a named list with five
+entries of the form
+
+```r
+mtd.decision = list(
+  min.dlt     = 1,
+  pat.at.mtd  = 6,
+  min.pat     = 12,
+  target.prob = 0.5,
+  rule        = 2
+)
+```
+
+The list stated above is also the default argument. The first four list entries
+correspond to the demanded boundaries of four different conditions that are
+used to determine an MTD. The last entry, `mtd.decision$rule` does not pose
+a condition itself, but dictates which of the other conditions are mandatory instead.
+
+During the simulation, the MTD can only be determined as the dose that was used
+for the last cohort, which is always the current candidate for the MTD.
+For MTD selection, the function will then first demand that the current dose level
+is also recommended for the next cohort again (so-called stabilization criterion).
+If this is the case, it will check whether the current dose also satisfies the
+conditions determined by `mtd.decision`, and, if these are satisfied, declare the
+current dose to be the MTD of this trial. The precise conditions and the
+corresponding entries in `mtd.decision` are listed in the following table.
+
+No.     | List entry    |  Condition
+:--------|:-----------  |:-----------------------
+1       | `min.dlt`     | At least `min.dlt` patients with DLTs were observed in the trial.
+2       | `pat.at.mtd`  | At least `pat.at.mtd` patients were treated with the current dose.
+3       | `min.pat`     | At least `min.pat` patients were treated in the current trial.
+4       | `target.prob` | The probability that the current dose has DLT rate in the target interval is at least `target.prob`.
+
+In terms of the effect of the entry `rule`, the following to possibilities are supported
+
+* __If `rule` is `1`__: Conditions 1 and 2 are necessary, and at least one of conditions 3 and 4 must be satisfied as well.
+
+* __If `rule` is `2`__: Conditions 1 and 3 are necessary, and at least one of conditions 2 and 4 must be satisfied as well.
+
+Other decision rule specifications may be supported in the future.
+
+The second argument that affects MTD selection, `mtd.enforce`, is a logical
+value that controls how the function behaves when a trial reaches the specified
+maximum sample size. By default, `mtd.enforce` is `FALSE`, which causes trials
+that reach the maximum sample size to be considered as not having found an MTD,
+which will also be noted in the output. If the parameter is instead `TRUE`, the
+current dose will be considered the MTD when the maximum sample size is reached
+before the conditions for MTD selections are satisfied. This can e.g. be used if
+one wants to approximate the average dosing recommendations after a specific
+number of cohorts based on simulations. For instance, when `max.n = 15`,
+`mtd.enforce = TRUE`, one can set `mtd.decision` to values that cannot be
+reached within 15 patients (e.g., `mtd.decision$rule = 2` and `mtd.decision$min.pat = 16`),
+so that the function will simply report the dosing recommendation after 15
+patients as the MTD and not apply the MTD decision rule. This option can also be
+set for individual trials (via the parameters with the corresponding suffix).
+
+#### Dose-toxicity scenarios and trial simulations
+It remains to specify a dose-toxicity scenario before the simulation can be started.
+That is, a DLT rate for each dose level is assumed, which is then used by the
+function to simulate the number of patients experiencing DLT in each cohort.
+
+The arguments for specifying the DLT rate in one of the simulated trials
+are named according to the pattern `tox.[...]`, where `[...]` can be any of the
+trial-specific suffixes. Note that there is no global variant of this argument.
+For the situation discussed in the previous chapters, the required arguments are
+therefore `tox.mono1.a` and `tox.combi.a`.
+
+First, recall the specification of the dose levels for the monotherapy trial:
+
+```r
+doses.mono1.a
+#> [1] 0.1 0.2 0.4 0.8 1.6 2.4 3.6 5.0 6.0
+```
+
+The DLT rates (or toxicities) must therefore be specified for 9 dose levels. This
+is done by supplying a vector of this length, so that the entry `tox.mono1.a[i]`
+specifies the DLT rate of the dose given in `doses.mono1.a[i]`. In our case,
+this could e.g. be
+
+```r
+#Compound 1:     0.1   0.2   0.4   0.8   1.6   2.4   3.6   5     6
+tox.mono1.a = c(0.01, 0.02, 0.03, 0.05, 0.09, 0.12, 0.19, 0.29, 0.43)
+```
+
+Similarly, for the combination therapy trial, the dose levels were given as
+
+```r
+doses.combi.a
+#>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14] [,15] [,16] [,17] [,18]
+#> [1,]  0.1  0.2  0.4  0.8  1.6  2.4  3.6    5    6   0.1   0.2   0.4   0.8   1.6   2.4   3.6     5     6
+#> [2,]  8.0  8.0  8.0  8.0  8.0  8.0  8.0    8    8  12.0  12.0  12.0  12.0  12.0  12.0  12.0    12    12
+```
+
+Here, each column specifies a dose, so that the argument `tox.combi.a` needs one
+entry for each column, i.e. 18 entries in our example. Similarly to before,
+entry `i` of the argument provides the DLT rate of the dose given in column `i`
+of `doses.combi.a`. Hence, a dose-toxicity scenario for this case could be
+
+```r
+#Compound 1:     0.1   0.2   0.4   0.8   1.6   2.4   3.6   5     6        0.1   0.2   0.4   0.8   1.6   2.4   3.6   5     6
+#compound 2:     8     8     8     8     8     8     8     8     8        12    12    12    12    12    12    12    12    12
+tox.combi.a = c(0.02, 0.03, 0.04, 0.08, 0.14, 0.21, 0.32, 0.39, 0.47,    0.04, 0.06, 0.09, 0.12, 0.17, 0.29, 0.45, 0.52, 0.61)
+```
+
+Note that one will usually consider multiple different dose toxicity scenarios
+to assess the performance of the prior in different settings and situations. In
+the following, we will only consider the scenario specified above for simplicity.
+
+This completes the setup and specification of the trials that are to be simulated.
+As a last step, it remains to specify the number of simulated studies via the
+parameter `n.studies`. As an example, 1 study will be used in the following.
+Note however that this is of course by far not sufficient for a proper evaluation
+of the prior, where one should simulate something around the order of e.g. 1000
+to 10000 studies. However, be aware that depending on the specifications, each study will
+require up to multiple minutes of run time for the repeated calls to Stan, so
+that 1000 or more trials may take multiple hours or even nearly a day to simulate. It is
+therefore recommended to run the simulation in parallel.
+
+If a cluster is available, a parallel backend consisting of multiple nodes
+with multiple cores can be registered, so that the function can leverage the
+capabilities of a cluster with a nested foreach loop. This is however purely optional.
+Further, when
+running simulations in parallel with a moderate number of cores, it is
+recommended to consider the argument `working.path` in the documentation, as this
+allows to save a reload MCMC results across nodes and cores.
+
+At last, one can also optionally specify the arguments `path` and `file.name`,
+which will cause the function to automatically write the summarized simulation results
+to a `.xlsx` file of the specified name under the specified path. Otherwise, the
+simulation results are only returned to R.
+
+Putting all of the previous explanations together, the call to `sim_jointBLRM`
+would therefore be:
+
+```r
+sim_result <- sim_jointBLRM(
+  active.mono1.a = TRUE,
+  active.combi.a = TRUE,
+
+  doses.mono1.a = doses.mono1.a,
+  doses.combi.a = doses.combi.a,
+  dose.ref1 = dose.ref1,
+  dose.ref2 = dose.ref2,
+  start.dose.mono1.a = start.dose.mono1.a,
+  start.dose.combi.a1 = start.dose.combi.a1,
+  start.dose.combi.a2 = start.dose.combi.a2,
+
+  tox.mono1.a = tox.mono1.a,
+  tox.combi.a = tox.combi.a,
+
+  historical.data = historical.data,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau,
+
+  max.n.mono1.a = max.n.mono1.a,
+  max.n.combi.a = max.n.combi.a,
+  cohort.size = cohort.size,
+  cohort.queue = cohort.queue,
+  ewoc.threshold = ewoc.threshold,
+  esc.constrain = esc.constrain,
+  mtd.decision = mtd.decision,
+
+  n.studies = 1
+)
+
+print(sim_result)
+#> $`results combi.a`
+#>                              underdose target dose overdose max n reached before MTD all doses too toxic
+#> Number of trials                     0           1        0                        0                   0
+#> Percentage                           0         100        0                        0                   0
+#> Percentage not all too toxic         0         100        0                        0                  NA
+#> 
+#> $`summary combi.a`
+#>                      Median       Mean       Min.       Max.       2.5%      97.5%
+#> #Pat underdose    9.0000000  9.0000000  9.0000000  9.0000000  9.0000000  9.0000000
+#> #Pat target dose 12.0000000 12.0000000 12.0000000 12.0000000 12.0000000 12.0000000
+#> #Pat overdose     0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> #Pat (all)       21.0000000 21.0000000 21.0000000 21.0000000 21.0000000 21.0000000
+#> #DLT underdose    0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> #DLT target dose  2.0000000  2.0000000  2.0000000  2.0000000  2.0000000  2.0000000
+#> #DLT overdose     0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> #DLT (all)        2.0000000  2.0000000  2.0000000  2.0000000  2.0000000  2.0000000
+#> % overdose        0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> % DLT             0.0952381  0.0952381  0.0952381  0.0952381  0.0952381  0.0952381
+#> 
+#> $`MTDs combi.a`
+#>                  0.1+8       0.2+8       0.4+8       0.8+8       1.6+8       2.4+8         3.6+8         5+8       
+#> Dose             "0.1+8"     "0.2+8"     "0.4+8"     "0.8+8"     "1.6+8"     "2.4+8"       "3.6+8"       "5+8"     
+#> True P(DLT)      "0.02"      "0.03"      "0.04"      "0.08"      "0.14"      "0.21"        "0.32"        "0.39"    
+#> True category    "underdose" "underdose" "underdose" "underdose" "underdose" "target dose" "target dose" "overdose"
+#> MTD declared (n) "0"         "0"         "0"         "0"         "0"         "0"           "0"           "0"       
+#>                  6+8        0.1+12      0.2+12      0.4+12      0.8+12      1.6+12        2.4+12        3.6+12    
+#> Dose             "6+8"      "0.1+12"    "0.2+12"    "0.4+12"    "0.8+12"    "1.6+12"      "2.4+12"      "3.6+12"  
+#> True P(DLT)      "0.47"     "0.04"      "0.06"      "0.09"      "0.12"      "0.17"        "0.29"        "0.45"    
+#> True category    "overdose" "underdose" "underdose" "underdose" "underdose" "target dose" "target dose" "overdose"
+#> MTD declared (n) "0"        "0"         "0"         "0"         "0"         "1"           "0"           "0"       
+#>                  5+12       6+12      
+#> Dose             "5+12"     "6+12"    
+#> True P(DLT)      "0.52"     "0.61"    
+#> True category    "overdose" "overdose"
+#> MTD declared (n) "0"        "0"       
+#> 
+#> $`#pat. combi.a`
+#>             0.1+8   0.2+8   0.4+8   0.8+8   1.6+8   2.4+8   3.6+8   5+8   6+8   0.1+12   0.2+12   0.4+12   0.8+12  
+#> Dose        "0.1+8" "0.2+8" "0.4+8" "0.8+8" "1.6+8" "2.4+8" "3.6+8" "5+8" "6+8" "0.1+12" "0.2+12" "0.4+12" "0.8+12"
+#> mean #pat   "0"     "3"     "0"     "0"     "0"     "0"     "0"     "0"   "0"   "0"      "0"      "3"      "3"     
+#> median #pat "0"     "3"     "0"     "0"     "0"     "0"     "0"     "0"   "0"   "0"      "0"      "3"      "3"     
+#> min #pat    "0"     "3"     "0"     "0"     "0"     "0"     "0"     "0"   "0"   "0"      "0"      "3"      "3"     
+#> max #pat    "0"     "3"     "0"     "0"     "0"     "0"     "0"     "0"   "0"   "0"      "0"      "3"      "3"     
+#>             1.6+12   2.4+12   3.6+12   5+12   6+12  
+#> Dose        "1.6+12" "2.4+12" "3.6+12" "5+12" "6+12"
+#> mean #pat   "9"      "3"      "0"      "0"    "0"   
+#> median #pat "9"      "3"      "0"      "0"    "0"   
+#> min #pat    "9"      "3"      "0"      "0"    "0"   
+#> max #pat    "9"      "3"      "0"      "0"    "0"   
+#> 
+#> $`results mono1.a`
+#>                              underdose target dose overdose max n reached before MTD all doses too toxic
+#> Number of trials                     1           0        0                        0                   0
+#> Percentage                         100           0        0                        0                   0
+#> Percentage not all too toxic       100           0        0                        0                  NA
+#> 
+#> $`summary mono1.a`
+#>                      Median       Mean       Min.       Max.       2.5%      97.5%
+#> #Pat underdose   21.0000000 21.0000000 21.0000000 21.0000000 21.0000000 21.0000000
+#> #Pat target dose  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> #Pat overdose     0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> #Pat (all)       21.0000000 21.0000000 21.0000000 21.0000000 21.0000000 21.0000000
+#> #DLT underdose    3.0000000  3.0000000  3.0000000  3.0000000  3.0000000  3.0000000
+#> #DLT target dose  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> #DLT overdose     0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> #DLT (all)        3.0000000  3.0000000  3.0000000  3.0000000  3.0000000  3.0000000
+#> % overdose        0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+#> % DLT             0.1428571  0.1428571  0.1428571  0.1428571  0.1428571  0.1428571
+#> 
+#> $`MTDs mono1.a`
+#>                  0.1         0.2         0.4         0.8         1.6         2.4         3.6           5            
+#> Dose             "0.1"       "0.2"       "0.4"       "0.8"       "1.6"       "2.4"       "3.6"         "5"          
+#> True P(DLT)      "0.01"      "0.02"      "0.03"      "0.05"      "0.09"      "0.12"      "0.19"        "0.29"       
+#> True category    "underdose" "underdose" "underdose" "underdose" "underdose" "underdose" "target dose" "target dose"
+#> MTD declared (n) "0"         "0"         "0"         "0"         "1"         "0"         "0"           "0"          
+#>                  6         
+#> Dose             "6"       
+#> True P(DLT)      "0.43"    
+#> True category    "overdose"
+#> MTD declared (n) "0"       
+#> 
+#> $`#pat. mono1.a`
+#>             0.1   0.2   0.4   0.8   1.6   2.4   3.6   5   6  
+#> Dose        "0.1" "0.2" "0.4" "0.8" "1.6" "2.4" "3.6" "5" "6"
+#> mean #pat   "3"   "3"   "6"   "3"   "6"   "0"   "0"   "0" "0"
+#> median #pat "3"   "3"   "6"   "3"   "6"   "0"   "0"   "0" "0"
+#> min #pat    "3"   "3"   "6"   "3"   "6"   "0"   "0"   "0" "0"
+#> max #pat    "3"   "3"   "6"   "3"   "6"   "0"   "0"   "0" "0"
+#> 
+#> $`historical data`
+#>        Obs1 Obs2 Obs3 Obs4 Obs5
+#> Dose 1    0    0    0    0    0
+#> Dose 2    2    4    8   12   16
+#> N Pat.    3    3    3    9   12
+#> N DLT     0    0    0    1    2
+#> Trial     7    7    7    7    7
+#> 
+#> $prior
+#>               mean        SD
+#> mu_a1   -0.7081851 3.0000000
+#> mu_b1    0.0000000 1.0000000
+#> mu_a2   -0.7081851 3.0000000
+#> mu_b2    0.0000000 1.0000000
+#> mu_eta   0.0000000 1.1210000
+#> tau_a1  -1.3862944 0.3536465
+#> tau_b1  -2.0794415 0.3536465
+#> tau_a2  -1.3862944 0.3536465
+#> tau_b2  -2.0794415 0.3536465
+#> tau_eta -2.0794415 0.3536465
+#> 
+#> $specifications
+#>                                  Value       -     
+#> seed                             "377859300" "-"   
+#> dosing.intervals                 "0.16"      "0.33"
+#> esc.rule                         "ewoc"      "-"   
+#> esc.comp.max                     "1"         "-"   
+#> dose.ref1                        "6"         "-"   
+#> dose.ref2                        "12"        "-"   
+#> saturating                       "FALSE"     "-"   
+#> ewoc.threshold                   "0.25"      "-"   
+#> start.dose.mono1.a               "0.1"       "-"   
+#> esc.step.mono1.a                 "2"         "-"   
+#> esc.constrain.mono1.a            "TRUE"      "-"   
+#> max.n.mono1.a                    "45"        "-"   
+#> cohort.size.mono1.a              "3"         "-"   
+#> cohort.prob.mono1.a              "1"         "-"   
+#> mtd.decision.mono1.a$target.prob "0.5"       "-"   
+#> mtd.decision.mono1.a$pat.at.mtd  "6"         "-"   
+#> mtd.decision.mono1.a$min.pat     "12"        "-"   
+#> mtd.decision.mono1.a$min.dlt     "1"         "-"   
+#> mtd.decision.mono1.a$rule        "2"         "-"   
+#> mtd.enforce.mono1.a              "FALSE"     "-"   
+#> backfill.mono1.a                 "FALSE"     "-"   
+#> backfill.size.mono1.a            "3"         "-"   
+#> backfill.prob.mono1.a            "1"         "-"   
+#> backfill.start.mono1.a           "0.1"       "-"   
+#> start.dose.combi.a1              "0.2"       "-"   
+#> start.dose.combi.a2              "8"         "-"   
+#> esc.step.combi.a1                "2"         "-"   
+#> esc.step.combi.a2                "1.5"       "-"   
+#> esc.constrain.combi.a1           "TRUE"      "-"   
+#> esc.constrain.combi.a2           "TRUE"      "-"   
+#> max.n.combi.a                    "36"        "-"   
+#> cohort.size.combi.a              "3"         "-"   
+#> cohort.prob.combi.a              "1"         "-"   
+#> mtd.decision.combi.a$target.prob "0.5"       "-"   
+#> mtd.decision.combi.a$pat.at.mtd  "6"         "-"   
+#> mtd.decision.combi.a$min.pat     "12"        "-"   
+#> mtd.decision.combi.a$min.dlt     "1"         "-"   
+#> mtd.decision.combi.a$rule        "2"         "-"   
+#> mtd.enforce.combi.a              "FALSE"     "-"   
+#> backfill.combi.a                 "FALSE"     "-"   
+#> backfill.size.combi.a            "3"         "-"   
+#> backfill.prob.combi.a            "1"         "-"   
+#> backfill.start.combi.a1          "0.1"       "-"   
+#> backfill.start.combi.a2          "8"         "-"   
+#> 
+#> $`Stan options`
+#>                 Value
+#> chains            4.0
+#> iter          13500.0
+#> warmup         1000.0
+#> adapt_delta       0.8
+#> max_treedepth    15.0
+```
+
+This completes the setup of the simulation function for prior evaluations. As
+mentioned before, it is recommended to evaluate multiple different scenarios for
+at least multiple hundred studies when assessing the performance of an actual design.
+
+
+## References
+
+<div id="refs"></div>
+
+## Session info
+
+
+```r
+sessionInfo()
+#> R version 4.1.2 (2021-11-01)
+#> Platform: x86_64-w64-mingw32/x64 (64-bit)
+#> Running under: Windows 10 x64 (build 19044)
+#> 
+#> Matrix products: default
+#> 
+#> locale:
+#> [1] LC_COLLATE=German_Germany.1252  LC_CTYPE=German_Germany.1252    LC_MONETARY=German_Germany.1252
+#> [4] LC_NUMERIC=C                    LC_TIME=German_Germany.1252    
+#> 
+#> attached base packages:
+#> [1] stats     graphics  grDevices utils     datasets  methods   base     
+#> 
+#> other attached packages:
+#> [1] doRNG_1.8.2        rngtools_1.5.2     doFuture_0.12.0    future_1.28.0      foreach_1.5.2      decider_0.0.0.9008
+#> [7] knitr_1.37        
+#> 
+#> loaded via a namespace (and not attached):
+#>  [1] Rcpp_1.0.8.3         listenv_0.8.0        prettyunits_1.1.1    ps_1.6.0             rprojroot_2.0.3     
+#>  [6] digest_0.6.29        utf8_1.2.2           parallelly_1.32.1    R6_2.5.1             stats4_4.1.2        
+#> [11] evaluate_0.14        highr_0.9            httr_1.4.2           ggplot2_3.3.6        pillar_1.7.0        
+#> [16] flock_0.7            rlang_1.0.6          rstudioapi_0.13      whisker_0.4          callr_3.7.0         
+#> [21] rmarkdown_2.11       labeling_0.4.2       desc_1.4.1           stringr_1.4.0        loo_2.5.1           
+#> [26] munsell_0.5.0        compiler_4.1.2       xfun_0.29            rstan_2.21.5         pkgconfig_2.0.3     
+#> [31] askpass_1.1          pkgbuild_1.3.1       globals_0.16.1       htmltools_0.5.2      openssl_1.4.6       
+#> [36] tidyselect_1.1.1     tibble_3.1.6         gridExtra_2.3        matrixStats_0.62.0   codetools_0.2-18    
+#> [41] fansi_1.0.2          crayon_1.5.1         dplyr_1.0.7          withr_2.5.0          grid_4.1.2          
+#> [46] gtable_0.3.0         lifecycle_1.0.3      magrittr_2.0.2       StanHeaders_2.21.0-7 scales_1.2.0        
+#> [51] RcppParallel_5.1.5   zip_2.2.0            cli_3.4.1            stringi_1.7.6        farver_2.1.0        
+#> [56] fs_1.5.2             doParallel_1.0.17    ellipsis_0.3.2       generics_0.1.1       vctrs_0.4.2         
+#> [61] openxlsx_4.2.5       iterators_1.0.14     tools_4.1.2          glue_1.6.1           purrr_0.3.4         
+#> [66] processx_3.5.2       parallel_4.1.2       fastmap_1.1.0        yaml_2.2.2           inline_0.3.19       
+#> [71] colorspace_2.0-3     usethis_2.1.5
+```
+
