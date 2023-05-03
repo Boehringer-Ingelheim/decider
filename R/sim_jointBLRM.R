@@ -11,6 +11,9 @@
 #'trials, the function supports the inclusion of historical data from arbitrarily many previous (already concluded)
 #'dose-finding trials for the considered compounds.
 #'
+#' For an introduction to the use of this function, see the introduction vignette:
+#' \code{vignette("intro_jointBLRM", package = "decider")}.
+#'
 #'The function expects a specification of dose levels and their assumed DLT rates for each involved trial, based on which the course of
 #'the dose-finding trial is simulated. Additional customization of the simulations is possible (separately for each simulated trial),
 #'e.g. regarding the escalation rule (EWOC and loss-based methods), definition of MTD, the maximum increment of escalations,
