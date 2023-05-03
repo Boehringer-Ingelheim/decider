@@ -4,15 +4,11 @@
 \alias{scenario_list_jointBLRM}
 \title{Process a list of data scenarios in parallel.}
 \usage{
-scenario_list_jointBLRM(data.list, n.cores = 1, file.names = NULL, ...)
+scenario_list_jointBLRM(data.list, file.names = NULL, ...)
 }
 \arguments{
 \item{data.list}{List of hypothetical data scenarios. Each entry is passed to
 \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.}
-
-\item{n.cores}{Optional integer, defaults to \code{1}. Indicates the number of workers
-to be used during parallel processing. A value of \code{1} causes the scenarios to
-be processed sequentially.}
 
 \item{file.names}{Optional character vector, defaults to \code{NULL}. The argument
 has only an effect when results are saved to disk, i.e. when an additional argument
@@ -43,10 +39,8 @@ Be aware that input checks are performed by \code{\link[decider:scenario_jointBL
 If this results in an error for one or more scenarios, the error is returned in the output list.
 }
 \details{
-Be aware that parallelization could also be performed at level of the chains
-in Stan. However, we recommend to parallelize at level of the scenarios.
-This way, also the generation of e.g. the plots and posterior toxicities are parallelized,
-and, additionally, the initialization of the parallel backend needs to occur only once.
+Be aware that parallelization requires the initialization of a parallel backend by the user.
+Otherwise, the function is executed sequentially.
 }
 \seealso{
 \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}, \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}()},

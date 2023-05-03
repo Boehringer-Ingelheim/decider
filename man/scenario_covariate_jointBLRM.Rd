@@ -320,7 +320,8 @@ monotherapy or two-drug combination therapy dose-finding trials including a
 binary covariate and computes
 posterior toxicities for a trial of interest and a set of doses of interest.
 The function supports one-sided and two-sided covariates. This can be
-controlled separately for each of thw two compounds.
+controlled separately for each of thw two compounds. Also refer to the documentation of
+\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 
 If multiple scenarios need to be evaluated, consider using the function
 \code{\link[decider:scenario_list_covariate_jointBLRM]{scenario_list_covariate_jointBLRM}()}

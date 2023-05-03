@@ -370,6 +370,9 @@ Evaluates data scenarios consisting of observations of one or more
 monotherapy or two-drug combination therapy dose-finding trials and computes
 posterior toxicities for a trial of interest and a set of doses of interest.
 
+For an introduction to the use of this function, see the introduction vignette:
+\code{vignette("intro_jointBLRM", package = "decider")}.
+
 If multiple scenarios need to be evaluated, consider using the function
 \code{\link[decider:scenario_list_jointBLRM]{scenario_list_jointBLRM}()}
 instead, which is a parallelized wrapper that processes a list of data scenarios
