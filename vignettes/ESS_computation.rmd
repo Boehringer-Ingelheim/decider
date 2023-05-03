@@ -241,16 +241,17 @@ pred3 <- get_pred_tox(
 mix7 <- RBesT::mixfit(as.vector(pred3$samples), type = "beta", Nc = 3, constrain_gt1 = T)
 ```
 
-However, the visual check of the resulting mixture approximation appears to be unusual:
+This can already trigger some warning indicating convergence issues of the mixture approximation. 
+Further, the visual check of the resulting mixture approximation appears to be unusual:
 ```{r, eval=rbest_avail}
 plot(plot(mix7)$mix)
 ```
 
-And, further, `RBesT::ess()` results in an error when using this mixture:
-```{r, error = TRUE, warning=FALSE, eval = FALSE}
-RBesT::ess(mix7)
-#>Error in if (is.finite(x[xmax])) return(log1p(sum(exp(x[-xmax] - x[xmax]))) + : 
-#> argument has length 0
+And, further, the command `RBesT::ess(mix7)` would result in the following error when using this 
+mixture (last tested using `RBesT` version `1.6.3`):
+```{r}
+# >Error in if (is.finite(x[xmax])) return(log1p(sum(exp(x[-xmax] - x[xmax]))) + : 
+# > argument has length 0
 ```
 The error itself is caused by numerical problems when a shape parameter of one or
 more of the mixture components is too close to 1, especially when the other shape parameter
