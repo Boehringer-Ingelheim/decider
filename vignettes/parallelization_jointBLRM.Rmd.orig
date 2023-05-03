@@ -1,0 +1,175 @@
+---
+title: "Parallelizing functions of the decider package"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Parallelizing functions of the decider package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Four of the main functions of the decider package come with a built-in parallelization
+using the `foreach` package, namely, the functions:
+
+* `scenario_list_jointBLRM()` and `scenario_list_covariate_jointBLRM()`
+
+* `sim_jointBLRM()` and `sim_covariate_jointBLRM()`
+
+Leveraging this capability requires the registration of a parallel bakcend by the user. The present
+vignette will provide some basic examples how such a backend can be registered.
+A similar vignette is provided by the [`bhmbasket`](https://CRAN.R-project.org/package=bhmbasket) package, which inspired the
+creation of the present vignette.
+
+## Simple parallelization
+
+First, the following packages are loaded
+```{r setup, warning = F}
+library(decider)
+library(doFuture)
+```
+
+With the `doFuture`, we register a simple parallel backend with a given number
+of cores, set by the argument `n.cores`. For the purpose of this vignette, we
+will use a single core due to technical reasons, but when running the code
+locally, one can easily change this depending on the number of cores available.
+
+```{r dofuture-setup}
+#specify number of cores -- here, only 1 for a sequential execution
+n.cores <- 1
+
+#register backend for parallel execution and plan multisession
+doFuture::registerDoFuture()
+future::plan(future::multisession, workers=n.cores)
+```
+
+To figure out how many cores are available, one can use e.g.
+
+```{r detectCores}
+parallel::detectCores()
+```
+
+Following the initialization of the parallel backend, you can simply run
+one of the four parallelized functions from the `decider` package.
+They will automatically leverage the number of cores registered.
+
+As an example, a simple simulation could be accomplished by:
+```{r simulation1, warning=F}
+sim_result <- sim_jointBLRM(
+  active.mono1.a = TRUE,
+  active.combi.a = TRUE,
+
+  doses.mono1.a = c(2, 4, 8),
+  doses.combi.a = rbind(
+    c(2, 4, 8,  2, 4, 8),
+    c(1, 1, 1,  2, 2, 2)
+  ),
+  dose.ref1 = 8,
+  dose.ref2 = 2,
+  start.dose.mono1.a = 2,
+  start.dose.combi.a1 = 2,
+  start.dose.combi.a2 = 1,
+
+  tox.mono1.a = c(0.2, 0.3, 0.5),
+  tox.combi.a = c(0.3, 0.4, 0.6,  0.4, 0.5, 0.7),
+  max.n.mono1.a = 12,
+  max.n.combi.a = 24,
+  cohort.size = 3,
+  cohort.queue = c(1, 1, 1, rep(c(1, 3), times = 100)),
+  n.studies = 3
+)
+
+print(sim_result, quote = F)
+```
+
+
+Here, only 3 studies are simulated for illustration purposes. Please note, for
+simulations, one can also initiate storing and re-loading of MCMC results
+to speed up simulations further when parallelizing on a moderate number of cores
+(e.g., when one is not using a cluster). For details, refer to the argument
+`working.path` of the function `sim_jointBLRM()`.
+
+## Advanced: parallelization on a cluster
+All of the functions of the `decider` package that allow for parallelization
+feature a nested `foreach` loop with two stages. With this, is is possible to
+leverage the capabilities of a computing cluster consisting of multiple nodes
+that each have multiple cores. Usually, simulations of joint BLRM trials with
+multiple arms will take a very long run time (in the order of hours).
+The function `sim_jointBLRM` parallelizes across trials, so, when simulating
+e.g. 1000 trials, using multiple hundreds (or, up to 1000) cores can drastically
+improve the run time. In the following, it is illustrated how a parallel backend
+on a common SLURM cluster could be registered, in a way that allows a joint BLRM
+simulation to leverage multiple hundred cores.
+
+We will use the `future.batchtools` package for this:
+```{r setup2}
+library(future.batchtools)
+```
+
+Let us assume we have a cluster available where we want to request 10 nodes with
+32 cores per node (320 cores in total). We specify this in the following arguments:
+```{r nodes}
+#number of processor nodes
+n_nodes <- 10
+#number of cores per node
+n_cpus  <- 32
+```
+
+To register the parallel backend, we will use a simple SLURM template from the `future.batchtools`
+package. As this allows to specify a requested walltime and memory, we enter some standard
+numbers that usually work well for the functions of the `decider` package:
+```{r specs}
+#job time in hours
+walltime_h <- 2
+#memory requested in GB
+memory_gb  <- 4
+```
+
+With this, we can allocate the parallel backend with the given specifications:
+```{r slurm, eval=F}
+slurm <- tweak(batchtools_slurm,
+               template  = system.file('templates/slurm-simple.tmpl', package = 'batchtools'),
+               workers   = n_nodes,
+               resources = list(
+                 walltime  = 60 * 60 * walltime_h,
+                 ncpus     = n_cpus,
+                 memory    = 1000 * memory_gb))
+
+#register paralel backend on cluster
+registerDoFuture()
+plan(list(slurm, multisession))
+```
+
+With this specification, when `sim_jointBLRM()` is called, the trials that need
+to be simulated will first be divided evenly across the available nodes, and the
+trials to be simulated by each node will be distributed across the CPUs the
+node has. In the above example, when we simulate e.g. 6400 trials using 20 nodes
+with 32 cores each, each node will receive 320 trials, which will be split across
+32 cores, so that each core will need to simulate only 10 of the trials.
+
+After this setup, the `sim_jointBLRM()` function can be called in the same
+way as illustrated previously.
+
+Please note that there are some tradeoffs involed depending on the system, e.g.
+requesting a very large number of cores may take more time. Depending on the
+number of trials to be simulated, a higher number of nodes/cores may not always
+provide a speed-up beyond a certain number of nodes/cores.
+
+At last, please note that the function `sim_jointBLRM()` also supports the use
+of a `working.path` which allows to enable saving and reloading of MCMC results.
+If this is executed on a parallel backend, please note that the path must be
+somewhere in the shared memory, where all CPUs have access. In general, this
+option is mostly designed for use on local computers with only a small number of
+cores and a single node. While the strategy of saving and reloading also works
+on hundreds of cores (as it synchronizes communication across nodes/cores
+via the `flock` package), there may be some overhead introduced
+when multiple cores need to read the same MCMC result. The strategy will still
+work without causing issues (e.g., deadlocks), but, with sufficiently many cores, it should
+not be necessary to reload MCMC results as the overhead might outweigh the
+benefits beyond a certain point.
+

@@ -1,0 +1,377 @@
+---
+title: "Computation of the prior effective sample size"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Computation of the prior effective sample size}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r options, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+options(width=120)
+rbest_avail <- require(RBesT)
+detach("package:RBesT", unload=TRUE)
+```
+
+The following vignette illustrates how the `decider` package can be used in
+combination with the `RBesT` [@RBesT20] package to perform calculations of the
+prior effective sample size (ESS) using the ELIR method proposed by 
+[@neuenschwander20a].
+
+Firstly, it is required to load both of these packages:
+```{r, eval=rbest_avail}
+library(decider)
+library(RBesT)
+```
+
+In general, the prior ESS of the BLRM should be computed for individual dose levels,
+on the one hand as it is in general only defined for univariate parameters, and
+secondly as it is only sensible on level of the sampling distribution. 
+More precisely, given the prior distribution of the DLT rate $\pi(d)$ of some
+dose $d$, one wants to determine how much information is contained in the prior
+in terms of the number of patients it is equivalent to, given that the observed
+number of DLTs follows
+$$
+r \ \sim\ \mathrm{Binomial}(n, \pi(d)).
+$$
+
+In the following, the computation of the ESS-ELIR is described in the case of
+the joint BLRM, but the process would work analoguously for other functions.
+
+### Exemplary computation of the ESS-ELIR for the joint BLRM
+
+Suppose that four previous dose-finding trials for monotherapy and combination
+therapy with compounds 1 and 2 were conducted, and that those trials
+resulted in the DLT data given in the following table:
+
+Dose 1  |Dose 2  | #Patients | #DLT  | Trial
+------  |------  |-----------|------ | ------
+2       |0       | 3         |0      |   1
+4       |0       | 3         |0      |   1
+8       |0       | 3         |0      |   1
+10      |0       | 9         |1      |   1
+14      |0       | 6         |2      |   1
+10      |0       | 6         |1      |   2
+15      |0       | 3         |0      |   2
+20      |0       | 3         |2      |   2
+0       |12      | 3         |0      |   3
+0       |24      | 12        |1      |   3
+0       |36      | 3         |1      |   3
+4       |24      | 3         |0      |   4
+8       |24      | 3         |0      |   4
+10      |24      | 9         |1      |   4
+12      |24      | 3         |1      |   4
+
+Further, assume a joint BLRM shall employ this data and a prior specified as:
+```{r}
+#Prior for the hyper-mean
+#               Parameter    Mean        SD
+prior.mu = list(mu_a1  =  c(-0.7,       2),
+                mu_b1  =  c(0,          1),
+                mu_a2  =  c(-0.7,       2),
+                mu_b2  =  c(0,          1),
+                mu_eta =  c(0,          1.121))
+
+#Prior for the between-trial heterogeneity
+#                Parameter    Mean        SD
+prior.tau = list(tau_a1  =  c(log(0.25),  log(2)/1.96),
+                 tau_b1  =  c(log(0.125), log(2)/1.96),
+                 tau_a2  =  c(log(0.25),  log(2)/1.96),
+                 tau_b2  =  c(log(0.125), log(2)/1.96),
+                 tau_eta =  c(log(0.125), log(2)/1.96))
+```
+
+The chosen values were oriented towards the ones proposed in [@neuenschwander14]
+and [@neuenschwander08].
+
+Assume we are interested in a new combination therapy trial which shall consider
+the dose combinations 4+24, 8+24, and 10+24. Using this we first determine the
+prior distribution of these doses as assessed by a joint BLRM using the priors
+above and the co-data in the previous table. This can be achieved with:
+```{r}
+pred <- get_pred_tox(
+  doses.of.interest = rbind(
+    c(4,  8,  12),
+    c(24, 24, 24)),
+  dose1 = c(2, 4, 8, 10, 14, 10, 15, 20, 0,  0,  0,  4,  8,  10, 12),
+  dose2 = c(0, 0, 0, 0,  0,  0,  0,  0,  12, 24, 36, 24, 24, 24, 24),
+  n.pat = c(3, 3, 3, 9,  6,  6,  3,  3,  3,  12, 3,  3,  3,  9,  3),
+  n.dlt = c(0, 0, 0, 1,  2,  1,  0,  2,  0,  1,  1,  0,  0,  1,  1),
+  trial = c(1, 1, 1, 1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  4),
+  dose.ref1 = 14,
+  dose.ref2 = 24,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau,
+  return.samples = TRUE,
+  iter = 2000,
+  chains = 2
+)
+
+pred$summary
+```
+
+Please note that the number of samples, `iter`, and the number of chains, `chains`,
+should be chosen higher in practice and were reduced here for reasons of runtime.
+Note the use of the argument `return.samples = TRUE` to draw an MCMC sample from
+the prior distribution of $\pi(d)$ for the doses of interest. We used `get_pred_tox()`
+here to conveniently compute the MCMC sample directly, note however that one could also use
+`fit_jointBLRM()` to fit the joint BLRM manually and extract the sample from the
+DLT rates from the `rstan::stanfit` object returned by this function. Refer to the
+documentation of the `rstan-package` [@rstan20] for details on this type of object.
+
+Regardless of how the MCMC sample is obtained, it should now be approximated by
+a mixture of beta distributions. Here, we will use the `RBesT::mixfit()` function to accomplish this.
+
+For computing the mixture with the `RBesT` package, e.g. for the dose combination
+of 4 and 24, one can use:
+```{r, eval=rbest_avail}
+mix <- RBesT::mixfit(pred$samples["4+24", ], type = "beta", Nc = 3, constrain_gt1 = T)
+``` 
+
+Here, the argument `Nc` gives the number of components, while `constrain_gt1` constrains
+the shape parameters of the mixture components to be greater than 1. The latter
+constrain is required to ensure that the ELIR is well-defined [@neuenschwander20a]. 
+In case other definitions of the ESS are applied, one may be able to drop this condition.
+For computing the ESS-ELIR, it is however required.
+
+It is recommended to check the fit of the approximation visually, e.g. via
+```{r, eval=rbest_avail}
+plot(plot(mix)$mix)
+```
+
+As this seems to be fine in this example, one can proceed to calculate the ESS via
+```{r, eval=rbest_avail}
+RBesT::ess(mix)
+```
+As this seems to be comparably large, one may want to reduce the ESS further.
+For this, we will consider a prior that assumes substantial to large between-trial
+heterogeneity (cf. e.g. [@neuenschwander14]). For instance, one could use
+```{r}
+#Prior for the between-trial heterogeneity
+#                Parameter    Mean        SD
+prior.tau2 = list(tau_a1  =  c(log(0.75),  log(2)/1.96),
+                  tau_b1  =  c(log(0.25),  log(2)/1.96),
+                  tau_a2  =  c(log(0.75),  log(2)/1.96),
+                  tau_b2  =  c(log(0.25),  log(2)/1.96),
+                  tau_eta =  c(log(0.25),  log(2)/1.96))
+```
+
+Repeating the previous computations gives:
+```{r, eval=rbest_avail}
+pred2 <- get_pred_tox(
+  doses.of.interest = rbind(
+    c(4,  8,  12),
+    c(24, 24, 24)),
+  dose1 = c(2, 4, 8, 10, 14, 10, 15, 20, 0,  0,  0,  4,  8,  10, 12),
+  dose2 = c(0, 0, 0, 0,  0,  0,  0,  0,  12, 24, 36, 24, 24, 24, 24),
+  n.pat = c(3, 3, 3, 9,  6,  6,  3,  3,  3,  12, 3,  3,  3,  9,  3),
+  n.dlt = c(0, 0, 0, 1,  2,  1,  0,  2,  0,  1,  1,  0,  0,  1,  1),
+  trial = c(1, 1, 1, 1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  4),
+  dose.ref1 = 14,
+  dose.ref2 = 24,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau2,
+  return.samples = TRUE,
+  iter = 2000,
+  chains = 2
+)
+
+mix2 <- RBesT::mixfit(pred2$samples["4+24", ], type = "beta", Nc = 3, constrain_gt1 = T)
+
+plot(plot(mix2)$mix)
+
+RBesT::ess(mix2)
+
+```
+As can be seen, the ESS descreased drastically whan a larger between-trial heterogeneity
+is assumed. One verifies readily that this is also the case for the other considered
+dose levels:
+```{r, eval=rbest_avail}
+#for moderate between-trial heterogeneity:
+mix3 <- RBesT::mixfit(pred$samples[ "8+24", ], type = "beta", Nc = 3, constrain_gt1 = T)
+RBesT::ess(mix3)
+mix4 <- RBesT::mixfit(pred$samples["12+24", ], type = "beta", Nc = 3, constrain_gt1 = T)
+RBesT::ess(mix4)
+
+
+#for larger between-trial heterogeneity:
+mix5 <- RBesT::mixfit(pred2$samples[ "8+24", ], type = "beta", Nc = 3, constrain_gt1 = T)
+RBesT::ess(mix5)
+mix6 <- RBesT::mixfit(pred2$samples["12+24", ], type = "beta", Nc = 3, constrain_gt1 = T)
+RBesT::ess(mix6)
+```
+
+Note that the ESS tends in general to increase when the dose is decreased in
+such situations.
+
+### Problematic cases for the ELIR-ESS for BLRMs
+
+The ELIR-ESS provides sensible approximations in many cases, but appears to have
+certain problems in some situations.
+For instance, for  sufficiently small dose levels (and certain other cases), the ELIR-ESS may 
+cease to exist, or result in divergent or non-sensible results. This is illustrated
+in the following. Moreover, we present a fallback method discussed in [@neuenschwander14] 
+that can be used as a substitute when the ELIR method is found to break down in a specific case.
+
+Suppose for instance that we now want to consider the dose combination 0.5+1 using
+the previously presented data set. First, we determine the predictive DLT rate and
+further the approximation with a beta mixture as before:
+```{r, eval=rbest_avail}
+pred3 <- get_pred_tox(
+  doses.of.interest = c(0.5, 1),
+  dose1 = c(2, 4, 8, 10, 14, 10, 15, 20, 0,  0,  0,  4,  8,  10, 12),
+  dose2 = c(0, 0, 0, 0,  0,  0,  0,  0,  12, 24, 36, 24, 24, 24, 24),
+  n.pat = c(3, 3, 3, 9,  6,  6,  3,  3,  3,  12, 3,  3,  3,  9,  3),
+  n.dlt = c(0, 0, 0, 1,  2,  1,  0,  2,  0,  1,  1,  0,  0,  1,  1),
+  trial = c(1, 1, 1, 1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  4),
+  dose.ref1 = 14,
+  dose.ref2 = 24,
+  prior.mu = prior.mu,
+  prior.tau = prior.tau2,
+  return.samples = TRUE,
+  iter = 2000,
+  chains = 2
+)
+
+mix7 <- RBesT::mixfit(as.vector(pred3$samples), type = "beta", Nc = 3, constrain_gt1 = T)
+```
+
+However, the visual check of the resulting mixture approximation appears to be unusual:
+```{r, eval=rbest_avail}
+plot(plot(mix7)$mix)
+```
+
+And, further, `RBesT::ess()` results in an error when using this mixture:
+```{r, error = TRUE, warning=FALSE, eval = FALSE}
+RBesT::ess(mix7)
+#>Error in if (is.finite(x[xmax])) return(log1p(sum(exp(x[-xmax] - x[xmax]))) + : 
+#> argument has length 0
+```
+The error itself is caused by numerical problems when a shape parameter of one or
+more of the mixture components is too close to 1, especially when the other shape parameter
+of the components is significantly larger. Indeed, looking at the parameters
+generated during the mixture approximation:
+```{r, eval=rbest_avail}
+print(mix7)
+```
+One may be able to remove the error messages by restricting the domain of the integration
+that `RBesT` carries out internally, but would still obtain results like e.g. negative sample sizes
+or ESS that are not compatible with the estimates for other dose levels. This
+indicates that there may be an intrinsic problem with the ELIR method in these
+cases. As a simple illustration of this, consider the prior $\mathrm{Beta}(1,10^6)$
+with binomial likelihood. It is well known that this is a very informative distribution,
+with an ESS of $1 + 10^6 = 1,000,001$ patients (sum of shape parameters). However,
+it can be shown that the ELIR gives an ESS of exactly 1 [@neuenschwander20a].
+Hence, the ELIR appears to break down in general once a shape parameter is too close to 1,
+and may not give results that encode the intuitive notion of information.
+
+Note that other approaches for determining the ELIR exist, a number of them
+are discussed in [@neuenschwander20a]. Based on the experience of the author,
+these methods often also result in counterintuitive results in the 
+cases where the approximation with a beta mixture breaks down. There may be
+intermediate cases where one of the methods works while the others do not.
+
+Therefore, the ELIR method may not be applicable in all situations. 
+
+Due to this, a very crude approximation of the ESS can be used instead to obtain a rough
+idea about the ESS on low dose levels. The method is similar to the one applied e.g.
+in [@neuenschwander14] to estimate an ESS (not necessarily the ELIR-ESS). 
+For this, a beta approximation with just one component is fitted: 
+```{r, eval=rbest_avail}
+mix8 <- RBesT::mixfit(as.vector(pred3$samples), type = "beta", Nc = 1, constrain_gt1 = T)
+plot(plot(mix8)$mix)
+print(mix8)
+```
+ 
+As the visual check reveals, the approximation with a single beta distribution
+is certainly not a perfect fit, but still reasonably close to the actual distribution to
+obtain a basic idea of the implied ESS. Note that we again constrained the 
+shape parameters to be larger than 1, as is was found that this provides usually a
+better fit and more consistent results in extreme cases based on the experience
+of the author (elaborated below in more detail). One may however want to additionally
+consider the result without this contrain.
+
+To compute the ESS for a single beta distribution, one can either apply `RBesT` again
+(provided the shape parameters were constrained),
+or, alternatively, simply add the shape parameters of the beta distribution.
+The latter strategy exploits that the natural ESS of the distribution $\mathrm{Beta}(a, b)$
+is simply $a+b$, also cf. [@neuenschwander14]. The two methods provide the following ESSs:
+```{r, eval=rbest_avail}
+RBesT::ess(mix8)
+mix8[2, 1] + mix8[3, 1]
+```
+
+Repeating the same computation without the constrain on the shape parameters 
+results in a non-existent ELIR, but an approximate ESS can still be obtained
+by adding the shape parameters:
+```{r, eval=rbest_avail}
+mix9 <- RBesT::mixfit(as.vector(pred3$samples), type = "beta", Nc = 1, constrain_gt1 = F)
+plot(plot(mix9)$mix)
+print(mix9)
+mix9[2, 1] + mix9[3, 1]
+```
+
+Note that the results differ across the three considered attempts. Further, 
+it can be shown that the ELIR results in an ESS
+of 1 in case one of the parameters is exactly equal to 1, different from the
+natural ESS of a beta prior with binomial likelihood [@neuenschwander20a]. 
+Hence, the ELIR method may be problematic in general in such cases.
+
+Based on practical experience, the constrained fit (using `constrain_gt1 = TRUE`)
+in combination with the sum of shape parameters, $a+b$, as estimate of the 
+ESS appears to provide intuitively often a reasonable and consistent results in
+settings where approximation with multiple components causes problems. 
+This is also indicated by the example above: indeed, the ESS as obtained with the 
+ELIR method for the constrained fit is about 1, which does not seem to be 
+compatible with the results for the previous dose levels (ESSs of 7-25), 
+as the prior DLT rate of the low dose level is intuitively expected to encode 
+significantly more information. 
+Further, the ESS obtained from the unconstrained fit is about 10, 
+and therefore still lower than the ESSs obtained for larger doses with seemingly
+less information. Compare for instance the samples obtained for the doses 8+24 
+(ESS ELIR of about 11) in comparison to 0.5+1:
+```{r, eval=rbest_avail}
+hist(pred2$samples["8+24",], main="Histogram for 8+24")
+hist(pred3$samples, main="Histogram for 0.5+1")
+```
+
+Assuming that the ESS should encode (at least partially) the intuitive notion
+of information, one would expect the second distribution to contain significantly
+more information, i.e. should result in larger ESS. Therefore, both the value 1
+as obtained from the ELIR method with a single-component beta aproximation, as well
+as the value of 10 as obtained from the unconstrained approximation appear to 
+be incompatible with the previously obtained values. However, the estimated
+ESS using the constrained fit and adding the parameters is above 200, which
+appears to be consistent with the intuition that the model contains substantially
+more information for low doses (due to the assumption of monotonously increasing
+DLT rates). Similar behavior was observed for other examples, e.g. for minimally
+informative priors for the BLRM without any co-data.
+
+Typically, it may be helpful to consider multiple different approaches in situations
+where the ELIR may not exist. Often, the constrained fit with a single beta distribution
+appears to give an intuitively reasonable results, but, this may not hold in general.
+
+Due to this behavior, analyses of the prior ESS should be considered as a technique
+to heuristically assess the strength of the model assumptions, but not as a formal
+quantity that is guaranteed to always produce meaningful results in case of the 
+BLRM and regression models. However, as also indicated in [@neuenschwander20b] and [@park20], 
+further research appears to be necessary to obtain sensible definitions of the ESS for
+regression models and multivariate cases. Due to this, estimates of the ESS for
+the BLRM should be treated with caution, and should mostly be viewed 
+as heuristic check of the model assumptions and the prior.
+
+### References
+
+<div id="refs"></div>
+
+### Session info
+
+```{r}
+sessionInfo()
+```
+

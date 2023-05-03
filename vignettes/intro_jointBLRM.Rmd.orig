@@ -3,7 +3,7 @@ title: "Evaluate prior specifications of a joint BLRM for oncology dose finding"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{evaluate_prior_specs_jointBLRM}
+  %\VignetteIndexEntry{Evaluate prior specifications of a joint BLRM for oncology dose finding}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -707,14 +707,6 @@ In this example, only 1 core is selected, which is identical to a sequential exe
 In practice, `n.cores` can be set depending on the available processor on which
 the function is running.
 
-Note on more advanced parallelization: For evaluation of hypothetical scenarios,
-please note that the parallelization is set up to use only a single node, i.e.,
-no cluster architecture with multiple nodes of a given number of cores is supported
-in the current version. This was done as for scenarios, one will rarely require to
-evaluate more than a couple dozen. However, for trial simulations (mentioned below), the
-package implements a nested foreach loop, so that parallelization with arbitrarily many
-nodes and several cores per node can be used.
-
 Now, coming back to the evaluation of scenarios, after registration of the
 parallel backend one can simply use
 ```{r scenario-call3, eval=T, warning=F}
@@ -767,11 +759,8 @@ on each dose (or on doses with DLT rate in a specific dosing interval), the numb
 of patients per dose and the number of DLTs in the trial, as well as further
 metrics for the simulation results.
 
-While there are simulation-free approaches to estimating OCs
-of certain model-based trial designs for dose finding, no such method is currently
-known for the BLRM
-(cf. Braun (2020)), and even less so for its more involved variants like the
-joint BLRM. Hence, the only available method for this are simulated trials.
+To estimate the operating characteristics of the BLRM, one usually uses simulated
+trials.
 That is, one assumes a fixed set of available dose levels and a fixed
 dose-toxicity scenario -- i.e. a specification of the DLT rate for each available
 dose level -- and simulates a number of trials in this setting. This allows to
