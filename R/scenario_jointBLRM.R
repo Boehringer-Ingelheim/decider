@@ -3,6 +3,9 @@
 #'monotherapy or two-drug combination therapy dose-finding trials and computes
 #'posterior toxicities for a trial of interest and a set of doses of interest.
 #'
+#' For an introduction to the use of this function, see the introduction vignette:
+#' \code{vignette("intro_jointBLRM", package = "decider")}.
+#'
 #'If multiple scenarios need to be evaluated, consider using the function
 #'\code{\link[decider:scenario_list_jointBLRM]{scenario_list_jointBLRM}()}
 #'instead, which is a parallelized wrapper that processes a list of data scenarios
@@ -1895,9 +1898,6 @@ scenario_jointBLRM <- function(data=NULL,
 #'If this results in an error for one or more scenarios, the error is returned in the output list.
 #'@param data.list List of hypothetical data scenarios. Each entry is passed to
 #'\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
-#'@param n.cores Optional integer, defaults to \code{1}. Indicates the number of workers
-#'to be used during parallel processing. A value of \code{1} causes the scenarios to
-#'be processed sequentially.
 #'@param file.names Optional character vector, defaults to \code{NULL}. The argument
 #'has only an effect when results are saved to disk, i.e. when an additional argument
 #'\code{path} is supplied that states the output location.
@@ -1911,10 +1911,8 @@ scenario_jointBLRM <- function(data=NULL,
 #'and for the argument \code{file.name}, which is taken from \code{file.names} instead.
 #'Note in particular that \code{historical.data} can still be supplied, which is then included in every
 #'evaluated scenario, additionally to the scenario-specific data from the \code{data.list} entries.
-#'@details Be aware that parallelization could also be performed at level of the chains
-#'in Stan. However, we recommend to parallelize at level of the scenarios.
-#'This way, also the generation of e.g. the plots and posterior toxicities are parallelized,
-#'and, additionally, the initialization of the parallel backend needs to occur only once.
+#'@details Be aware that parallelization requires the initialization of a parallel backend by the user.
+#'Otherwise, the function is executed sequentially.
 #'@returns Numbered list in which each entry contains the output of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}
 #'for the corresponding trial in the \code{data.list}.
 #'
@@ -1925,7 +1923,6 @@ scenario_jointBLRM <- function(data=NULL,
 #' @export
 scenario_list_jointBLRM <- function(
   data.list,
-  n.cores=1,
   file.names=NULL,
   ...
 ){
@@ -1948,30 +1945,80 @@ scenario_list_jointBLRM <- function(
       stop("`file.names` must be a character type vector of the same length as `data.list`.")
     }
   }
-  if(n.cores>1){
-    cl_foreach <- makeCluster(n.cores)
-    registerDoParallel(cl_foreach)
-  }else{
-    registerDoSEQ()
+  # if(n.cores>1){
+  #   cl_foreach <- makeCluster(n.cores)
+  #   registerDoParallel(cl_foreach)
+  # }else{
+  #   registerDoSEQ()
+  # }
+
+  ## required functions
+  "%dorng%" <- doRNG::"%dorng%"
+  "%dopar%" <- foreach::"%dopar%"
+  if(!foreach::getDoParRegistered()) {
+
+    message("\nCaution: No parallel backend detected for the 'foreach' framework.",
+            " For parallel execution of the function, register a parallel backend.\n",
+            " This can be accomplished e.g. with: \n",
+            "   doFuture::registerDoFuture()\n",
+            "   future::plan(future::multisession)\n")
+
+    tt <- suppressWarnings(foreach::foreach(kpar = 1:2) %dopar% {kpar^kpar^kpar})
+    rm(tt)
+
   }
 
-  res.list <- foreach(i = 1:n.scen,
-                      .packages = c("decider"),
-                      .export = c("stanmodels"),
-                      .errorhandling = "pass",
-                      .inorder = TRUE)%dopar%
-    {
+  ## Code inspired by https://stackoverflow.com/questions/3318333/split-a-vector-into-chunks
+  ## Answer by mathheadinclouds
+  chunkVector <- function(x, n_chunks) {
 
-      return(scenario_jointBLRM(
-        data = data.list[[i]],
-        file.name = file.names[i],
-        ...
-      ))
+    if (n_chunks <= 1) {
+
+      chunk_list <- list(x)
+
+    } else {
+
+      chunk_list <- unname(split(x, cut(seq_along(x), n_chunks, labels = FALSE)))
 
     }
 
-  #clusters need to be stopped
-  if(n.cores>1){stopCluster(cl_foreach)}
+    return (chunk_list)
+
+  }
+
+  #distribute number of studies across nodes
+  chunks_outer <- chunkVector(seq_len(n.scen), foreach::getDoParWorkers())
+
+  res.list <-       foreach( kpar = chunks_outer,
+                        .packages = c("decider"),
+                        .export = c("stanmodels"),
+                        .errorhandling = "pass",
+                        .inorder = TRUE,
+                        .combine = c) %dorng% {
+
+                          #distribute number of trials for this node among workers
+                          chunks_inner <- chunkVector(kpar, foreach::getDoParWorkers())
+
+                          #parallel foreach across number of workers
+                          foreach::foreach(ipar = chunks_inner,
+                                           .combine = c,
+                                           .errorhandling = "pass") %dorng% {
+
+                                              lapply(ipar,
+                                                    function(j){
+                                                      return(scenario_jointBLRM(
+                                                        data = data.list[[j]],
+                                                        file.name = file.names[j],
+                                                        ...
+                                                      ))
+                                                    }
+                                             )
+                          }
+            }
+
+
+
+
 
   return(res.list)
 }
