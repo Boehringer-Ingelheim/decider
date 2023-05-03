@@ -1,6 +1,6 @@
 Package: decider
-Title: DECision making in oncology Dose Escalation trials with logistic Regression
-Version: 0.0.0.9008
+Title: Decision making in oncology dose escalation trials with logistic regression
+Version: 0.0.0.9009
 Authors@R: 
     c(person(given = "Boehringer Ingelheim",
            family = "Pharma GmbH & Co. KG",
@@ -8,11 +8,7 @@ Authors@R:
      ,person(given = "Lukas",
            family = "Schroeter",
            role = c("aut", "cre"),
-           email = "lukas.schroeter@boehringer-ingelheim.com")
-      ,person(given = "Daniela",
-           family = "Maier",
-           role = c("ctb"),
-           email = "daniela_2.maier@boehringer-ingelheim.com"))
+           email = "lukas.schroeter@boehringer-ingelheim.com"))
 Description: Provides functions that allow to compute posterior distributions of 
   Bayesian logistic regression models (BLRMs) for monotherapy and combination 
   therapy dose-finding trials and summarizing them via dosing 
@@ -63,6 +59,7 @@ SystemRequirements: GNU make
 Suggests: 
     rmarkdown,
     knitr,
+    RBesT (>= 1.6.0),
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
