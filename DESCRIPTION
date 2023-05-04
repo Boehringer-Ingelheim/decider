@@ -22,7 +22,7 @@ Description: Provides functions that allow to compute posterior distributions of
   covariate are included in the package. All Bayesian models are evaluated using
   the 'Stan' modeling language via the package 'rstan', refer to Stan 
   Development Team (2020) <https://mc-stan.org>.
-License: Apache License (>= 2)
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
