@@ -2,13 +2,13 @@ Package: decider
 Title: Decision making in oncology dose escalation trials with logistic regression
 Version: 0.0.0.9009
 Authors@R: 
-    c(person(given = "Boehringer Ingelheim",
-           family = "Pharma GmbH & Co. KG",
-           role = c("cph", "fnd"))
-     ,person(given = "Lukas",
+    c(person(given = "Lukas",
            family = "Schroeter",
            role = c("aut", "cre"),
-           email = "lukas.schroeter@boehringer-ingelheim.com"))
+           email = "lukas.schroeter@boehringer-ingelheim.com")
+      ,person(given = "Boehringer Ingelheim",
+           family = "Pharma GmbH & Co. KG",
+           role = c("cph", "fnd")))
 Description: Provides functions that allow to compute posterior distributions of 
   Bayesian logistic regression models (BLRMs) for monotherapy and combination 
   therapy dose-finding trials and summarizing them via dosing 
@@ -22,7 +22,7 @@ Description: Provides functions that allow to compute posterior distributions of
   covariate are included in the package. All Bayesian models are evaluated using
   the 'Stan' modeling language via the package 'rstan', refer to Stan 
   Development Team (2020) <https://mc-stan.org>.
-License: GPL (>= 3)
+License: Apache License (>= 2)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
