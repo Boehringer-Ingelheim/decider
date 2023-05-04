@@ -403,6 +403,15 @@ Simulates dose-finding trials with up to six parallel monotherapy or two-drug co
 joint BLRM. The function assumes that two different compounds are involved, compounds 1 and 2 (and their combination).
 Up to two monotherapy trials for each compound can be actively simulated, and additionally two combination therapy trials.
 Additionally, for each trial the binary covariate included in the model can be activated or deactivated.
+
+A general introduction to the use of the simulation functions provided in
+this package can be found in the introduction vignette:\code{vignette("intro_jointBLRM", package = "decider")}.
+
+Note that the function \code{sim_covariate_jointBLRM()} uses the foreach framework to allow parallelized
+simulations. For this, a parallel backend needs to be registered by the user.
+A basic example of this is available in the following vignette:
+\code{vignette("parallelization_jointBLRM", package = "decider")}.
+
 Please refer to \code{\link[decider:scenario_covariate_jointBLRM]{scenario_covariate_jointBLRM}()} for details on
 the model specification and \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()} for details on most of the
 arguments used by the function. Note that function \code{sim_covariate_jointBLRM()} uses to a large extent the same arguments as

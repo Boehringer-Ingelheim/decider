@@ -1894,6 +1894,10 @@ scenario_jointBLRM <- function(data=NULL,
 #'for convenience, e.g. to evaluate a number of scenarios that are used for prior adjustment
 #'in a quick manner.
 #'
+#'Please note that for parallel execution, a parallel backend needs to be registered by the user.
+#'A basic example of this is available in the following vignette:
+#'\code{vignette("parallelization_jointBLRM", package = "decider")}.
+#'
 #'Be aware that input checks are performed by \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'If this results in an error for one or more scenarios, the error is returned in the output list.
 #'@param data.list List of hypothetical data scenarios. Each entry is passed to

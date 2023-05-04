@@ -619,6 +619,11 @@ dose-finding trials for the considered compounds.
 For an introduction to the use of this function, see the introduction vignette:
 \code{vignette("intro_jointBLRM", package = "decider")}.
 
+Note that the function \code{sim_jointBLRM()} uses the foreach framework to allow parallelized
+simulations. For this, a parallel backend needs to be registered by the user.
+A basic example of this is available in the following vignette:
+\code{vignette("parallelization_jointBLRM", package = "decider")}.
+
 The function expects a specification of dose levels and their assumed DLT rates for each involved trial, based on which the course of
 the dose-finding trial is simulated. Additional customization of the simulations is possible (separately for each simulated trial),
 e.g. regarding the escalation rule (EWOC and loss-based methods), definition of MTD, the maximum increment of escalations,

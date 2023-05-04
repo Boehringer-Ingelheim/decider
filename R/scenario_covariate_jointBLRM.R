@@ -4,8 +4,12 @@
 #'binary covariate and computes
 #'posterior toxicities for a trial of interest and a set of doses of interest.
 #'The function supports one-sided and two-sided covariates. This can be
-#'controlled separately for each of thw two compounds. Also refer to the documentation of
-#'\code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
+#'controlled separately for each of thw two compounds.
+#'
+#'For a general introduction to
+#'the use of the scenario functions included in this package, see the
+#'introduction vignette: \code{vignette("intro_jointBLRM", package = "decider")}.
+#'Also refer to the documentation of \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'
 #'If multiple scenarios need to be evaluated, consider using the function
 #'\code{\link[decider:scenario_list_covariate_jointBLRM]{scenario_list_covariate_jointBLRM}()}
@@ -1918,6 +1922,10 @@ scenario_covariate_jointBLRM <- function(
 #'for a list of data scenarios, and processing them in parallel. This function is mostly included
 #'for convenience, e.g. to evaluate a number of scenarios that are used for prior adjustment
 #'in a quick manner.
+#'
+#'Please note that for parallel execution, a parallel backend needs to be registered by the user.
+#'A basic example of this is available in the following vignette:
+#'\code{vignette("parallelization_jointBLRM", package = "decider")}.
 #'
 #'Be aware that input checks are performed by \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()}.
 #'If this results in an error for one or more scenarios, the error is returned in the output list.
