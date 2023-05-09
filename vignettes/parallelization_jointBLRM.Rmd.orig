@@ -87,7 +87,6 @@ sim_result <- sim_jointBLRM(
 print(sim_result, quote = F)
 ```
 
-
 Here, only 3 studies are simulated for illustration purposes. Please note, for
 simulations, one can also initiate storing and re-loading of MCMC results
 to speed up simulations further when parallelizing on a moderate number of cores
@@ -97,16 +96,17 @@ to speed up simulations further when parallelizing on a moderate number of cores
 ## Advanced: parallelization on a cluster
 All of the functions of the `decider` package that allow for parallelization
 feature a nested `foreach` loop with two stages. With this, is is possible to
-leverage the capabilities of a computing cluster consisting of multiple nodes
+leverage the capabilities of multiple cluster nodes
 that each have multiple cores. Usually, simulations of joint BLRM trials with
-multiple arms will take a very long run time (in the order of hours).
-The function `sim_jointBLRM` parallelizes across trials, so, when simulating
-e.g. 1000 trials, using multiple hundreds (or, up to 1000) cores can drastically
-improve the run time. In the following, it is illustrated how a parallel backend
-on a common SLURM cluster could be registered, in a way that allows a joint BLRM
-simulation to leverage multiple hundred cores.
+multiple arms will take a very long run time (in the order of hours) when
+executed on a regular computer with a moderate amount of cores, so running
+simulations on a cluster may be desirable to achieve manageable runtimes.
+Please note that function `sim_jointBLRM` parallelizes across trials, so, when simulating
+e.g. 1000 trials, multiple hundreds cores can be used to substantially
+improve the run time. 
 
-We will use the `future.batchtools` package for this:
+In the following, it is illustrated how a parallel backend
+on a SLURM cluster could be registered. We will use the `future.batchtools` package for this:
 ```{r setup2}
 library(future.batchtools)
 ```
@@ -156,9 +156,7 @@ After this setup, the `sim_jointBLRM()` function can be called in the same
 way as illustrated previously.
 
 Please note that there are some tradeoffs involed depending on the system, e.g.
-requesting a very large number of cores may take more time. Depending on the
-number of trials to be simulated, a higher number of nodes/cores may not always
-provide a speed-up beyond a certain number of nodes/cores.
+requesting a very large number of cores may take more time.
 
 At last, please note that the function `sim_jointBLRM()` also supports the use
 of a `working.path` which allows to enable saving and reloading of MCMC results.

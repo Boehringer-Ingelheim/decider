@@ -92,17 +92,17 @@ print(sim_result, quote = F)
 #> Percentage not all too toxic                                                                            
 #> 
 #> $`summary combi.a`
-#>                     Median      Mean      Min.      Max.      2.5%     97.5%
-#> #Pat underdose   0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
-#> #Pat target dose 3.0000000 3.0000000 3.0000000 3.0000000 3.0000000 3.0000000
-#> #Pat overdose    0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
-#> #Pat (all)       3.0000000 3.0000000 3.0000000 3.0000000 3.0000000 3.0000000
-#> #DLT underdose   0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
-#> #DLT target dose 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000
-#> #DLT overdose    0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
-#> #DLT (all)       1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000
-#> % overdose       0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
-#> % DLT            0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#>                     Median      Mean Min.      Max.       2.5%     97.5%
+#> #Pat underdose   0.0000000 0.0000000    0 0.0000000 0.00000000 0.0000000
+#> #Pat target dose 3.0000000 3.0000000    3 3.0000000 3.00000000 3.0000000
+#> #Pat overdose    0.0000000 0.0000000    0 0.0000000 0.00000000 0.0000000
+#> #Pat (all)       3.0000000 3.0000000    3 3.0000000 3.00000000 3.0000000
+#> #DLT underdose   0.0000000 0.0000000    0 0.0000000 0.00000000 0.0000000
+#> #DLT target dose 1.0000000 0.6666667    0 1.0000000 0.05000000 1.0000000
+#> #DLT overdose    0.0000000 0.0000000    0 0.0000000 0.00000000 0.0000000
+#> #DLT (all)       1.0000000 0.6666667    0 1.0000000 0.05000000 1.0000000
+#> % overdose       0.0000000 0.0000000    0 0.0000000 0.00000000 0.0000000
+#> % DLT            0.3333333 0.2222222    0 0.3333333 0.01666667 0.3333333
 #> 
 #> $`MTDs combi.a`
 #>                  2+1         4+1      8+1      2+2      4+2      8+2     
@@ -121,37 +121,37 @@ print(sim_result, quote = F)
 #> 
 #> $`results mono1.a`
 #>                              underdose target dose overdose max n reached before MTD all doses too toxic
-#> Number of trials                     0           0        0                  1.00000             2.00000
-#> Percentage                           0           0        0                 33.33333            66.66667
-#> Percentage not all too toxic         0           0        0                100.00000                  NA
+#> Number of trials                     0     1.00000        0                        0             2.00000
+#> Percentage                           0    33.33333        0                        0            66.66667
+#> Percentage not all too toxic         0   100.00000        0                        0                  NA
 #> 
 #> $`summary mono1.a`
-#>                     Median      Mean Min. Max.      2.5%      97.5%
-#> #Pat underdose   0.0000000 0.0000000 0.00    0 0.0000000  0.0000000
-#> #Pat target dose 3.0000000 6.0000000 3.00   12 3.0000000 11.5500000
-#> #Pat overdose    0.0000000 0.0000000 0.00    0 0.0000000  0.0000000
-#> #Pat (all)       3.0000000 6.0000000 3.00   12 3.0000000 11.5500000
-#> #DLT underdose   0.0000000 0.0000000 0.00    0 0.0000000  0.0000000
-#> #DLT target dose 3.0000000 2.6666667 2.00    3 2.0500000  3.0000000
-#> #DLT overdose    0.0000000 0.0000000 0.00    0 0.0000000  0.0000000
-#> #DLT (all)       3.0000000 2.6666667 2.00    3 2.0500000  3.0000000
-#> % overdose       0.0000000 0.0000000 0.00    0 0.0000000  0.0000000
-#> % DLT            0.6666667 0.6388889 0.25    1 0.2708333  0.9833333
+#>                     Median      Mean      Min.       Max.  2.5% 97.5%
+#> #Pat underdose   0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
+#> #Pat target dose 9.0000000 8.0000000 3.0000000 12.0000000 3.300 11.85
+#> #Pat overdose    0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
+#> #Pat (all)       9.0000000 8.0000000 3.0000000 12.0000000 3.300 11.85
+#> #DLT underdose   0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
+#> #DLT target dose 2.0000000 2.3333333 2.0000000  3.0000000 2.000  2.95
+#> #DLT overdose    0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
+#> #DLT (all)       2.0000000 2.3333333 2.0000000  3.0000000 2.000  2.95
+#> % overdose       0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
+#> % DLT            0.3333333 0.3888889 0.1666667  0.6666667 0.175  0.65
 #> 
 #> $`MTDs mono1.a`
 #>                  2           4           8       
 #> Dose             2           4           8       
 #> True P(DLT)      0.2         0.3         0.5     
 #> True category    target dose target dose overdose
-#> MTD declared (n) 0           0           0       
+#> MTD declared (n) 0           1           0       
 #> 
 #> $`#pat. mono1.a`
 #>             2 4 8
 #> Dose        2 4 8
-#> mean #pat   3 3 0
-#> median #pat 3 0 0
+#> mean #pat   4 4 0
+#> median #pat 3 3 0
 #> min #pat    3 0 0
-#> max #pat    3 9 0
+#> max #pat    6 9 0
 #> 
 #> $prior
 #>               mean       SD
@@ -167,51 +167,51 @@ print(sim_result, quote = F)
 #> tau_eta -2.0794415 0.707293
 #> 
 #> $specifications
-#>                                  Value    -   
-#> seed                             10589635 -   
-#> dosing.intervals                 0.16     0.33
-#> esc.rule                         ewoc     -   
-#> esc.comp.max                     1        -   
-#> dose.ref1                        8        -   
-#> dose.ref2                        2        -   
-#> saturating                       FALSE    -   
-#> ewoc.threshold                   0.25     -   
-#> start.dose.mono1.a               2        -   
-#> esc.step.mono1.a                 2        -   
-#> esc.constrain.mono1.a            FALSE    -   
-#> max.n.mono1.a                    12       -   
-#> cohort.size.mono1.a              3        -   
-#> cohort.prob.mono1.a              1        -   
-#> mtd.decision.mono1.a$target.prob 0.5      -   
-#> mtd.decision.mono1.a$pat.at.mtd  6        -   
-#> mtd.decision.mono1.a$min.pat     12       -   
-#> mtd.decision.mono1.a$min.dlt     1        -   
-#> mtd.decision.mono1.a$rule        2        -   
-#> mtd.enforce.mono1.a              FALSE    -   
-#> backfill.mono1.a                 FALSE    -   
-#> backfill.size.mono1.a            3        -   
-#> backfill.prob.mono1.a            1        -   
-#> backfill.start.mono1.a           2        -   
-#> start.dose.combi.a1              2        -   
-#> start.dose.combi.a2              1        -   
-#> esc.step.combi.a1                2        -   
-#> esc.step.combi.a2                2        -   
-#> esc.constrain.combi.a1           FALSE    -   
-#> esc.constrain.combi.a2           FALSE    -   
-#> max.n.combi.a                    24       -   
-#> cohort.size.combi.a              3        -   
-#> cohort.prob.combi.a              1        -   
-#> mtd.decision.combi.a$target.prob 0.5      -   
-#> mtd.decision.combi.a$pat.at.mtd  6        -   
-#> mtd.decision.combi.a$min.pat     12       -   
-#> mtd.decision.combi.a$min.dlt     1        -   
-#> mtd.decision.combi.a$rule        2        -   
-#> mtd.enforce.combi.a              FALSE    -   
-#> backfill.combi.a                 FALSE    -   
-#> backfill.size.combi.a            3        -   
-#> backfill.prob.combi.a            1        -   
-#> backfill.start.combi.a1          2        -   
-#> backfill.start.combi.a2          1        -   
+#>                                  Value      -   
+#> seed                             1056427552 -   
+#> dosing.intervals                 0.16       0.33
+#> esc.rule                         ewoc       -   
+#> esc.comp.max                     1          -   
+#> dose.ref1                        8          -   
+#> dose.ref2                        2          -   
+#> saturating                       FALSE      -   
+#> ewoc.threshold                   0.25       -   
+#> start.dose.mono1.a               2          -   
+#> esc.step.mono1.a                 2          -   
+#> esc.constrain.mono1.a            FALSE      -   
+#> max.n.mono1.a                    12         -   
+#> cohort.size.mono1.a              3          -   
+#> cohort.prob.mono1.a              1          -   
+#> mtd.decision.mono1.a$target.prob 0.5        -   
+#> mtd.decision.mono1.a$pat.at.mtd  6          -   
+#> mtd.decision.mono1.a$min.pat     12         -   
+#> mtd.decision.mono1.a$min.dlt     1          -   
+#> mtd.decision.mono1.a$rule        2          -   
+#> mtd.enforce.mono1.a              FALSE      -   
+#> backfill.mono1.a                 FALSE      -   
+#> backfill.size.mono1.a            3          -   
+#> backfill.prob.mono1.a            1          -   
+#> backfill.start.mono1.a           2          -   
+#> start.dose.combi.a1              2          -   
+#> start.dose.combi.a2              1          -   
+#> esc.step.combi.a1                2          -   
+#> esc.step.combi.a2                2          -   
+#> esc.constrain.combi.a1           FALSE      -   
+#> esc.constrain.combi.a2           FALSE      -   
+#> max.n.combi.a                    24         -   
+#> cohort.size.combi.a              3          -   
+#> cohort.prob.combi.a              1          -   
+#> mtd.decision.combi.a$target.prob 0.5        -   
+#> mtd.decision.combi.a$pat.at.mtd  6          -   
+#> mtd.decision.combi.a$min.pat     12         -   
+#> mtd.decision.combi.a$min.dlt     1          -   
+#> mtd.decision.combi.a$rule        2          -   
+#> mtd.enforce.combi.a              FALSE      -   
+#> backfill.combi.a                 FALSE      -   
+#> backfill.size.combi.a            3          -   
+#> backfill.prob.combi.a            1          -   
+#> backfill.start.combi.a1          2          -   
+#> backfill.start.combi.a2          1          -   
 #> 
 #> $`Stan options`
 #>                 Value
@@ -222,7 +222,6 @@ print(sim_result, quote = F)
 #> max_treedepth    15.0
 ```
 
-
 Here, only 3 studies are simulated for illustration purposes. Please note, for
 simulations, one can also initiate storing and re-loading of MCMC results
 to speed up simulations further when parallelizing on a moderate number of cores
@@ -232,16 +231,17 @@ to speed up simulations further when parallelizing on a moderate number of cores
 ## Advanced: parallelization on a cluster
 All of the functions of the `decider` package that allow for parallelization
 feature a nested `foreach` loop with two stages. With this, is is possible to
-leverage the capabilities of a computing cluster consisting of multiple nodes
+leverage the capabilities of multiple cluster nodes
 that each have multiple cores. Usually, simulations of joint BLRM trials with
-multiple arms will take a very long run time (in the order of hours).
-The function `sim_jointBLRM` parallelizes across trials, so, when simulating
-e.g. 1000 trials, using multiple hundreds (or, up to 1000) cores can drastically
-improve the run time. In the following, it is illustrated how a parallel backend
-on a common SLURM cluster could be registered, in a way that allows a joint BLRM
-simulation to leverage multiple hundred cores.
+multiple arms will take a very long run time (in the order of hours) when
+executed on a regular computer with a moderate amount of cores, so running
+simulations on a cluster may be desirable to achieve manageable runtimes.
+Please note that function `sim_jointBLRM` parallelizes across trials, so, when simulating
+e.g. 1000 trials, multiple hundreds cores can be used to substantially
+improve the run time. 
 
-We will use the `future.batchtools` package for this:
+In the following, it is illustrated how a parallel backend
+on a SLURM cluster could be registered. We will use the `future.batchtools` package for this:
 
 ```r
 library(future.batchtools)
@@ -295,9 +295,7 @@ After this setup, the `sim_jointBLRM()` function can be called in the same
 way as illustrated previously.
 
 Please note that there are some tradeoffs involed depending on the system, e.g.
-requesting a very large number of cores may take more time. Depending on the
-number of trials to be simulated, a higher number of nodes/cores may not always
-provide a speed-up beyond a certain number of nodes/cores.
+requesting a very large number of cores may take more time.
 
 At last, please note that the function `sim_jointBLRM()` also supports the use
 of a `working.path` which allows to enable saving and reloading of MCMC results.

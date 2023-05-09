@@ -712,7 +712,6 @@ parallel backend one can simply use
 ```{r scenario-call3, eval=T, warning=F}
 results <- scenario_list_jointBLRM(
   data.list = data.list,
-  n.cores = n.cores,
 
   historical.data = historical.data,
   doses.of.interest = doses.of.interest,

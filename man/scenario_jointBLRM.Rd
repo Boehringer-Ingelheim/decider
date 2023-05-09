@@ -406,7 +406,7 @@ and the combination therapy toxicity with interaction is modeled as
 This concludes the definition of the likelihood of the model.
 In the following, we denote the interaction term as the function
 \deqn{
-g(\eta, d_1, d_2) = \eta \cdot \frac{d_1}{d^*_1} \cdot \frac{d_2}{d^*_2}}.
+g(\eta, d_1, d_2) = \eta \cdot \frac{d_1}{d^*_1} \cdot \frac{d_2}{d^*_2}.}
 This is the so-called linear (on logit scale) interaction term.
 \subsection{Saturating interaction term}{
 
