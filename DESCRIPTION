@@ -1,5 +1,5 @@
 Package: decider
-Title: Decision making in oncology dose escalation trials with logistic regression
+Title: Decision making in multiple-arm oncology dose escalation trials with logistic regression
 Version: 0.0.0.9009
 Authors@R: 
     c(person(given = "Lukas",
@@ -11,17 +11,16 @@ Authors@R:
            role = c("cph", "fnd")))
 Description: Provides functions that allow to compute posterior distributions of 
   Bayesian logistic regression models (BLRMs) for monotherapy and combination 
-  therapy dose-finding trials and summarizing them via dosing 
-  intervals. Data scenarios can be evaluated and trial simulations can be 
-  conducted for multiple variants of the BLRM. Most importantly, functions are 
-  provided to aid BLRM-based dose finding for monotherapy (Neuenschwander et al. 
-  (2008) <doi:10.1002/sim.3230>) and combination therapy trials (Neuenschwander 
-  et al. (2014) <doi:10.1201/b17965>). Further, functions to evaluate a joint 
-  BLRM for monotherapy and combination therapy (Neuenschwander et al. (2016) 
-  <doi:10.1080/19466315.2016.1174149>), and BLRMs with additional binary 
-  covariate are included in the package. All Bayesian models are evaluated using
-  the 'Stan' modeling language via the package 'rstan', refer to Stan 
-  Development Team (2020) <https://mc-stan.org>.
+  therapy dose-finding trials with one or more arms, summarizing them via dosing 
+  intervals, and simulating such trial designs. Data scenarios can be evaluated 
+  and trial simulations can be conducted for multiple variants of the BLRM. Functions are provided to aid
+  designing BLRM-based dose finding for concurrent monotherapy and combination 
+  therapy trials following (Neuenschwander et al. (2008) <doi:10.1002/sim.3230>),
+  (Neuenschwander et al. (2014) <doi:10.1201/b17965>). The main implemented model is
+  the hierarchical BLRM for monotherapy and combination therapy (Neuenschwander et al. (2016) 
+  <doi:10.1080/19466315.2016.1174149>), and a variant with an additional binary 
+  covariate. All Bayesian models are evaluated using the 'Stan' modeling language 
+  via the package 'rstan', refer to Stan Development Team (2020) <https://mc-stan.org>.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
