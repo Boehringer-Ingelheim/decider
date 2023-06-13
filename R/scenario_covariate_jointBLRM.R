@@ -22,6 +22,7 @@
 #'    data=NULL,
 #'    historical.data=NULL,
 #'    doses.of.interest,
+#'    doses.of.interest.covars = NULL,
 #'    dose.ref1,
 #'    dose.ref2,
 #'    trials.of.interest,
@@ -68,6 +69,12 @@
 #'    seed=sample.int(.Machine$integer.max, 1),
 #'    path = NULL,
 #'    file.name = NULL,
+#'    output.dosetrafo = list(
+#'      "d1c0" = function(x) return(x),
+#'      "d1c1" = function(x) return(x),
+#'      "d2c0" = function(x) return(x),
+#'      "d2c1" = function(x) return(x)
+#'    ),
 #'    plot.decisions = FALSE,
 #'    plot.combi.heatmap = TRUE,
 #'    plot.int.probs.loss = FALSE,
@@ -115,6 +122,11 @@
 #'@param doses.of.interest Numeric matrix with two rows and non-negative entries. Each column gives a dose combination
 #'of interest.
 #'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
+#'@param doses.of.interest.covars Numeric vector, defaults to \code{NULL}. Must be either \code{NULL} or of the same length
+#'as the number of columns of \code{doses.of.interest}. Allows to provide a covariate value for each dose of interest
+#'that decides if it should be displayed for only one of the covariates. Entries other than \code{0} or \code{1} cause
+#'the dose to be displayed for both covariate values in the outputs. If the argument is set to \code{NULL}, all doses
+#'are displayed for both covariates
 #'@param types.of.interest Optional character vector with one entry for each entry of \code{trials.of.interest} which specifies the
 #'trial type of the corresponding trial of interest. Supported trial types are \code{"mono1"}, \code{"mono2"},  \code{"combi"},
 #'and \code{"all"}.
@@ -192,6 +204,19 @@
 #'all output is saved there.
 #'@param file.name Optional name for the output file. If \code{NULL} or missing, no output is saved (and also if no valid path is given). Results are only returned to R in this case. Note
 #'that plots will not be returned to R unless the additional argument \code{plot.return} is specified.
+#'@param output.dosetrafo Optional list of functions that will be applied to transform the doses given to the model to the doses
+#'presented in the output. By default, each transformation is the identiy function, meaning that doses are displayed
+#'as given to the model. The argument  \code{output.dosetrafo} should be a named list with entries \code{output.dosetrafo$"d1c0"},
+#'\code{output.dosetrafo$"d1c1"}, \code{output.dosetrafo$"d2c0"}, and \code{output.dosetrafo$"d1c2"},
+#'where each entry is a function that accepts and returns a positive numeric. For the display of outputs (including plots),
+#'the function will be applied to transform the given doses, where \code{[...]$d1c0} is used to transform dose/compound 1
+#'when the covariate is 0 and \code{[...]$d1c1} is used when the covariate is 1. The same applies to dose/compound 2. This
+#'argument can be used if there are e.g. different dosing schedules that are transformed to the same scale for modelling
+#'in a BLRM. For instance, if covariate 0 indicates a weekly schedule, and covariate 1 a bi-weekly schedule, one could set
+#'up the BLRM to operate on the total dose received over 2 weeks. For the weekly schedule, one may want to backtransform and
+#'display the weekly dose again instead of the dose received over two weeks, which could be accomplished by setting
+#'\code{output.dosetrafo$"d2c0" = function(x) return(x/2)} to cause the function to display half of the dose used for modelling
+#'for outputs about doses with covariate of 0.
 #'@param plot.decisions Optional logical, defaults to \code{FALSE}. If \code{TRUE}, plots of escalation decisions according to the
 #'specified escalation rule are created.
 #'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
@@ -478,6 +503,7 @@ scenario_covariate_jointBLRM <- function(
                                data=NULL,
                                historical.data=NULL,
                                doses.of.interest,
+                               doses.of.interest.covars = NULL,
                                dose.ref1,
                                dose.ref2,
                                trials.of.interest,
@@ -529,6 +555,12 @@ scenario_covariate_jointBLRM <- function(
 
                                path = NULL,
                                file.name = NULL,
+                               output.dosetrafo = list(
+                                 "d1c0" = function(x) return(x),
+                                 "d1c1" = function(x) return(x),
+                                 "d2c0" = function(x) return(x),
+                                 "d2c1" = function(x) return(x)
+                               ),
                                plot.decisions = FALSE,
                                plot.combi.heatmap = TRUE,
                                plot.int.probs.loss = FALSE,
@@ -1262,203 +1294,6 @@ scenario_covariate_jointBLRM <- function(
   prior.tau[["tau_c1"]] <- prior.tau.covar$tau_g1
   prior.tau[["tau_c2"]] <- prior.tau.covar$tau_g2
 
-  # #OLD: prior checks, kept for reference until next version.
-  # if(!is.list(prior.mu)){
-  #
-  #   stop("prior.mu must be a list.")
-  # }
-  #
-  # if(is.null(names(prior.mu))){
-  #   stop("prior.mu must be a named list.")
-  # }
-  #
-  # names(prior.mu) <- tolower(names(prior.mu))
-  # names_pmu <- names(prior.mu)
-  #
-  # if(!is.list(prior.tau)){
-  #
-  #   stop("prior.tau must be a list.")
-  # }
-  #
-  # if(is.null(names(prior.tau))){
-  #   stop("prior.tau must be a named list.")
-  # }
-  # names(prior.tau) <- tolower(names(prior.tau))
-  # names_ptau <- names(prior.tau)
-  #
-  # if(!(all(c("mu_a1", "mu_a2", "mu_b1", "mu_b2", "mu_eta")%in%names_pmu))){
-  #
-  #   stop("prior.mu must have entries \"mu_a1\",\"mu_b1\",\"mu_a2\",\"mu_b2\", and \"mu_eta\".")
-  # }
-  # if(!is.numeric(prior.mu$mu_a1)){
-  #
-  #   stop("prior.mu$mu_a1 must be numeric.")
-  # }
-  # if(any(is.na(prior.mu$mu_a1))){
-  #
-  #   stop("prior.mu$mu_a1 must not be NA.")
-  # }
-  # if(!length(prior.mu$mu_a1)==2){
-  #
-  #   stop("prior.mu$mu_a1 must have length 2.")
-  # }
-  # if(!prior.mu$mu_a1[2]>0){
-  #
-  #   stop("prior.mu$mu_a1[2] is the SD and cannot be negative.")
-  # }
-  # if(!is.numeric(prior.mu$mu_b1)){
-  #
-  #   stop("prior.mu$mu_b1 must be numeric.")
-  # }
-  # if(any(is.na(prior.mu$mu_b1))){
-  #
-  #   stop("prior.mu$mu_b1 must not be NA.")
-  # }
-  # if(!length(prior.mu$mu_b1)==2){
-  #
-  #   stop("prior.mu$mu_b1 must have length 2.")
-  # }
-  # if(!prior.mu$mu_b1[2]>0){
-  #
-  #   stop("prior.mu$mu_b1[2] is the SD and cannot be negative.")
-  # }
-  # if(!is.numeric(prior.mu$mu_a2)){
-  #
-  #   stop("prior.mu$mu_a2 must be numeric.")
-  # }
-  # if(any(is.na(prior.mu$mu_a2))){
-  #
-  #   stop("prior.mu$mu_a2 must not be NA.")
-  # }
-  # if(!length(prior.mu$mu_a2)==2){
-  #
-  #   stop("prior.mu$mu_a2 must have length 2.")
-  # }
-  # if(!prior.mu$mu_a2[2]>0){
-  #
-  #   stop("prior.mu$mu_a2[2] is the SD and cannot be negative.")
-  # }
-  #
-  # if(!is.numeric(prior.mu$mu_b2)){
-  #
-  #   stop("prior.mu$mu_b2 must be numeric.")
-  # }
-  # if(any(is.na(prior.mu$mu_b2))){
-  #
-  #   stop("prior.mu$mu_b2 must not be NA.")
-  # }
-  # if(!length(prior.mu$mu_b2)==2){
-  #
-  #   stop("prior.mu$mu_b2 must have length 2.")
-  # }
-  # if(!prior.mu$mu_b2[2]>0){
-  #
-  #   stop("prior.mu$mu_b2[2] is the SD and cannot be negative.")
-  # }
-  # if(!is.numeric(prior.mu$mu_eta)){
-  #
-  #   stop("prior.mu$mu_eta must be numeric.")
-  # }
-  # if(any(is.na(prior.mu$mu_eta))){
-  #
-  #   stop("prior.mu$mu_eta must not be NA.")
-  # }
-  # if(!length(prior.mu$mu_eta)==2){
-  #
-  #   stop("prior.mu$mu_eta must have length 2.")
-  # }
-  # if(!prior.mu$mu_eta[2]>0){
-  #
-  #   stop("prior.mu$mu_eta[2] is the SD and cannot be negative.")
-  # }
-  #
-  # if(!(all(c("tau_a1", "tau_a2", "tau_b1", "tau_b2", "tau_eta")%in%names_ptau))){
-  #
-  #   stop("prior.tau must have entries \"tau_a1\",\"tau_b1\",\"tau_a2\",\"tau_b2\", and \"tau_eta\".")
-  # }
-  # if(!is.numeric(prior.tau$tau_a1)){
-  #
-  #   stop("prior.tau$tau_a1 must be numeric.")
-  # }
-  # if(any(is.na(prior.tau$tau_a1))){
-  #
-  #   stop("prior.tau$tau_a1 must not be NA.")
-  # }
-  # if(!length(prior.tau$tau_a1)==2){
-  #
-  #   stop("prior.tau$tau_a1 must have length 2.")
-  # }
-  # if(!prior.tau$tau_a1[2]>0){
-  #
-  #   stop("prior.tau$tau_a1[2] is the SD and cannot be negative.")
-  # }
-  # if(!is.numeric(prior.tau$tau_b1)){
-  #
-  #   stop("prior.tau$tau_b1 must be numeric.")
-  # }
-  # if(any(is.na(prior.tau$tau_b1))){
-  #
-  #   stop("prior.tau$tau_b1 must not be NA.")
-  # }
-  # if(!length(prior.tau$tau_b1)==2){
-  #
-  #   stop("prior.tau$tau_b1 must have length 2.")
-  # }
-  # if(!prior.tau$tau_b1[2]>0){
-  #
-  #   stop("prior.tau$tau_b1[2] is the SD and cannot be negative.")
-  # }
-  # if(!is.numeric(prior.tau$tau_a2)){
-  #
-  #   stop("prior.tau$tau_a2 must be numeric.")
-  # }
-  # if(any(is.na(prior.tau$tau_a2))){
-  #
-  #   stop("prior.tau$tau_a2 must not be NA.")
-  # }
-  # if(!length(prior.tau$tau_a2)==2){
-  #
-  #   stop("prior.tau$tau_a2 must have length 2.")
-  # }
-  # if(!prior.tau$tau_a2[2]>0){
-  #
-  #   stop("prior.tau$tau_a2[2] is the SD and cannot be negative.")
-  # }
-  #
-  # if(!is.numeric(prior.tau$tau_b2)){
-  #
-  #   stop("prior.tau$tau_b2 must be numeric.")
-  # }
-  # if(any(is.na(prior.tau$tau_b2))){
-  #
-  #   stop("prior.tau$tau_b2 must not be NA.")
-  # }
-  # if(!length(prior.tau$tau_b2)==2){
-  #
-  #   stop("prior.tau$tau_b2 must have length 2.")
-  # }
-  # if(!prior.tau$tau_b2[2]>0){
-  #
-  #   stop("prior.tau$tau_b2[2] is the SD and cannot be negative.")
-  # }
-  # if(!is.numeric(prior.tau$tau_eta)){
-  #
-  #   stop("prior.tau$tau_eta must be numeric.")
-  # }
-  # if(any(is.na(prior.tau$tau_eta))){
-  #
-  #   stop("prior.tau$tau_eta must not be NA.")
-  # }
-  # if(!length(prior.tau$tau_eta)==2){
-  #
-  #   stop("prior.tau$tau_eta must have length 2.")
-  # }
-  # if(!prior.tau$tau_eta[2]>0){
-  #
-  #   stop("prior.tau$tau_eta[2] is the SD and cannot be negative.")
-  # }
-
-
 
   if(!is.numeric(iter)){
 
@@ -1611,20 +1446,6 @@ scenario_covariate_jointBLRM <- function(
     stop("`two_sided2` must be logical.")
   }
 
-
-  # type.mono1.active <- length(which(doses.of.interest[1,]>0&doses.of.interest[2,]==0))>0
-  # type.mono2.active <- length(which(doses.of.interest[2,]>0&doses.of.interest[1,]==0))>0
-  # type.combi.active <- length(which(doses.of.interest[1,]>0&doses.of.interest[2,]>0))>0
-
-  # ldi <- length(doses.of.interest[1,])
-  # if(esc.rule=="dynamic.loss"){
-  #   doses.of.interest2 <- matrix(NA, nrow=2, ncol=(ldi+1))
-  #   doses.of.interest2[, 1:ldi] <- doses.of.interest
-  #   doses.of.interest2[1, ldi+1] <- dref1
-  #   doses.of.interest2[2, ldi+1] <- dref2
-  # }else{
-  #   doses.of.interest2 <- doses.of.interest
-  # }
   #--------------------------------------------------------------------------------------------------
   #Sampling from posterior and extracting results
   #--------------------------------------------------------------------------------------------------
@@ -1663,6 +1484,70 @@ scenario_covariate_jointBLRM <- function(
   res_raw <- res_raw_all[["postsummaries"]]
   ref.probs.all <- res_raw_all[["refprobs"]]
 
+
+
+  #-------------------------------------------------------
+  for(std in 1:length(res_raw)){
+    #if doses.of.interest.covars is given, filter for these doses
+    if(!is.null(doses.of.interest.covars)){
+      names(doses.of.interest.covars) <- paste0(doses.of.interest[1, ], "+", doses.of.interest[2, ])
+      nrws <- length(res_raw[[std]][, 1])
+      ncls <- length(res_raw[[std]][1, ])
+      incl_rws <- rep(F, times = nrws)
+      rnms <- rownames(res_raw[[std]])
+      for(r in 1:nrws){
+        if(doses.of.interest.covars[rnms[r]]==1){
+          if (res_raw[[std]][r, ncls]==1){
+            incl_rws[r] <- T
+          }
+        }else if(doses.of.interest.covars[rnms[r]]==0){
+          if (res_raw[[std]][r, ncls]==0){
+            incl_rws[r] <- T
+          }
+        }else{
+          incl_rws[r] <- T
+        }
+      }
+      res_raw[[std]] <- res_raw[[std]][incl_rws,]
+    }
+
+    # output.dosetrafo = list(
+    #   "d1c0" = function(x) return(x),
+    #   "d1c1" = function(x) return(x),
+    #   "d2c0" = function(x) return(x),
+    #   "d2c1" = function(x) return(x)
+    # )
+
+    #apply dose tranformation if needed
+    dose_names_curr <- rownames(res_raw[[std]])
+    dose1name_curr <- as.numeric(sapply(strsplit(dose_names_curr, "+", fixed=T),
+                                        FUN = function(x) return(x[1])))
+    dose2name_curr <- as.numeric(sapply(strsplit(dose_names_curr, "+", fixed=T),
+                                        FUN = function(x) return(x[2])))
+    trafo_dose_names <- rep("", length(dose_names_curr))
+    for(r in 1:length(dose_names_curr)){
+      ncls <- length(res_raw[[std]][1, ])
+      if(res_raw[[std]][r, ncls]==0){
+        trafo_dose_names[r] <- paste0(
+          output.dosetrafo$"d1c0"(dose1name_curr[r]),
+          "+",
+          output.dosetrafo$"d2c0"(dose2name_curr[r])
+        )
+      }else if(res_raw[[std]][r, ncls]==1){
+        trafo_dose_names[r] <- paste0(
+          output.dosetrafo$"d1c1"(dose1name_curr[r]),
+          "+",
+          output.dosetrafo$"d2c1"(dose2name_curr[r])
+        )
+      }
+    }
+
+    rownames(res_raw[[std]]) <- trafo_dose_names
+  }
+
+
+  #-------------------------------------------------------
+
   summary_list <- list()
   plot_list <- list()
 
@@ -1677,6 +1562,8 @@ scenario_covariate_jointBLRM <- function(
     }else{
       cov_inds <- covcurr
     }
+
+
 
     #loop over artificial vector of cov of interest
     #for current study to generate two plots
@@ -1782,9 +1669,11 @@ scenario_covariate_jointBLRM <- function(
         #summ_plot <- summ.current.std[, c(1:(length(summ.current.std)-1))]
       }
 
+
+
+
       #round and add to summary list
       summary_list[[str_curr]] <- round(summ.current.std, digits = digits)
-
 
       if(plot.decisions){
         if(is.null(file.name)){

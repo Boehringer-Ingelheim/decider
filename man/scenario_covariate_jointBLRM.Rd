@@ -8,6 +8,7 @@ scenario_covariate_jointBLRM(
    data=NULL,
    historical.data=NULL,
    doses.of.interest,
+   doses.of.interest.covars = NULL,
    dose.ref1,
    dose.ref2,
    trials.of.interest,
@@ -54,6 +55,12 @@ scenario_covariate_jointBLRM(
    seed=sample.int(.Machine$integer.max, 1),
    path = NULL,
    file.name = NULL,
+   output.dosetrafo = list(
+     "d1c0" = function(x) return(x),
+     "d1c1" = function(x) return(x),
+     "d2c0" = function(x) return(x),
+     "d2c1" = function(x) return(x)
+   ),
    plot.decisions = FALSE,
    plot.combi.heatmap = TRUE,
    plot.int.probs.loss = FALSE,
@@ -103,6 +110,12 @@ are interpreted to belong to the same trial.}
 \item{doses.of.interest}{Numeric matrix with two rows and non-negative entries. Each column gives a dose combination
 of interest.
 See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.}
+
+\item{doses.of.interest.covars}{Numeric vector, defaults to \code{NULL}. Must be either \code{NULL} or of the same length
+as the number of columns of \code{doses.of.interest}. Allows to provide a covariate value for each dose of interest
+that decides if it should be displayed for only one of the covariates. Entries other than \code{0} or \code{1} cause
+the dose to be displayed for both covariate values in the outputs. If the argument is set to \code{NULL}, all doses
+are displayed for both covariates}
 
 \item{dose.ref1}{Numeric, must be positive. Reference dose for compound 1.}
 
@@ -225,6 +238,20 @@ all output is saved there.}
 
 \item{file.name}{Optional name for the output file. If \code{NULL} or missing, no output is saved (and also if no valid path is given). Results are only returned to R in this case. Note
 that plots will not be returned to R unless the additional argument \code{plot.return} is specified.}
+
+\item{output.dosetrafo}{Optional list of functions that will be applied to transform the doses given to the model to the doses
+presented in the output. By default, each transformation is the identiy function, meaning that doses are displayed
+as given to the model. The argument  \code{output.dosetrafo} should be a named list with entries \code{output.dosetrafo$"d1c0"},
+\code{output.dosetrafo$"d1c1"}, \code{output.dosetrafo$"d2c0"}, and \code{output.dosetrafo$"d1c2"},
+where each entry is a function that accepts and returns a positive numeric. For the display of outputs (including plots),
+the function will be applied to transform the given doses, where \code{[...]$d1c0} is used to transform dose/compound 1
+when the covariate is 0 and \code{[...]$d1c1} is used when the covariate is 1. The same applies to dose/compound 2. This
+argument can be used if there are e.g. different dosing schedules that are transformed to the same scale for modelling
+in a BLRM. For instance, if covariate 0 indicates a weekly schedule, and covariate 1 a bi-weekly schedule, one could set
+up the BLRM to operate on the total dose received over 2 weeks. For the weekly schedule, one may want to backtransform and
+display the weekly dose again instead of the dose received over two weeks, which could be accomplished by setting
+\code{output.dosetrafo$"d2c0" = function(x) return(x/2)} to cause the function to display half of the dose used for modelling
+for outputs about doses with covariate of 0.}
 
 \item{plot.decisions}{Optional logical, defaults to \code{FALSE}. If \code{TRUE}, plots of escalation decisions according to the
 specified escalation rule are created.
