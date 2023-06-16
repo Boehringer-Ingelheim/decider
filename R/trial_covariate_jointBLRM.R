@@ -238,6 +238,19 @@ trial_covariate_jointBLRM<- function(
     patients.at.dose.mono.5 <- rep(0, times = length(doses.mono2.b))
     names(patients.at.dose.mono.5) <- doses.mono2.b
 
+    #counters for how many DLTs per dose
+    dlts.at.dose.combi.1 <- rep(0, times = length(tox.combi.a))
+    names(dlts.at.dose.combi.1) <- paste(doses.combi.a[1,],doses.combi.a[2,], sep= "+")
+    dlts.at.dose.mono.1 <- rep(0, times = length(doses.mono1.a))
+    names(dlts.at.dose.mono.1) <- doses.mono1.a
+    dlts.at.dose.mono.2 <- rep(0, times = length(doses.mono2.a))
+    names(dlts.at.dose.mono.2) <- doses.mono2.a
+    dlts.at.dose.combi.2 <- rep(0, times = length(tox.combi.b))
+    names(dlts.at.dose.combi.2) <- paste(doses.combi.b[1,],doses.combi.b[2,], sep= "+")
+    dlts.at.dose.mono.4 <- rep(0, times = length(doses.mono1.b))
+    names(dlts.at.dose.mono.4) <- doses.mono1.b
+    dlts.at.dose.mono.5 <- rep(0, times = length(doses.mono2.b))
+    names(dlts.at.dose.mono.5) <- doses.mono2.b
 
     #reset the vars for current doses
     current.dose.mono.2 <- start.dose.mono2.a
@@ -418,6 +431,10 @@ trial_covariate_jointBLRM<- function(
                     if(paste0(data.doses.1[h])%in%doses.mono1.a){
                         patients.at.dose.mono.1[paste0(data.doses.1[h])] <-
                             patients.at.dose.mono.1[paste0(data.doses.1[h])]+data.n.patients[h]
+
+                        dlts.at.dose.mono.1[paste0(data.doses.1[h])] <-
+                          dlts.at.dose.mono.1[paste0(data.doses.1[h])]+data.DLT[h]
+
                         if(tox.mono1.a[paste0(data.doses.1[h])]<dosing.intervals[1]){
                             trials.n.under[1] <- trials.n.under[1] + data.n.patients[h]
                             trials.dlt.under[1] <- trials.dlt.under[1] + data.DLT[h]
@@ -446,6 +463,10 @@ trial_covariate_jointBLRM<- function(
                     if(paste0(data.doses.2[h])%in%doses.mono2.a){
                         patients.at.dose.mono.2[paste0(data.doses.2[h])] <-
                             patients.at.dose.mono.2[paste0(data.doses.2[h])]+data.n.patients[h]
+
+                        dlts.at.dose.mono.2[paste0(data.doses.2[h])] <-
+                          dlts.at.dose.mono.2[paste0(data.doses.2[h])]+data.DLT[h]
+
                         if(tox.mono2.a[paste0(data.doses.2[h])]<dosing.intervals[1]){
                             trials.n.under[2] <- trials.n.under[2] + data.n.patients[h]
                             trials.dlt.under[2] <- trials.dlt.under[2] + data.DLT[h]
@@ -477,6 +498,9 @@ trial_covariate_jointBLRM<- function(
                        %in% paste0(doses.combi.a[1,], "+", doses.combi.a[2,])){
                         index_curr_d <- paste0(data.doses.1[h], "+", data.doses.2[h])
                         patients.at.dose.combi.1[index_curr_d] <- patients.at.dose.combi.1[index_curr_d]+data.n.patients[h]
+
+                        dlts.at.dose.combi.1[index_curr_d] <- dlts.at.dose.combi.1[index_curr_d]+data.DLT[h]
+
                         if(tox.combi.a[paste0(data.doses.1[h], "+", data.doses.2[h])]<dosing.intervals[1]){
                             trials.n.under[3] <- trials.n.under[3] + data.n.patients[h]
                             trials.dlt.under[3] <- trials.dlt.under[3] + data.DLT[h]
@@ -508,6 +532,10 @@ trial_covariate_jointBLRM<- function(
                     if(paste0(data.doses.1[h])%in%doses.mono1.b){
                         patients.at.dose.mono.4[paste0(data.doses.1[h])] <-
                             patients.at.dose.mono.4[paste0(data.doses.1[h])]+data.n.patients[h]
+
+                        dlts.at.dose.mono.4[paste0(data.doses.1[h])] <-
+                          dlts.at.dose.mono.4[paste0(data.doses.1[h])]+data.DLT[h]
+
                         if(tox.mono1.b[paste0(data.doses.1[h])]<dosing.intervals[1]){
                             trials.n.under[4] <- trials.n.under[4] + data.n.patients[h]
                             trials.dlt.under[4] <- trials.dlt.under[4] + data.DLT[h]
@@ -537,6 +565,10 @@ trial_covariate_jointBLRM<- function(
                     if(paste0(data.doses.2[h])%in%doses.mono2.b){
                         patients.at.dose.mono.5[paste0(data.doses.2[h])] <-
                             patients.at.dose.mono.5[paste0(data.doses.2[h])]+data.n.patients[h]
+
+                        dlts.at.dose.mono.5[paste0(data.doses.2[h])] <-
+                          dlts.at.dose.mono.5[paste0(data.doses.2[h])]+data.DLT[h]
+
                         if(tox.mono2.b[paste0(data.doses.2[h])]<dosing.intervals[1]){
                             trials.n.under[5] <- trials.n.under[5] + data.n.patients[h]
                             trials.dlt.under[5] <- trials.dlt.under[5] + data.DLT[h]
@@ -569,6 +601,10 @@ trial_covariate_jointBLRM<- function(
                         index_curr_d <- paste0(data.doses.1[h], "+", data.doses.2[h])
                         patients.at.dose.combi.2[index_curr_d] <- patients.at.dose.combi.2[index_curr_d] +
                             data.n.patients[h]
+
+                        dlts.at.dose.combi.2[index_curr_d] <- dlts.at.dose.combi.2[index_curr_d] +
+                          data.DLT[h]
+
                         if(tox.combi.b[paste0(data.doses.1[h], "+", data.doses.2[h])]<dosing.intervals[1]){
                             trials.n.under[6] <- trials.n.under[6] + data.n.patients[h]
                             trials.dlt.under[6] <- trials.dlt.under[6] + data.DLT[h]
@@ -607,6 +643,11 @@ trial_covariate_jointBLRM<- function(
                     if(paste0(data.doses.1[h])%in%doses.mono1.a){
                         patients.at.dose.mono.1[paste0(data.doses.1[h])] <-
                             patients.at.dose.mono.1[paste0(data.doses.1[h])]+data.n.patients[h]
+
+
+                        dlts.at.dose.mono.1[paste0(data.doses.1[h])] <-
+                          dlts.at.dose.mono.1[paste0(data.doses.1[h])]+data.DLT[h]
+
                         if(tox.mono1.a[paste0(data.doses.1[h])]<dosing.intervals[1]){
                             trials.n.under[1] <- trials.n.under[1] + data.n.patients[h]
                             trials.dlt.under[1] <- trials.dlt.under[1] + data.DLT[h]
@@ -634,6 +675,10 @@ trial_covariate_jointBLRM<- function(
                     if(paste0(data.doses.1[h])%in%doses.mono1.b){
                         patients.at.dose.mono.4[paste0(data.doses.1[h])] <-
                             patients.at.dose.mono.4[paste0(data.doses.1[h])]+data.n.patients[h]
+
+                        dlts.at.dose.mono.4[paste0(data.doses.1[h])] <-
+                          dlts.at.dose.mono.4[paste0(data.doses.1[h])]+data.DLT[h]
+
                         if(tox.mono1.b[paste0(data.doses.1[h])]<dosing.intervals[1]){
                             trials.n.under[4] <- trials.n.under[4] + data.n.patients[h]
                             trials.dlt.under[4] <- trials.dlt.under[4] + data.DLT[h]
@@ -660,6 +705,10 @@ trial_covariate_jointBLRM<- function(
                     if(paste0(data.doses.2[h])%in%doses.mono2.a){
                         patients.at.dose.mono.2[paste0(data.doses.2[h])] <-
                             patients.at.dose.mono.2[paste0(data.doses.2[h])]+data.n.patients[h]
+
+                        dlts.at.dose.mono.2[paste0(data.doses.2[h])] <-
+                          dlts.at.dose.mono.2[paste0(data.doses.2[h])]+data.DLT[h]
+
                         if(tox.mono2.a[paste0(data.doses.2[h])]<dosing.intervals[1]){
                             trials.n.under[2] <- trials.n.under[2] + data.n.patients[h]
                             trials.dlt.under[2] <- trials.dlt.under[2] + data.DLT[h]
@@ -686,6 +735,10 @@ trial_covariate_jointBLRM<- function(
                     if(paste0(data.doses.2[h])%in%doses.mono2.b){
                         patients.at.dose.mono.5[paste0(data.doses.2[h])] <-
                             patients.at.dose.mono.5[paste0(data.doses.2[h])]+data.n.patients[h]
+
+                        dlts.at.dose.mono.5[paste0(data.doses.2[h])] <-
+                          dlts.at.dose.mono.5[paste0(data.doses.2[h])]+data.DLT[h]
+
                         if(tox.mono2.b[paste0(data.doses.2[h])]<dosing.intervals[1]){
                             trials.n.under[5] <- trials.n.under[5] + data.n.patients[h]
                             trials.dlt.under[5] <- trials.dlt.under[5] + data.DLT[h]
@@ -714,6 +767,10 @@ trial_covariate_jointBLRM<- function(
                         index_curr_d <-paste0(data.doses.1[h], "+", data.doses.2[h])
                         patients.at.dose.combi.1[index_curr_d] <- patients.at.dose.combi.1[index_curr_d] +
                             data.n.patients[h]
+
+                        dlts.at.dose.combi.1[index_curr_d] <- dlts.at.dose.combi.1[index_curr_d] +
+                          data.DLT[h]
+
                         if(tox.combi.a[paste0(data.doses.1[h], "+", data.doses.2[h])]<dosing.intervals[1]){
                             trials.n.under[3] <- trials.n.under[3] + data.n.patients[h]
                             trials.dlt.under[3] <- trials.dlt.under[3] + data.DLT[h]
@@ -742,6 +799,10 @@ trial_covariate_jointBLRM<- function(
                         index_curr_d <-paste0(data.doses.1[h], "+", data.doses.2[h])
                         patients.at.dose.combi.2[index_curr_d] <- patients.at.dose.combi.2[index_curr_d] +
                             data.n.patients[h]
+
+                        dlts.at.dose.combi.2[index_curr_d] <- dlts.at.dose.combi.2[index_curr_d] +
+                          data.DLT[h]
+
                         if(tox.combi.b[paste0(data.doses.1[h], "+", data.doses.2[h])]<dosing.intervals[1]){
                             trials.n.under[6] <- trials.n.under[6] + data.n.patients[h]
                             trials.dlt.under[6] <- trials.dlt.under[6] + data.DLT[h]
@@ -978,6 +1039,7 @@ trial_covariate_jointBLRM<- function(
 
             #save the simulated treatment and result
             patients.at.dose.combi.1[curr.dose.name] <- curr.n.pat + patients.at.dose.combi.1[curr.dose.name]
+            dlts.at.dose.combi.1[curr.dose.name] <- curr.dlt + dlts.at.dose.combi.1[curr.dose.name]
             if(curr.tox.combi.1 < dosing.intervals[1]){  #the cohort was treated with underdose
                 trials.n.under[3] <- as.numeric(trials.n.under[3]) + curr.n.pat
                 trials.dlt.under[3] <- as.numeric(trials.dlt.under[3]) + curr.dlt
@@ -1047,6 +1109,10 @@ trial_covariate_jointBLRM<- function(
                                 #save data
                                 patients.at.dose.combi.1[prev.dose.name.combi.a] <- bf.pat.combi.a +
                                     patients.at.dose.combi.1[prev.dose.name.combi.a]
+
+                                dlts.at.dose.combi.1[prev.dose.name.combi.a] <- bf.dlt.combi.a +
+                                  dlts.at.dose.combi.1[prev.dose.name.combi.a]
+
                                 if(prev.tox.combi.a < dosing.intervals[1]){  #the cohort was treated with underdose
                                     trials.n.under[3] <- as.numeric(trials.n.under[3]) + bf.pat.combi.a
                                     trials.dlt.under[3] <- as.numeric(trials.dlt.under[3]) + bf.dlt.combi.a
@@ -1211,6 +1277,8 @@ trial_covariate_jointBLRM<- function(
                 #save relevant data
                 patients.at.dose.combi.2[curr.dose.name] <- curr.n.pat + patients.at.dose.combi.2[curr.dose.name]
 
+                dlts.at.dose.combi.2[curr.dose.name] <- curr.dlt + dlts.at.dose.combi.2[curr.dose.name]
+
                 if(curr.tox.combi.2 < dosing.intervals[1]){
                     #the cohort was treated with underdose
                     trials.n.under[6] <- as.numeric(trials.n.under[6]) + curr.n.pat
@@ -1282,6 +1350,10 @@ trial_covariate_jointBLRM<- function(
                                     #save data
                                     patients.at.dose.combi.2[prev.dose.name.combi.b] <- bf.pat.combi.b +
                                         patients.at.dose.combi.2[prev.dose.name.combi.b]
+
+                                    dlts.at.dose.combi.2[prev.dose.name.combi.b] <- bf.dlt.combi.b +
+                                      dlts.at.dose.combi.2[prev.dose.name.combi.b]
+
                                     if(prev.tox.combi.b < dosing.intervals[1]){  #the cohort was treated with underdose
                                         trials.n.under[6] <- as.numeric(trials.n.under[6]) + bf.pat.combi.b
                                         trials.dlt.under[6] <- as.numeric(trials.dlt.under[6]) + bf.dlt.combi.b
@@ -1449,6 +1521,9 @@ trial_covariate_jointBLRM<- function(
 
             #save data
             patients.at.dose.mono.1[curr.dose.name ] <- curr.n.pat + patients.at.dose.mono.1[curr.dose.name ]
+
+            dlts.at.dose.mono.1[curr.dose.name ] <- curr.dlt + dlts.at.dose.mono.1[curr.dose.name ]
+
             if(curr.tox.mono.1 < dosing.intervals[1]){  #the cohort was treated with underdose
                 trials.n.under[1] <- as.numeric(trials.n.under[1]) + curr.n.pat
                 trials.dlt.under[1] <- as.numeric(trials.dlt.under[1]) + curr.dlt
@@ -1514,6 +1589,10 @@ trial_covariate_jointBLRM<- function(
                                 #save data
                                 patients.at.dose.mono.1[toString(prev.dose.mono1.a) ] <- bf.pat.mono1.a +
                                     patients.at.dose.mono.1[toString(prev.dose.mono1.a)]
+
+                                dlts.at.dose.mono.1[toString(prev.dose.mono1.a) ] <- bf.dlt.mono1.a +
+                                  dlts.at.dose.mono.1[toString(prev.dose.mono1.a)]
+
                                 if(prev.tox.mono1.a < dosing.intervals[1]){  #the cohort was treated with underdose
                                     trials.n.under[1] <- as.numeric(trials.n.under[1]) + bf.pat.mono1.a
                                     trials.dlt.under[1] <- as.numeric(trials.dlt.under[1]) + bf.dlt.mono1.a
@@ -1661,6 +1740,9 @@ trial_covariate_jointBLRM<- function(
 
             #save data
             patients.at.dose.mono.4[curr.dose.name] <- curr.n.pat + patients.at.dose.mono.4[curr.dose.name]
+
+            dlts.at.dose.mono.4[curr.dose.name] <- curr.dlt + dlts.at.dose.mono.4[curr.dose.name]
+
             if(curr.tox.mono.4 < dosing.intervals[1]){  #the cohort was treated with underdose
                 trials.n.under[4] <- as.numeric(trials.n.under[4]) + curr.n.pat
                 trials.dlt.under[4] <- as.numeric(trials.dlt.under[4]) + curr.dlt
@@ -1727,6 +1809,11 @@ trial_covariate_jointBLRM<- function(
                                 #save data
                                 patients.at.dose.mono.4[toString(prev.dose.mono1.b) ] <- bf.pat.mono1.b +
                                     patients.at.dose.mono.4[toString(prev.dose.mono1.b)]
+
+
+                                dlts.at.dose.mono.4[toString(prev.dose.mono1.b) ] <- bf.dlt.mono1.b +
+                                  dlts.at.dose.mono.4[toString(prev.dose.mono1.b)]
+
                                 if(prev.tox.mono1.b < dosing.intervals[1]){  #the cohort was treated with underdose
                                     trials.n.under[4] <- as.numeric(trials.n.under[4]) + bf.pat.mono1.b
                                     trials.dlt.under[4] <- as.numeric(trials.dlt.under[4]) + bf.dlt.mono1.b
@@ -1877,6 +1964,9 @@ trial_covariate_jointBLRM<- function(
 
             #save the data
             patients.at.dose.mono.2[curr.dose.name] <- curr.n.pat + patients.at.dose.mono.2[curr.dose.name]
+
+            dlts.at.dose.mono.2[curr.dose.name] <- curr.dlt + dlts.at.dose.mono.2[curr.dose.name]
+
             if(curr.tox.mono.2 < dosing.intervals[1]){  #the cohort was treated with underdose
                 trials.n.under[2] <- as.numeric(trials.n.under[2]) + curr.n.pat
                 trials.dlt.under[2] <- as.numeric(trials.dlt.under[2]) + curr.dlt
@@ -1942,6 +2032,11 @@ trial_covariate_jointBLRM<- function(
                                 #save data
                                 patients.at.dose.mono.2[toString(prev.dose.mono2.a) ] <- bf.pat.mono2.a +
                                     patients.at.dose.mono.2[toString(prev.dose.mono2.a)]
+
+
+                                dlts.at.dose.mono.2[toString(prev.dose.mono2.a) ] <- bf.dlt.mono2.a +
+                                  dlts.at.dose.mono.2[toString(prev.dose.mono2.a)]
+
                                 if(prev.tox.mono2.a < dosing.intervals[1]){  #the cohort was treated with underdose
                                     trials.n.under[2] <- as.numeric(trials.n.under[2]) + bf.pat.mono2.a
                                     trials.dlt.under[2] <- as.numeric(trials.dlt.under[2]) + bf.dlt.mono2.a
@@ -2082,6 +2177,10 @@ trial_covariate_jointBLRM<- function(
 
             #save data
             patients.at.dose.mono.5[curr.dose.name] <- curr.n.pat + patients.at.dose.mono.5[curr.dose.name]
+
+
+            dlts.at.dose.mono.5[curr.dose.name] <- curr.dlt + dlts.at.dose.mono.5[curr.dose.name]
+
             if(curr.tox.mono.5 < dosing.intervals[1]){  #the cohort was treated with underdose
                 trials.n.under[5] <- as.numeric(trials.n.under[5]) + curr.n.pat
                 trials.dlt.under[5] <- as.numeric(trials.dlt.under[5]) + curr.dlt
@@ -2147,6 +2246,10 @@ trial_covariate_jointBLRM<- function(
                                 #save data
                                 patients.at.dose.mono.5[toString(prev.dose.mono2.b) ] <- bf.pat.mono2.b +
                                     patients.at.dose.mono.5[toString(prev.dose.mono2.b)]
+
+                                dlts.at.dose.mono.5[toString(prev.dose.mono2.b) ] <- bf.dlt.mono2.b +
+                                  dlts.at.dose.mono.5[toString(prev.dose.mono2.b)]
+
                                 if(prev.tox.mono2.b < dosing.intervals[1]){  #the cohort was treated with underdose
                                     trials.n.under[5] <- as.numeric(trials.n.under[5]) + bf.pat.mono2.b
                                     trials.dlt.under[5] <- as.numeric(trials.dlt.under[5]) + bf.dlt.mono2.b
@@ -2298,6 +2401,7 @@ trial_covariate_jointBLRM<- function(
         result_simulation[['current.dose.mono.1']] <- current.dose.mono.1
         result_simulation[['curr.tox.mono.1']] <- curr.tox.mono.1
         result_simulation[['pat.d.mono.1']] <- patients.at.dose.mono.1
+        result_simulation[['dlt.d.mono.1']] <- dlts.at.dose.mono.1
     }
     if(active.mono2.a== TRUE){
         result_simulation[['mono.2.stopped']] <- mono.2.stopped
@@ -2305,6 +2409,7 @@ trial_covariate_jointBLRM<- function(
         result_simulation[['current.dose.mono.2']] <- current.dose.mono.2
         result_simulation[['curr.tox.mono.2']] <- curr.tox.mono.2
         result_simulation[['pat.d.mono.2']] <- patients.at.dose.mono.2
+        result_simulation[['dlt.d.mono.2']] <- dlts.at.dose.mono.2
     }
     if(active.combi.a == TRUE){
         result_simulation[['combi.stopped.1']] <- combi.stopped.1
@@ -2313,6 +2418,7 @@ trial_covariate_jointBLRM<- function(
         result_simulation[['current.dose.2.combi.1']] <- current.dose.2.combi.1
         result_simulation[['curr.tox.combi.1']] <- curr.tox.combi.1
         result_simulation[['pat.d.combi.1']] <- patients.at.dose.combi.1
+        result_simulation[['dlt.d.combi.1']] <- dlts.at.dose.combi.1
     }
     if(active.mono1.b==TRUE){
         result_simulation[['mono.4.stopped']] <- mono.4.stopped
@@ -2320,6 +2426,7 @@ trial_covariate_jointBLRM<- function(
         result_simulation[['current.dose.mono.4']] <- current.dose.mono.4
         result_simulation[['curr.tox.mono.4']] <- curr.tox.mono.4
         result_simulation[['pat.d.mono.4']] <- patients.at.dose.mono.4
+        result_simulation[['dlt.d.mono.4']] <- dlts.at.dose.mono.4
     }
     if(active.mono2.b== TRUE){
         result_simulation[['mono.5.stopped']] <- mono.5.stopped
@@ -2327,6 +2434,7 @@ trial_covariate_jointBLRM<- function(
         result_simulation[['current.dose.mono.5']] <- current.dose.mono.5
         result_simulation[['curr.tox.mono.5']] <- curr.tox.mono.5
         result_simulation[['pat.d.mono.5']] <- patients.at.dose.mono.5
+        result_simulation[['dlt.d.mono.5']] <- dlts.at.dose.mono.5
     }
     if(active.combi.b == TRUE){
         result_simulation[['combi.stopped.2']] <- combi.stopped.2
@@ -2335,6 +2443,7 @@ trial_covariate_jointBLRM<- function(
         result_simulation[['current.dose.2.combi.2']] <- current.dose.2.combi.2
         result_simulation[['curr.tox.combi.2']] <- curr.tox.combi.2
         result_simulation[['pat.d.combi.2']] <- patients.at.dose.combi.2
+        result_simulation[['dlt.d.combi.2']] <- dlts.at.dose.combi.2
     }
 
     #return the results.
