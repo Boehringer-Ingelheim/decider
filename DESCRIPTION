@@ -1,11 +1,15 @@
 Package: decider
 Title: Decision making in multiple-arm oncology dose escalation trials with logistic regression
-Version: 0.0.0.9010
+Version: 0.0.0.9011
 Authors@R: 
     c(person(given = "Lukas",
            family = "Schroeter",
            role = c("aut", "cre"),
            email = "lukas.schroeter@boehringer-ingelheim.com")
+      ,person(given = "Maier",
+           family = "Daniela",
+           role = c("ctb"),
+           email = "daniela_2.maier@boehringer-ingelheim.com")
       ,person(given = "Boehringer Ingelheim",
            family = "Pharma GmbH & Co. KG",
            role = c("cph", "fnd")))
