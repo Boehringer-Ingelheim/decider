@@ -2722,6 +2722,50 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     rownames(summ.ppd.c2) <- c("Dose", "mean #pat", "median #pat", "min #pat", "max #pat")
   }
 
+  #also save number of DLTs at each dose for the trials.
+  if(active.mono1.a){
+    trials.dlt.dose.m1 <- matrix(NA, nrow = length(doses.mono1.a), ncol = n.studies)
+    summ.dpd.m1a <- matrix(NA, nrow = 5, ncol= length(doses.mono1.a))
+    summ.dpd.m1a[1,] <- paste0(doses.mono1.a)
+    colnames(summ.dpd.m1a) <- paste0(doses.mono1.a)
+    rownames(summ.dpd.m1a) <- c("Dose", "mean #DLT", "median #DLT", "min #DLT", "max #DLT")
+  }
+  if(active.mono2.a){
+    trials.dlt.dose.m2 <- matrix(NA, nrow = length(doses.mono2.a), ncol = n.studies)
+    summ.dpd.m2a <- matrix(NA, nrow = 5, ncol= length(doses.mono2.a))
+    summ.dpd.m2a[1,] <- paste0(doses.mono2.a)
+    colnames(summ.dpd.m2a) <- paste0(doses.mono2.a)
+    rownames(summ.dpd.m2a) <- c("Dose", "mean #DLT", "median #DLT", "min #DLT", "max #DLT")
+  }
+  if(active.mono1.b){
+    trials.dlt.dose.m4 <- matrix(NA, nrow = length(doses.mono1.b), ncol = n.studies)
+    summ.dpd.m1b <- matrix(NA, nrow = 5, ncol= length(doses.mono1.b))
+    summ.dpd.m1b[1,] <- paste0(doses.mono1.b)
+    colnames(summ.dpd.m1b) <- paste0(doses.mono1.b)
+    rownames(summ.dpd.m1b) <- c("Dose",  "mean #DLT", "median #DLT", "min #DLT", "max #DLT")
+  }
+  if(active.mono2.b){
+    trials.dlt.dose.m5 <- matrix(NA, nrow = length(doses.mono2.b), ncol = n.studies)
+    summ.dpd.m2b <- matrix(NA, nrow = 5, ncol= length(doses.mono2.b))
+    summ.dpd.m2b[1,] <- paste0(doses.mono2.b)
+    colnames(summ.dpd.m2b) <- paste0(doses.mono2.b)
+    rownames(summ.dpd.m2b) <- c("Dose", "mean #DLT", "median #DLT", "min #DLT", "max #DLT")
+  }
+  if(active.combi.a){
+    trials.dlt.dose.c1 <- matrix(NA, nrow = length(doses.combi.a[1,]), ncol = n.studies)
+    summ.dpd.c1 <- matrix(NA, nrow = 5, ncol= length(doses.combi.a[1,]))
+    summ.dpd.c1[1,] <- dose.name.vector.combi1
+    colnames(summ.dpd.c1) <- dose.name.vector.combi1
+    rownames(summ.dpd.c1) <- c("Dose", "mean #DLT", "median #DLT", "min #DLT", "max #DLT")
+  }
+  if(active.combi.b){
+    trials.dlt.dose.c2 <- matrix(NA, nrow = length(doses.combi.b[1,]), ncol = n.studies)
+    summ.dpd.c2 <- matrix(NA, nrow = 5, ncol= length(doses.combi.b[1,]))
+    summ.dpd.c2[1,] <- dose.name.vector.combi2
+    colnames(summ.dpd.c2) <- dose.name.vector.combi2
+    rownames(summ.dpd.c2) <- c("Dose", "mean #DLT", "median #DLT", "min #DLT", "max #DLT")
+  }
+
 
   #--------------------------------------------------------------------------------------------------------
   #Fill in output data in these stuctures
@@ -2771,6 +2815,26 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     }
     if(active.combi.b){
       trials.p.dose.c2[,i] <- res$'pat.d.combi.2'
+    }
+
+    #read out DLT numbers per dose level
+    if(active.mono1.a){
+      trials.dlt.dose.m1[,i] <- res$'dlt.d.mono.1'
+    }
+    if(active.mono2.a){
+      trials.dlt.dose.m2[,i] <- res$'dlt.d.mono.2'
+    }
+    if(active.mono1.b){
+      trials.dlt.dose.m4[,i] <- res$'dlt.d.mono.4'
+    }
+    if(active.mono2.b){
+      trials.dlt.dose.m5[,i] <- res$'dlt.d.mono.5'
+    }
+    if(active.combi.a){
+      trials.dlt.dose.c1[,i] <- res$'dlt.d.combi.1'
+    }
+    if(active.combi.b){
+      trials.dlt.dose.c2[,i] <- res$'dlt.d.combi.2'
     }
 
     #determine the reason for the end of these trials
@@ -3150,12 +3214,21 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
     }
 
 
+    for(d in 1:length(tox.combi.a)){
+      summ.dpd.c1[2, d] <- mean(trials.dlt.dose.c1[d, ], na.rm=T)
+      summ.dpd.c1[3, d] <- median(trials.dlt.dose.c1[d, ], na.rm=T)
+      summ.dpd.c1[4, d] <- min(trials.dlt.dose.c1[d, ], na.rm=T)
+      summ.dpd.c1[5, d] <- max(trials.dlt.dose.c1[d, ], na.rm=T)
+    }
+
+
 
     #append the matrices to the list of output data.
     simulation.results[['results combi.a']] <- results.combi1
     simulation.results[['summary combi.a']] <- summary.combi1
     simulation.results[['MTDs combi.a']] <- input.combi1
     simulation.results[['#pat. combi.a']] <- summ.ppd.c1
+    simulation.results[['#DLT combi.a']] <- summ.dpd.c1
   }
 
   #------------------------------------------------------------------------------------------------------------
@@ -3264,10 +3337,18 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       summ.ppd.c2[5, d] <- max(trials.p.dose.c2[d, ], na.rm=T)
     }
 
+    for(d in 1:length(tox.combi.b)){
+      summ.dpd.c2[2, d] <- mean(trials.dlt.dose.c2[d, ], na.rm=T)
+      summ.dpd.c2[3, d] <- median(trials.dlt.dose.c2[d, ], na.rm=T)
+      summ.dpd.c2[4, d] <- min(trials.dlt.dose.c2[d, ], na.rm=T)
+      summ.dpd.c2[5, d] <- max(trials.dlt.dose.c2[d, ], na.rm=T)
+    }
+
     simulation.results[['results combi.b']] <- results.combi2
     simulation.results[['summary combi.b']] <- summary.combi2
     simulation.results[['MTDs combi.b']] <- input.combi2
     simulation.results[['#pat. combi.b']] <- summ.ppd.c2
+    simulation.results[['#DLT combi.b']] <- summ.dpd.c2
   }
 
 
@@ -3380,10 +3461,18 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       summ.ppd.m1a[5, d] <- max(trials.p.dose.m1[d, ], na.rm=T)
     }
 
+    for(d in 1:length(doses.mono1.a)){
+      summ.dpd.m1a[2, d] <- mean(trials.dlt.dose.m1[d, ], na.rm=T)
+      summ.dpd.m1a[3, d] <- median(trials.dlt.dose.m1[d, ], na.rm=T)
+      summ.dpd.m1a[4, d] <- min(trials.dlt.dose.m1[d, ], na.rm=T)
+      summ.dpd.m1a[5, d] <- max(trials.dlt.dose.m1[d, ], na.rm=T)
+    }
+
     simulation.results[['results mono1.a']] <- results.mono.1
     simulation.results[['summary mono1.a']] <- summary.mono.1
     simulation.results[['MTDs mono1.a']] <- input.mono.1
     simulation.results[['#pat. mono1.a']] <- summ.ppd.m1a
+    simulation.results[['#DLT mono1.a']] <- summ.dpd.m1a
 
 
   }
@@ -3490,12 +3579,19 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       summ.ppd.m1b[4, d] <- min(trials.p.dose.m4[d, ], na.rm=T)
       summ.ppd.m1b[5, d] <- max(trials.p.dose.m4[d, ], na.rm=T)
     }
+    for(d in 1:length(doses.mono1.b)){
+      summ.dpd.m1b[2, d] <- mean(trials.dlt.dose.m4[d, ], na.rm=T)
+      summ.dpd.m1b[3, d] <- median(trials.dlt.dose.m4[d, ], na.rm=T)
+      summ.dpd.m1b[4, d] <- min(trials.dlt.dose.m4[d, ], na.rm=T)
+      summ.dpd.m1b[5, d] <- max(trials.dlt.dose.m4[d, ], na.rm=T)
+    }
 
 
     simulation.results[['results mono1.b']] <- results.mono.4
     simulation.results[['summary mono1.b']] <- summary.mono.4
     simulation.results[['MTDs mono1.b']] <- input.mono.4
     simulation.results[['#pat. mono1.b']] <- summ.ppd.m1b
+    simulation.results[['#DLT mono1.b']] <- summ.dpd.m1b
 
   }
 
@@ -3606,10 +3702,18 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       summ.ppd.m2a[5, d] <- max(trials.p.dose.m2[d, ], na.rm=T)
     }
 
+    for(d in 1:length(doses.mono2.a)){
+      summ.dpd.m2a[2, d] <- mean(trials.dlt.dose.m2[d, ], na.rm=T)
+      summ.dpd.m2a[3, d] <- median(trials.dlt.dose.m2[d, ], na.rm=T)
+      summ.dpd.m2a[4, d] <- min(trials.dlt.dose.m2[d, ], na.rm=T)
+      summ.dpd.m2a[5, d] <- max(trials.dlt.dose.m2[d, ], na.rm=T)
+    }
+
     simulation.results[['results mono2.a']] <- results.mono.2
     simulation.results[['summary mono2.a']] <- summary.mono.2
     simulation.results[['MTDs mono2.a']] <- input.mono.2
     simulation.results[['#pat. mono2.a']] <- summ.ppd.m2a
+    simulation.results[['#DLT mono2.a']] <- summ.dpd.m2a
   }
 
   if(active.mono2.b){
@@ -3713,10 +3817,20 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       summ.ppd.m2b[5, d] <- max(trials.p.dose.m5[d, ], na.rm=T)
     }
 
+
+    for(d in 1:length(doses.mono2.b)){
+      summ.dpd.m2b[2, d] <- mean(trials.dlt.dose.m5[d, ], na.rm=T)
+      summ.dpd.m2b[3, d] <- median(trials.dlt.dose.m5[d, ], na.rm=T)
+      summ.dpd.m2b[4, d] <- min(trials.dlt.dose.m5[d, ], na.rm=T)
+      summ.dpd.m2b[5, d] <- max(trials.dlt.dose.m5[d, ], na.rm=T)
+    }
+
     simulation.results[['results mono2.b']] <- results.mono.5
     simulation.results[['summary mono2.b']] <- summary.mono.5
     simulation.results[['MTDs mono2.b']] <- input.mono.5
     simulation.results[['#pat. mono2.b']] <- summ.ppd.m2b
+    simulation.results[['#DLT mono2.b']] <- summ.dpd.m2b
+
   }
 
 
