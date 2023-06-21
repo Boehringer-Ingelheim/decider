@@ -1,5 +1,5 @@
 url: https://lschroeter.github.io/decider/
 template:
   bootstrap: 5
-  assets: ../vignettes/scenario-plots-1.png, ../vignettes/scenario-plots-2.png
+  assets: ../articles/scenario-plots-1.png, ../articles/scenario-plots-2.png
 
