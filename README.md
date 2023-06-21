@@ -52,7 +52,7 @@ BLRM simulations with multiple arms or evaluate hypothetical data scenarios.
 ## Installation
 
 
-The development version can be installed from this repository.
+The development version can be installed as follows:
 
 ```{r}
 # install.packages("remotes")
@@ -61,4 +61,4 @@ remotes::install_github("https://github.com/Boehringer-Ingelheim/decider")
 
 ## Documentation
 
-The package documentation is hosted at [LINK TO BE ADDED].
+The package documentation is hosted here [`https://lschroeter.github.io/decider/`](https://lschroeter.github.io/decider/).
