@@ -61,4 +61,4 @@ remotes::install_github("https://github.com/lschroeter/decider")
 
 ## Documentation
 
-The package documentation is hosted here [`https://lschroeter.github.io/decider/`](https://lschroeter.github.io/decider/).
+The package documentation is hosted [`here`](https://lschroeter.github.io/decider/).
