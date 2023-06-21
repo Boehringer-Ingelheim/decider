@@ -1,10 +1,9 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/lschroeter/decider/workflows/R-CMD-check/badge.svg)](https://github.com/lschroeter/decider/actions)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 # `decider` R package
-
-This package is currently in experimental stage.
 
 The `decider` package was created to allow the use of Bayesian logistic 
 regression models (BLRMs) for decision making in oncology dose escalation trials 
