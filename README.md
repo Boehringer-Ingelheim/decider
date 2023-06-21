@@ -56,7 +56,7 @@ The development version can be installed as follows:
 
 ```{r}
 # install.packages("remotes")
-remotes::install_github("https://github.com/Boehringer-Ingelheim/decider")
+remotes::install_github("https://github.com/lschroeter/decider")
 ```
 
 ## Documentation
