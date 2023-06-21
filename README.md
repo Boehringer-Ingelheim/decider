@@ -1,5 +1,5 @@
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/lschroeter/decider/workflows/R-CMD-check/badge.svg)](https://github.com/lschroeter/decider/actions)
+[![R-CMD-check](https://github.com/Boehringer-Ingelheim/decider/workflows/R-CMD-check/badge.svg)](https://github.com/Boehringer-Ingelheim/decider/actions)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
@@ -62,4 +62,4 @@ remotes::install_github("https://github.com/lschroeter/decider")
 
 ## Documentation
 
-The package documentation is hosted [`here`](https://lschroeter.github.io/decider/).
+The package documentation is hosted [`here`](https://Boehringer-Ingelheim.github.io/decider/).
