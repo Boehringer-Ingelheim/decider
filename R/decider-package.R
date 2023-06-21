@@ -77,4 +77,9 @@
 #' \code{\link[decider:sim_jointBLRM]{sim_jointBLRM}()},
 #' \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}},
 #' \code{\link[rstan:rstan]{rstan-package}}.
+## usethis namespace: start
+#' @importFrom lifecycle deprecated
+## usethis namespace: end
+NULL
+
 NULL

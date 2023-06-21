@@ -549,7 +549,9 @@ of `ggplot` objects. Refer to the documentation of the `ggplot2` package for det
 on this type of object. The `ggplot2` package also provides a broad range of
 functions that can be used to customize the returned plots further. If `plot.return`
 is not specified, the function will only print the plots and potentially
-save them if the user specified a path for outputs.
+save them if the user specified a path for outputs. Additionally, one may want
+to control the number of digits the output is rounded to, especially when
+considering heatmap-type plots for combination therapy, using e.g. `digits = 3`.
 ```{r scenario-call2, eval=T, fig.show = 'hide', warning=F}
 result1a <- scenario_jointBLRM(
   data = scenario1,
@@ -563,7 +565,8 @@ result1a <- scenario_jointBLRM(
   prior.tau = prior.tau,
   plot.decisions = TRUE,
   plot.return = TRUE,
-  ewoc.threshold = 0.25
+  ewoc.threshold = 0.25,
+  digits = 3
 )
 ```
 
@@ -692,7 +695,7 @@ arbitrary order.
 To run the evaluations in parallel, one can additionally register a paralell backend.
 There are various existing packages than can achieve this. A basic construct to
 register a parallel backend using the `doFuture` package is the following
-```{r n-cores}
+```{r n-cores, warning=F}
 library(doFuture)
 
 #specify number of cores -- here, only 1 for a sequential exacution

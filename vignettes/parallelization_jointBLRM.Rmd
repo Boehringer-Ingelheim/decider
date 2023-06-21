@@ -86,88 +86,88 @@ sim_result <- sim_jointBLRM(
 
 print(sim_result, quote = F)
 #> $`results combi.a`
-#>                              underdose target dose overdose max n reached before MTD all doses too toxic
-#> Number of trials             0         0           0        0                        3                  
-#> Percentage                   0         0           0        0                        100                
-#> Percentage not all too toxic                                                                            
+#>                              underdose target dose  overdose max n reached before MTD all doses too toxic
+#> Number of trials                     0           0   1.00000                        0             2.00000
+#> Percentage                           0           0  33.33333                        0            66.66667
+#> Percentage not all too toxic         0           0 100.00000                        0                  NA
 #> 
 #> $`summary combi.a`
-#>                     Median      Mean      Min.      Max.  2.5%     97.5%
-#> #Pat underdose   0.0000000 0.0000000 0.0000000 0.0000000 0.000 0.0000000
-#> #Pat target dose 6.0000000 6.0000000 3.0000000 9.0000000 3.150 8.8500000
-#> #Pat overdose    0.0000000 0.0000000 0.0000000 0.0000000 0.000 0.0000000
-#> #Pat (all)       6.0000000 6.0000000 3.0000000 9.0000000 3.150 8.8500000
-#> #DLT underdose   0.0000000 0.0000000 0.0000000 0.0000000 0.000 0.0000000
-#> #DLT target dose 1.0000000 1.6666667 1.0000000 3.0000000 1.000 2.9000000
-#> #DLT overdose    0.0000000 0.0000000 0.0000000 0.0000000 0.000 0.0000000
-#> #DLT (all)       1.0000000 1.6666667 1.0000000 3.0000000 1.000 2.9000000
-#> % overdose       0.0000000 0.0000000 0.0000000 0.0000000 0.000 0.0000000
-#> % DLT            0.3333333 0.2777778 0.1666667 0.3333333 0.175 0.3333333
+#>                     Median      Mean      Min.       Max.  2.5%   97.5%
+#> #Pat underdose   0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.0000
+#> #Pat target dose 3.0000000 3.0000000 3.0000000  3.0000000 3.000  3.0000
+#> #Pat overdose    0.0000000 3.0000000 0.0000000  9.0000000 0.000  8.5500
+#> #Pat (all)       3.0000000 6.0000000 3.0000000 12.0000000 3.000 11.5500
+#> #DLT underdose   0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.0000
+#> #DLT target dose 1.0000000 1.0000000 0.0000000  2.0000000 0.050  1.9500
+#> #DLT overdose    0.0000000 0.6666667 0.0000000  2.0000000 0.000  1.9000
+#> #DLT (all)       2.0000000 1.6666667 1.0000000  2.0000000 1.050  2.0000
+#> % overdose       0.0000000 0.2500000 0.0000000  0.7500000 0.000  0.7125
+#> % DLT            0.3333333 0.3888889 0.1666667  0.6666667 0.175  0.6500
 #> 
 #> $`MTDs combi.a`
 #>                  2+1         4+1      8+1      2+2      4+2      8+2     
 #> Dose             2+1         4+1      8+1      2+2      4+2      8+2     
 #> True P(DLT)      0.3         0.4      0.6      0.4      0.5      0.7     
 #> True category    target dose overdose overdose overdose overdose overdose
-#> MTD declared (n) 0           0        0        0        0        0       
+#> MTD declared (n) 0           1        0        0        0        0       
 #> 
 #> $`#pat. combi.a`
 #>             2+1 4+1 8+1 2+2 4+2 8+2
 #> Dose        2+1 4+1 8+1 2+2 4+2 8+2
-#> mean #pat   6   0   0   0   0   0  
-#> median #pat 6   0   0   0   0   0  
+#> mean #pat   3   3   0   0   0   0  
+#> median #pat 3   0   0   0   0   0  
 #> min #pat    3   0   0   0   0   0  
-#> max #pat    9   0   0   0   0   0  
+#> max #pat    3   9   0   0   0   0  
 #> 
 #> $`#DLT combi.a`
-#>             2+1              4+1 8+1 2+2 4+2 8+2
-#> Dose        2+1              4+1 8+1 2+2 4+2 8+2
-#> mean #DLT   1.66666666666667 0   0   0   0   0  
-#> median #DLT 1                0   0   0   0   0  
-#> min #DLT    1                0   0   0   0   0  
-#> max #DLT    3                0   0   0   0   0  
+#>             2+1 4+1               8+1 2+2 4+2 8+2
+#> Dose        2+1 4+1               8+1 2+2 4+2 8+2
+#> mean #DLT   1   0.666666666666667 0   0   0   0  
+#> median #DLT 1   0                 0   0   0   0  
+#> min #DLT    0   0                 0   0   0   0  
+#> max #DLT    2   2                 0   0   0   0  
 #> 
 #> $`results mono1.a`
 #>                              underdose target dose overdose max n reached before MTD all doses too toxic
-#> Number of trials                     0           0        0                  1.00000             2.00000
-#> Percentage                           0           0        0                 33.33333            66.66667
-#> Percentage not all too toxic         0           0        0                100.00000                  NA
+#> Number of trials                     0     1.00000        0                        0             2.00000
+#> Percentage                           0    33.33333        0                        0            66.66667
+#> Percentage not all too toxic         0   100.00000        0                        0                  NA
 #> 
 #> $`summary mono1.a`
-#>                     Median      Mean      Min.       Max.  2.5% 97.5%
-#> #Pat underdose   0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
-#> #Pat target dose 3.0000000 6.0000000 3.0000000 12.0000000 3.000 11.55
-#> #Pat overdose    0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
-#> #Pat (all)       3.0000000 6.0000000 3.0000000 12.0000000 3.000 11.55
-#> #DLT underdose   0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
-#> #DLT target dose 2.0000000 1.6666667 1.0000000  2.0000000 1.050  2.00
-#> #DLT overdose    0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
-#> #DLT (all)       2.0000000 1.6666667 1.0000000  2.0000000 1.050  2.00
-#> % overdose       0.0000000 0.0000000 0.0000000  0.0000000 0.000  0.00
-#> % DLT            0.3333333 0.3888889 0.1666667  0.6666667 0.175  0.65
+#>                  Median       Mean Min.       Max.   2.5%      97.5%
+#> #Pat underdose      0.0 0.00000000 0.00  0.0000000 0.0000  0.0000000
+#> #Pat target dose    6.0 6.00000000 3.00  9.0000000 3.1500  8.8500000
+#> #Pat overdose       0.0 1.00000000 0.00  3.0000000 0.0000  2.8500000
+#> #Pat (all)          6.0 7.00000000 3.00 12.0000000 3.1500 11.7000000
+#> #DLT underdose      0.0 0.00000000 0.00  0.0000000 0.0000  0.0000000
+#> #DLT target dose    2.0 1.66666667 0.00  3.0000000 0.1000  2.9500000
+#> #DLT overdose       0.0 1.00000000 0.00  3.0000000 0.0000  2.8500000
+#> #DLT (all)          3.0 2.66666667 2.00  3.0000000 2.0500  3.0000000
+#> % overdose          0.0 0.08333333 0.00  0.2500000 0.0000  0.2375000
+#> % DLT               0.5 0.47222222 0.25  0.6666667 0.2625  0.6583333
 #> 
 #> $`MTDs mono1.a`
 #>                  2           4           8       
 #> Dose             2           4           8       
 #> True P(DLT)      0.2         0.3         0.5     
 #> True category    target dose target dose overdose
-#> MTD declared (n) 0           0           0       
+#> MTD declared (n) 0           1           0       
 #> 
 #> $`#pat. mono1.a`
 #>             2 4 8
 #> Dose        2 4 8
-#> mean #pat   4 2 0
-#> median #pat 3 0 0
+#> mean #pat   3 3 1
+#> median #pat 3 3 0
 #> min #pat    3 0 0
-#> max #pat    6 6 0
+#> max #pat    3 6 3
 #> 
 #> $`#DLT mono1.a`
-#>             2 4                 8
-#> Dose        2 4                 8
-#> mean #DLT   1 0.666666666666667 0
-#> median #DLT 1 0                 0
-#> min #DLT    0 0                 0
-#> max #DLT    2 2                 0
+#>             2                 4 8
+#> Dose        2                 4 8
+#> mean #DLT   0.666666666666667 1 1
+#> median #DLT 0                 0 0
+#> min #DLT    0                 0 0
+#> max #DLT    2                 3 3
 #> 
 #> $prior
 #>               mean       SD
@@ -184,7 +184,7 @@ print(sim_result, quote = F)
 #> 
 #> $specifications
 #>                                  Value     -   
-#> seed                             965844282 -   
+#> seed                             449452596 -   
 #> dosing.intervals                 0.16      0.33
 #> esc.rule                         ewoc      -   
 #> esc.comp.max                     1         -   
