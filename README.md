@@ -1,4 +1,6 @@
 # `decider` R package
+This package is currently in experimental stage.
+
 The `decider` package was created to allow the use of Bayesian logistic 
 regression models (BLRMs) for decision making in oncology dose escalation trials 
 with multiple arms. It focuses on the use of the meta-analytic ("joint") BLRM 
@@ -56,4 +58,4 @@ remotes::install_github("https://github.com/Boehringer-Ingelheim/decider")
 
 ## Documentation
 
-The package documentation is hosted [LINK TO BE ADDED].
+The package documentation is hosted at [LINK TO BE ADDED].

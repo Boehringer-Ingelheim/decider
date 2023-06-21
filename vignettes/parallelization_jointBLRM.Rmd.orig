@@ -93,37 +93,32 @@ to speed up simulations further when parallelizing on a moderate number of cores
 (e.g., when one is not using a cluster). For details, refer to the argument
 `working.path` of the function `sim_jointBLRM()`.
 
-## Advanced: parallelization on a cluster
+## Parallelization on a cluster
 All of the functions of the `decider` package that allow for parallelization
 feature a nested `foreach` loop with two stages. With this, is is possible to
 leverage the capabilities of multiple cluster nodes
 that each have multiple cores. Usually, simulations of joint BLRM trials with
-multiple arms will take a very long run time (in the order of hours) when
+multiple arms will take a relatively long run time (up to the order of hours) when
 executed on a regular computer with a moderate amount of cores, so running
 simulations on a cluster may be desirable to achieve manageable runtimes.
 Please note that function `sim_jointBLRM` parallelizes across trials, so, when simulating
 e.g. 1000 trials, multiple hundreds cores can be used to substantially
-improve the run time. 
+improve the run time.
 
-In the following, it is illustrated how a parallel backend
-on a SLURM cluster could be registered. We will use the `future.batchtools` package for this:
+In the following, it is illustrated how an exemplary parallel backend
+on a common SLURM cluster could be registered. We will use the `future.batchtools` package for this:
 ```{r setup2}
 library(future.batchtools)
 ```
 
 Let us assume we have a cluster available where we want to request 10 nodes with
-32 cores per node (320 cores in total). We specify this in the following arguments:
+32 cores per node (320 cores in total). We specify this and further ressources
+like the job time and memory requested in the following arguments:
 ```{r nodes}
 #number of processor nodes
 n_nodes <- 10
 #number of cores per node
 n_cpus  <- 32
-```
-
-To register the parallel backend, we will use a simple SLURM template from the `future.batchtools`
-package. As this allows to specify a requested walltime and memory, we enter some standard
-numbers that usually work well for the functions of the `decider` package:
-```{r specs}
 #job time in hours
 walltime_h <- 2
 #memory requested in GB
@@ -145,7 +140,7 @@ registerDoFuture()
 plan(list(slurm, multisession))
 ```
 
-With this specification, when `sim_jointBLRM()` is called, the trials that need
+With this specification, when e.g. `sim_jointBLRM()` is called, the trials that need
 to be simulated will first be divided evenly across the available nodes, and the
 trials to be simulated by each node will be distributed across the CPUs the
 node has. In the above example, when we simulate e.g. 6400 trials using 20 nodes
@@ -159,15 +154,10 @@ Please note that there are some tradeoffs involed depending on the system, e.g.
 requesting a very large number of cores may take more time.
 
 At last, please note that the function `sim_jointBLRM()` also supports the use
-of a `working.path` which allows to enable saving and reloading of MCMC results.
+of a `working.path` argument which allows to enable saving and reloading of MCMC results.
 If this is executed on a parallel backend, please note that the path must be
-somewhere in the shared memory, where all CPUs have access. In general, this
-option is mostly designed for use on local computers with only a small number of
-cores and a single node. While the strategy of saving and reloading also works
-on hundreds of cores (as it synchronizes communication across nodes/cores
-via the `flock` package), there may be some overhead introduced
-when multiple cores need to read the same MCMC result. The strategy will still
-work without causing issues (e.g., deadlocks), but, with sufficiently many cores, it should
-not be necessary to reload MCMC results as the overhead might outweigh the
-benefits beyond a certain point.
+somewhere in the shared memory, where all CPUs have access. Synchronization across
+CPUs is carried out using file locks, which may introduce some overhead. It was observed
+that this feature can potentially still provide significant benefits to the runtime (both on a
+cluster and on a standard computer), but please be aware that this is **highly experimental**.
 
