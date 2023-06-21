@@ -6,6 +6,9 @@ vignette: >
   %\VignetteIndexEntry{Evaluate prior specifications of a joint BLRM for oncology dose finding}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+resource_files:
+ - vignettes/scenario-plots-1.png
+ - vignettes/scenario-plots-2.png
 ---
 
 ```{r options, include = FALSE}
@@ -16,12 +19,12 @@ knitr::opts_chunk$set(
 options(width=120)
 ```
 
-This vignette illustrates the usage of package `decider` for setting up and evaluating
+This vignette illustrates the usage of the `decider` package for setting up and evaluating
 prior distributions for joint Bayesian logistic regression model (BLRM)-based dose-finding trials with one or more monotherapy
 and/or two-compund combination therapy trials that may run sequentially or in parallel. It will
 be assumed that the reader is familiar with the general process of dose-limiting toxicity (DLT)-based
 dose-finding trials with the aim of determining a maximum-tolerated dose (MTD) and with
-the BLRM and its meta-analytic extensions (joint BLRM) for DLT-based dose finding.
+the BLRM and its meta-analytic extensions (here referred to as joint BLRM) for DLT-based dose finding.
 For an introduction to these topics, refer to [@neuenschwander08], [@neuenschwander14], [@neuenschwander16].
 While this terminology and the applied methods mainly originated in the context
 of oncology dose finding, the methods contained in this vignette can also be
@@ -52,7 +55,7 @@ For details on the technicalities behind Stan, a good starting place is Stan's
 
 However, besides fitting the model, the function will also perform a number of
 further evaluations based on the posterior. Most importantly, the posterior
-(predictive) distribution of the DLT rates (referred to as posterior toxicities
+distribution of the DLT rates (referred to as posterior toxicities
 in the following) for a given set of dose levels is
 determined based on the fitted model. In actual dose-finding trials these
 distributions will form the basis of the recommended dose level for the next cohort.

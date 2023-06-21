@@ -107,7 +107,7 @@ improve the run time.
 
 In the following, it is illustrated how an exemplary parallel backend
 on a common SLURM cluster could be registered. We will use the `future.batchtools` package for this:
-```{r setup2}
+```{r setup2, warning = F}
 library(future.batchtools)
 ```
 
