@@ -1,3 +1,6 @@
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/lschroeter/decider/workflows/R-CMD-check/badge.svg)](https://github.com/lschroeter/decider/actions)
+<!-- badges: end -->
 # `decider` R package
 This package is currently in experimental stage.
 
