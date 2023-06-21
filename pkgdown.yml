@@ -1,0 +1,11 @@
+pandoc: 2.19.2
+pkgdown: 2.0.7
+pkgdown_sha: ~
+articles:
+  intro_jointBLRM: intro_jointBLRM.html
+  parallelization_jointBLRM: parallelization_jointBLRM.html
+last_built: 2023-06-21T12:51Z
+urls:
+  reference: https://lschroeter.github.io/decider/reference
+  article: https://lschroeter.github.io/decider/articles
+
