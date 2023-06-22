@@ -21,7 +21,7 @@ combination therapy BLRM following the model described e.g. by
 for oncology dose finding in combination therapy. The posterior computations for
 the joint BLRM are implemented using the [`rstan`](https://mc-stan.org/) 
 package. For a detailed model description, refer to the documentation of 
-[`scenario_jointBLRM()`](../reference/scenario_jointBLRM.html). The `decider `package
+[`scenario_jointBLRM()`](../decider/reference/scenario_jointBLRM.html). The `decider `package
 allows to use the basic hierarchical combination therapy model with exchangeable 
 prior structure together with two variants of the general model:
 
@@ -32,8 +32,8 @@ by [`OncoBayes2`](https://CRAN.R-project.org/package=OncoBayes2), namely,
 the linear interaction term and the saturating interaction term.
 
 The core functions are 
-[`scenario_jointBLRM()`](../docs/reference/scenario_jointBLRM.html) and 
-[`sim_jointBLRM()`](../docs/reference/sim_jointBLRM.html), for evaluation of 
+[`scenario_jointBLRM()`](../decider/reference/scenario_jointBLRM.html) and 
+[`sim_jointBLRM()`](../decider/reference/sim_jointBLRM.html), for evaluation of 
 hypothetical data scenarios, respectively trial simulations. The latter function
 allows simulations of up to 6 parallel ongoing trial arms, with arbitrarily many
 historical trials (mono and/or combination therapy), and provides various 
@@ -44,7 +44,7 @@ back-fill cohorts, where lower doses are backfilled while escalation is ongoing
 on higher doses.
 
 Please refer to the vignette 
-[`Evaluating prior specifications of a joint BLRM for oncology dose finding`](../docs/articles/intro_jointBLRM.html)
+[`Evaluating prior specifications of a joint BLRM for oncology dose finding`](../decider/articles/intro_jointBLRM.html)
 for an introduction to how the functions of the `decider` can be used to conduct
 BLRM simulations with multiple arms or evaluate hypothetical data scenarios.
 
