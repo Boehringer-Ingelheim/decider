@@ -84,15 +84,15 @@
 <div class="row">
   <main id="main" class="col-md-9">
 <div class="section level1">
-<div class="page-header"><h1 id="decider-r-package--decision-making-in-oncology-dose-escalation-trials-with-logistic-regression">
-<code>decider</code> R package – decision making in oncology dose escalation trials with logistic regression<a class="anchor" aria-label="anchor" href="#decider-r-package--decision-making-in-oncology-dose-escalation-trials-with-logistic-regression"></a>
+<div class="page-header"><h1 id="decider-r-package-decision-making-in-oncology-dose-escalation-trials-with-logistic-regression">
+<code>decider</code> R package: decision making in oncology dose escalation trials with logistic regression<a class="anchor" aria-label="anchor" href="#decider-r-package-decision-making-in-oncology-dose-escalation-trials-with-logistic-regression"></a>
 </h1></div>
 <p>The <code>decider</code> package was created to allow the use of Bayesian logistic regression models (BLRMs) for decision making in oncology dose escalation trials with multiple arms. It focuses on the use of the meta-analytic (“joint”) BLRM for mono- and combination therapy, which uses a hierarchical prior structure. The package comes with various functions allowing to evaluate the performance and operating characteristics of the BLRM and a chosen prior in a given trial setting using trial simulations or hypothetical data scenarios.</p>
 <p>Please note that the present version is an early development version of the package.</p>
 <div class="section level2">
 <h2 id="background-and-getting-started">Background and getting started<a class="anchor" aria-label="anchor" href="#background-and-getting-started"></a>
 </h2>
-<p>The main model implemented in the package is the hierarchical (exchangeable) combination therapy BLRM following the model described e.g. by <a href="https://doi.org/10.1080/19466315.2016.1174149" class="external-link">Neuenschwander et al. (2016)</a> for oncology dose finding in combination therapy. The posterior computations for the joint BLRM are implemented using the <a href="https://mc-stan.org/" class="external-link"><code>rstan</code></a> package. For a detailed model description, refer to the documentation of <a href="../reference/scenario_jointBLRM.html"><code>scenario_jointBLRM()</code></a>. The <code>decider</code>package allows two general variants of the general model:</p>
+<p>The main model implemented in the package is the hierarchical (exchangeable) combination therapy BLRM following the model described e.g. by <a href="https://doi.org/10.1080/19466315.2016.1174149" class="external-link">Neuenschwander et al. (2016)</a> for oncology dose finding in combination therapy. The posterior computations for the joint BLRM are implemented using the <a href="https://mc-stan.org/" class="external-link"><code>rstan</code></a> package. For a detailed model description, refer to the documentation of <a href="../reference/scenario_jointBLRM.html"><code>scenario_jointBLRM()</code></a>. The <code>decider</code>package allows to use the basic hierarchical combination therapy model with exchangeable prior structure together with two variants of the general model:</p>
 <ul>
 <li><p>Inclusion of a binary covariate</p></li>
 <li><p>Use of two different interaction terms following the methodology described<br>
@@ -106,7 +106,7 @@ by <a href="https://CRAN.R-project.org/package=OncoBayes2" class="external-link"
 </h2>
 <p>The development version can be installed as follows:</p>
 <pre class="{r}"><code><span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"https://github.com/lschroeter/decider"</span><span class="op">)</span></span></code></pre>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"https://github.com/Boehringer-Ingelheim/decider"</span><span class="op">)</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
