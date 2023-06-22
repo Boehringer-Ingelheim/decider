@@ -3,7 +3,7 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-# `decider` R package
+# `decider` R package -- decision making in oncology dose escalation trials with logistic regression
 
 The `decider` package was created to allow the use of Bayesian logistic 
 regression models (BLRMs) for decision making in oncology dose escalation trials 
