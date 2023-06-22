@@ -13,9 +13,6 @@ The package comes with various functions allowing to evaluate the performance
 and operating characteristics of the BLRM and a chosen prior in a given trial
 setting using trial simulations or hypothetical data scenarios.
 
-Please note that the present version is an early development version of the 
-package.
-
 ## Background and getting started
 
 The main model implemented in the package is the hierarchical (exchangeable) 
