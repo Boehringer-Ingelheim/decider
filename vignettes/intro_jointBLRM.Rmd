@@ -660,7 +660,7 @@ supplied). In this case, it is recommended to specify the format of the output
 plots via `plot.unit`,  `plot.width`, and  `plot.height`. Refer to the
 documentation for detail on this.
 
-### Evaluating mutliple scenarios in parallel
+### Evaluating multiple scenarios in parallel
 When setting up a prior, one will typically want to evaluate a number of
 scenarios at once, but, as Bayesian computation tends to take relatively long,
 this may be rather slow for e.g. 10 or more scenarios. Additionally, one would
