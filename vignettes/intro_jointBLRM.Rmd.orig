@@ -7,8 +7,8 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 resource_files:
- - vignettes/scenario-plots-1.png
- - vignettes/scenario-plots-2.png
+ - man/figures/scenario-plots-1.png
+ - man/figures/scenario-plots-2.png
 ---
 
 ```{r options, include = FALSE}
