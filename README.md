@@ -3,7 +3,7 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-# `decider` R package -- decision making in oncology dose escalation trials with logistic regression
+# `decider` R package: decision making in oncology dose escalation trials with logistic regression
 
 The `decider` package was created to allow the use of Bayesian logistic 
 regression models (BLRMs) for decision making in oncology dose escalation trials 
@@ -25,7 +25,8 @@ for oncology dose finding in combination therapy. The posterior computations for
 the joint BLRM are implemented using the [`rstan`](https://mc-stan.org/) 
 package. For a detailed model description, refer to the documentation of 
 [`scenario_jointBLRM()`](../reference/scenario_jointBLRM.html). The `decider `package
-allows two general variants of the general model:
+allows to use the basic hierarchical combination therapy model with exchangeable 
+prior structure together with two variants of the general model:
 
 * Inclusion of a binary covariate
 
@@ -57,7 +58,7 @@ The development version can be installed as follows:
 
 ```{r}
 # install.packages("remotes")
-remotes::install_github("https://github.com/lschroeter/decider")
+remotes::install_github("https://github.com/Boehringer-Ingelheim/decider")
 ```
 
 ## Documentation
