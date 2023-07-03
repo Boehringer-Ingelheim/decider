@@ -38,7 +38,7 @@ A description of the underlying model and methods are given in the section Detai
     
     <a class="navbar-brand me-2" href="../index.html">decider</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9011</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9012</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -390,7 +390,8 @@ that plots will not be returned to R unless the additional argument <code>plot.r
 <dt>output.dosetrafo</dt>
 <dd><p>Optional list of functions that will be applied to transform the doses given to the model to the doses
 presented in the output. By default, each transformation is the identiy function, meaning that doses are displayed
-as given to the model. The argument  <code>output.dosetrafo</code> should be a named list with entries <code>output.dosetrafo$"d1c0"</code>,
+as given to the model. The argument  <code>output.dosetrafo</code> should be a named list. If the dose transformation shall depend on
+the compound and covariate, the list should have entries <code>output.dosetrafo$"d1c0"</code>,
 <code>output.dosetrafo$"d1c1"</code>, <code>output.dosetrafo$"d2c0"</code>, and <code>output.dosetrafo$"d1c2"</code>,
 where each entry is a function that accepts and returns a positive numeric. For the display of outputs (including plots),
 the function will be applied to transform the given doses, where <code>[...]$d1c0</code> is used to transform dose/compound 1
@@ -400,7 +401,12 @@ in a BLRM. For instance, if covariate 0 indicates a weekly schedule, and covaria
 up the BLRM to operate on the total dose received over 2 weeks. For the weekly schedule, one may want to backtransform and
 display the weekly dose again instead of the dose received over two weeks, which could be accomplished by setting
 <code>output.dosetrafo$"d2c0" = function(x) return(x/2)</code> to cause the function to display half of the dose used for modelling
-for outputs about doses with covariate of 0.</p></dd>
+for outputs about doses with covariate of 0.
+If one wants to supply a dose trnasofmration separately per trial arm type, one may include entries <code>output.dosetrafo$mono1</code>,
+<code>output.dosetrafo$mono2</code>, and <code>output.dosetrafo$combi1</code>, <code>output.dosetrafo$combi2</code>. This will only take effect if the
+previously described format is not provided. In case the dose tranformation is specified separately for mono1, mono2, and combi (combi1/2),
+monotherapy doses of interest are transformed with the respective transformation, and combination therapy doses with the combi1/2 transformation
+in the treatment compound 1/2.</p></dd>
 
 
 <dt>plot.decisions</dt>
