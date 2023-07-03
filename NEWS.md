@@ -1,4 +1,4 @@
-# decider 0.0.0.9011
+# decider 0.0.0.9012
 
 * This is the first version of the `decider` package on github. 
 

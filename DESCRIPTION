@@ -1,6 +1,6 @@
 Package: decider
 Title: Decision making in multiple-arm oncology dose escalation trials with logistic regression
-Version: 0.0.0.9011
+Version: 0.0.0.9012
 Authors@R: 
     c(person(given = "Lukas",
            family = "Schroeter",
