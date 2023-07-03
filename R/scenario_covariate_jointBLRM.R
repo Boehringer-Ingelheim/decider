@@ -1581,7 +1581,7 @@ scenario_covariate_jointBLRM <- function(
             output.dosetrafo$"mono2"(dose2name_curr[r])
           )
         }else{
-          rafo_dose_names[r] <- paste0(
+          trafo_dose_names[r] <- paste0(
 
             output.dosetrafo$"combi1"(dose1name_curr[r]),
             "+",
