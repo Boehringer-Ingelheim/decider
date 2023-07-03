@@ -206,7 +206,8 @@
 #'that plots will not be returned to R unless the additional argument \code{plot.return} is specified.
 #'@param output.dosetrafo Optional list of functions that will be applied to transform the doses given to the model to the doses
 #'presented in the output. By default, each transformation is the identiy function, meaning that doses are displayed
-#'as given to the model. The argument  \code{output.dosetrafo} should be a named list with entries \code{output.dosetrafo$"d1c0"},
+#'as given to the model. The argument  \code{output.dosetrafo} should be a named list. If the dose transformation shall depend on
+#'the compound and covariate, the list should have entries \code{output.dosetrafo$"d1c0"},
 #'\code{output.dosetrafo$"d1c1"}, \code{output.dosetrafo$"d2c0"}, and \code{output.dosetrafo$"d1c2"},
 #'where each entry is a function that accepts and returns a positive numeric. For the display of outputs (including plots),
 #'the function will be applied to transform the given doses, where \code{[...]$d1c0} is used to transform dose/compound 1
@@ -217,6 +218,11 @@
 #'display the weekly dose again instead of the dose received over two weeks, which could be accomplished by setting
 #'\code{output.dosetrafo$"d2c0" = function(x) return(x/2)} to cause the function to display half of the dose used for modelling
 #'for outputs about doses with covariate of 0.
+#'If one wants to supply a dose trnasofmration separately per trial arm type, one may include entries \code{output.dosetrafo$mono1},
+#'\code{output.dosetrafo$mono2}, and \code{output.dosetrafo$combi1}, \code{output.dosetrafo$combi2}. This will only take effect if the
+#'previously described format is not provided. In case the dose tranformation is specified separately for mono1, mono2, and combi (combi1/2),
+#'monotherapy doses of interest are transformed with the respective transformation, and combination therapy doses with the combi1/2 transformation
+#'in the treatment compound 1/2.
 #'@param plot.decisions Optional logical, defaults to \code{FALSE}. If \code{TRUE}, plots of escalation decisions according to the
 #'specified escalation rule are created.
 #'See \code{\link[decider:scenario_jointBLRM]{scenario_jointBLRM}()} for details.
@@ -1446,6 +1452,25 @@ scenario_covariate_jointBLRM <- function(
     stop("`two_sided2` must be logical.")
   }
 
+  noutdt <- names(output.dosetrafo)
+  if(length(noutdt)<=1){
+    stop("`output.dosetrafo` must be a named list with names either \n",
+         " `d1c0`, `d1c1`, `d2c0`, `d2c1` or \n",
+         " `mono1`, `mono2`, `combi1`, `combi2`, where each entry must be a function.")
+  }
+
+  dosetrafomode <- "cov"
+  if(!all(c("d1c1", "d1c0", "d2c1", "d2c0")%in%noutdt)){
+    if(!all(c("mono1", "mono2", "combi1", "combi2")%in%noutdt)){
+      stop("`output.dosetrafo` must be a named list with names either \n",
+           " `d1c0`, `d1c1`, `d2c0`, `d2c1` or \n",
+           " `mono1`, `mono2`, `combi1`, `combi2` where each entry must be a function.")
+
+    }else{
+      #means that not cov mode
+      dosetrafomode <- "type"
+    }
+  }
   #--------------------------------------------------------------------------------------------------
   #Sampling from posterior and extracting results
   #--------------------------------------------------------------------------------------------------
@@ -1527,21 +1552,46 @@ scenario_covariate_jointBLRM <- function(
     trafo_dose_names <- rep("", length(dose_names_curr))
     for(r in 1:length(dose_names_curr)){
       ncls <- length(res_raw[[std]][1, ])
-      if(res_raw[[std]][r, ncls]==0){
-        trafo_dose_names[r] <- paste0(
-          output.dosetrafo$"d1c0"(dose1name_curr[r]),
-          "+",
-          output.dosetrafo$"d2c0"(dose2name_curr[r])
-        )
+      #only if cov mode
+      if(dosetrafomode=="cov"){
+        if(res_raw[[std]][r, ncls]==0){
+          trafo_dose_names[r] <- paste0(
+            output.dosetrafo$"d1c0"(dose1name_curr[r]),
+            "+",
+            output.dosetrafo$"d2c0"(dose2name_curr[r])
+          )
       }else if(res_raw[[std]][r, ncls]==1){
-        trafo_dose_names[r] <- paste0(
-          output.dosetrafo$"d1c1"(dose1name_curr[r]),
-          "+",
-          output.dosetrafo$"d2c1"(dose2name_curr[r])
-        )
-      }
-    }
+          trafo_dose_names[r] <- paste0(
+            output.dosetrafo$"d1c1"(dose1name_curr[r]),
+            "+",
+            output.dosetrafo$"d2c1"(dose2name_curr[r])
+          )
+        }
+      }else{
 
+        #trafo by type
+        if(dose2name_curr[r]==0 & !dose1name_curr[r]==0){
+          trafo_dose_names[r] <- paste0(
+            output.dosetrafo$"mono1"(dose1name_curr[r]),
+            "+0"
+          )
+        }else if(dose1name_curr[r]==0 & !dose2name_curr[r]==0){
+          trafo_dose_names[r] <- paste0(
+            "0+",
+            output.dosetrafo$"mono2"(dose2name_curr[r])
+          )
+        }else{
+          rafo_dose_names[r] <- paste0(
+
+            output.dosetrafo$"combi1"(dose1name_curr[r]),
+            "+",
+            output.dosetrafo$"combi2"(dose2name_curr[r])
+          )
+        }
+
+      }
+
+    }
     rownames(res_raw[[std]]) <- trafo_dose_names
   }
 

@@ -241,7 +241,8 @@ that plots will not be returned to R unless the additional argument \code{plot.r
 
 \item{output.dosetrafo}{Optional list of functions that will be applied to transform the doses given to the model to the doses
 presented in the output. By default, each transformation is the identiy function, meaning that doses are displayed
-as given to the model. The argument  \code{output.dosetrafo} should be a named list with entries \code{output.dosetrafo$"d1c0"},
+as given to the model. The argument  \code{output.dosetrafo} should be a named list. If the dose transformation shall depend on
+the compound and covariate, the list should have entries \code{output.dosetrafo$"d1c0"},
 \code{output.dosetrafo$"d1c1"}, \code{output.dosetrafo$"d2c0"}, and \code{output.dosetrafo$"d1c2"},
 where each entry is a function that accepts and returns a positive numeric. For the display of outputs (including plots),
 the function will be applied to transform the given doses, where \code{[...]$d1c0} is used to transform dose/compound 1
@@ -251,7 +252,12 @@ in a BLRM. For instance, if covariate 0 indicates a weekly schedule, and covaria
 up the BLRM to operate on the total dose received over 2 weeks. For the weekly schedule, one may want to backtransform and
 display the weekly dose again instead of the dose received over two weeks, which could be accomplished by setting
 \code{output.dosetrafo$"d2c0" = function(x) return(x/2)} to cause the function to display half of the dose used for modelling
-for outputs about doses with covariate of 0.}
+for outputs about doses with covariate of 0.
+If one wants to supply a dose trnasofmration separately per trial arm type, one may include entries \code{output.dosetrafo$mono1},
+\code{output.dosetrafo$mono2}, and \code{output.dosetrafo$combi1}, \code{output.dosetrafo$combi2}. This will only take effect if the
+previously described format is not provided. In case the dose tranformation is specified separately for mono1, mono2, and combi (combi1/2),
+monotherapy doses of interest are transformed with the respective transformation, and combination therapy doses with the combi1/2 transformation
+in the treatment compound 1/2.}
 
 \item{plot.decisions}{Optional logical, defaults to \code{FALSE}. If \code{TRUE}, plots of escalation decisions according to the
 specified escalation rule are created.
