@@ -1521,7 +1521,8 @@ scenario_covariate_jointBLRM <- function(
       incl_rws <- rep(F, times = nrws)
       rnms <- rownames(res_raw[[std]])
       #which doses of interest are in current summary?
-      for(r in 1:length(idx_rws)){
+      idx_rws <- which(paste0(doses.of.interest[1, ], "+", doses.of.interest[2, ]) %in% rnms)
+      for(r in 1:nrws){
         if(doses.of.interest.covars[idx_rws[r]]==1){
           if (res_raw[[std]][r, ncls]==1){
             incl_rws[r] <- T
