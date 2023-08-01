@@ -343,7 +343,8 @@ Refer to the documentation below for more detail.</p></li>
 <span>   monitor.path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>   working.path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>   clean.working.path <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>   output.sim.config <span class="op">=</span><span class="cn">TRUE</span></span>
+<span>   output.sim.config <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>   output.sim.detail <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -837,6 +838,14 @@ and after simulation. If <code>FALSE</code>, the function will check for such fi
 <dd><p>Optional logical that specifies whether the input parameters of the call to <code>sim_jointBLRM()</code> are added to
 the output list (or, if activated, the output files written to disk). Defaults to <code>TRUE</code>. This can be used to save e.g. the seed, dose-toxicity scenarios, and
 priors of the simulation to allow double-checking the configuration of the simulation at a later point in time.</p></dd>
+
+
+<dt>output.sim.detail</dt>
+<dd><p>Optional logical, defaults to <code>FALSE</code>. Specifies if a list of more detailed simulation results
+per simulated study should be created. If so, this list will be written to a separate excel sheet, provided a
+path is given for outputs. The list contains the number of patients (total, at over/under/target) doses per trial, the
+number of DLTs per trial, the number of patients per dose for each trial, the number of DLTs per dose for each trial,
+and the name of the dose selected as MTD for each trial (or the empty string, if the trial did not find an MTD).</p></dd>
 
 </dl></div>
     <div class="section level2">
