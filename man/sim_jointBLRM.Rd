@@ -157,7 +157,8 @@ sim_jointBLRM(
    monitor.path = NULL,
    working.path = NULL,
    clean.working.path = FALSE,
-   output.sim.config =TRUE
+   output.sim.config = TRUE,
+   output.sim.detail = FALSE
 )
 }
 \arguments{
@@ -573,6 +574,12 @@ and after simulation. If \code{FALSE}, the function will check for such file nam
 \item{output.sim.config}{Optional logical that specifies whether the input parameters of the call to \code{sim_jointBLRM()} are added to
 the output list (or, if activated, the output files written to disk). Defaults to \code{TRUE}. This can be used to save e.g. the seed, dose-toxicity scenarios, and
 priors of the simulation to allow double-checking the configuration of the simulation at a later point in time.}
+
+\item{output.sim.detail}{Optional logical, defaults to \code{FALSE}. Specifies if a list of more detailed simulation results
+per simulated study should be created. If so, this list will be written to a separate excel sheet, provided a
+path is given for outputs. The list contains the number of patients (total, at over/under/target) doses per trial, the
+number of DLTs per trial, the number of patients per dose for each trial, the number of DLTs per dose for each trial,
+and the name of the dose selected as MTD for each trial (or the empty string, if the trial did not find an MTD).}
 }
 \value{
 List that contains a number of metrics that summarize the results of the simulation for each simulated trial,

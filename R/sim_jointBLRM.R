@@ -211,7 +211,8 @@
 #'    monitor.path = NULL,
 #'    working.path = NULL,
 #'    clean.working.path = FALSE,
-#'    output.sim.config =TRUE
+#'    output.sim.config = TRUE,
+#'    output.sim.detail = FALSE
 #')
 #'@param active.mono1.a,active.mono1.b,active.mono2.a,active.mono2.b,active.combi.a,active.combi.b Logicals, default to \code{FALSE}. Each parameter activates the simulation of the
 #'corresponding trial. If the parameter is \code{FALSE}, the corresponding trial is not simulated, all parameters with this suffix are ignored, and no historical information can be included for this trial.
@@ -592,6 +593,11 @@
 #'@param output.sim.config Optional logical that specifies whether the input parameters of the call to \code{sim_jointBLRM()} are added to
 #'the output list (or, if activated, the output files written to disk). Defaults to \code{TRUE}. This can be used to save e.g. the seed, dose-toxicity scenarios, and
 #'priors of the simulation to allow double-checking the configuration of the simulation at a later point in time.
+#'@param output.sim.detail Optional logical, defaults to \code{FALSE}. Specifies if a list of more detailed simulation results
+#'per simulated study should be created. If so, this list will be written to a separate excel sheet, provided a
+#'path is given for outputs. The list contains the number of patients (total, at over/under/target) doses per trial, the
+#'number of DLTs per trial, the number of patients per dose for each trial, the number of DLTs per dose for each trial,
+#'and the name of the dose selected as MTD for each trial (or the empty string, if the trial did not find an MTD).
 #'
 #'@returns List that contains a number of metrics that summarize the results of the simulation for each simulated trial,
 #'and, depending on the specification, additional list entries that save the given input specification.
@@ -826,7 +832,8 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                           monitor.path = NULL,
                           working.path = NULL,
                           clean.working.path = FALSE,
-                          output.sim.config =TRUE
+                          output.sim.config = TRUE,
+                          output.sim.detail = FALSE
 ){
   #"**************************************************************************************"
 
@@ -859,6 +866,11 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
          "`mtd.enforce.mono2.a`, `mtd.enforce.mono2.b`, `mtd.enforce.combi.a`,\n",
          "and `mtd.enforce.combi.b` must be of type logical.")
   }
+
+  if(!is.logical(output.sim.detail)){
+    stop("`output.sim.detail` must be of type logical.")
+  }
+
   if(!any(c(active.mono1.a, active.mono1.b, active.mono2.a, active.mono2.b,
             active.combi.a,active.combi.b))){
     stop("None of the trials is activated (via arguments `active.[...]`).")
@@ -2665,6 +2677,7 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
   #set up the other frequently used data structures
   #----------------------------------------------------------
 
+
   #vectors for saving the number of patients and dlts in each of the following simulated trials (these numbers will be needed to calculate the output later)
   #i.e. these vectors are just counters
   trials.n.all <- matrix(NA, nrow = 6, ncol = n.studies)
@@ -2767,6 +2780,26 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
   }
 
 
+  if(output.sim.detail){
+    if(active.mono1.a){
+      trials.m1.mtd <- rep("", times = n.studies)
+    }
+    if(active.mono1.b){
+      trials.m4.mtd <- rep("", times = n.studies)
+    }
+    if(active.mono2.a){
+      trials.m2.mtd <- rep("", times = n.studies)
+    }
+    if(active.mono2.b){
+      trials.m5.mtd <- rep("", times = n.studies)
+    }
+    if(active.combi.a){
+      trials.c1.mtd <- rep("", times = n.studies)
+    }
+    if(active.combi.b){
+      trials.c2.mtd <- rep("", times = n.studies)
+    }
+  }
   #--------------------------------------------------------------------------------------------------------
   #Fill in output data in these stuctures
   #--------------------------------------------------------------------------------------------------------
@@ -2853,6 +2886,9 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
 
         #get toxicity and dose name
         name.of.dose <- toString(res$'current.dose.mono.1')
+        if(output.sim.detail){
+          trials.m1.mtd[i] <- name.of.dose
+        }
         curr.tox.mono.1 <- res$'curr.tox.mono.1'
         if(curr.tox.mono.1 < dosing.intervals[1]){
 
@@ -2894,6 +2930,9 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       } else if(res$'mono.4.is.MTD' == TRUE){
 
         name.of.dose <- toString(res$'current.dose.mono.4')
+        if(output.sim.detail){
+          trials.m4.mtd[i] <- name.of.dose
+        }
         curr.tox.mono.4 <- res$'curr.tox.mono.4'
         # the MTD was found
         if(curr.tox.mono.4 < dosing.intervals[1]){
@@ -2936,6 +2975,9 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
 
       } else if(res$'mono.2.is.MTD' == TRUE){
         name.of.dose <- toString(res$'current.dose.mono.2')
+        if(output.sim.detail){
+          trials.m2.mtd[i] <- name.of.dose
+        }
         curr.tox.mono.2 <- res$'curr.tox.mono.2'
         # the MTD was found
         if(curr.tox.mono.2 < dosing.intervals[1]){
@@ -2978,6 +3020,9 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
 
       } else if(res$'mono.5.is.MTD' == TRUE){
         name.of.dose <- toString(res$'current.dose.mono.5')
+        if(output.sim.detail){
+          trials.m5.mtd[i] <- name.of.dose
+        }
         curr.tox.mono.5 <- res$'curr.tox.mono.5'
         # the MTD was found
         if(curr.tox.mono.5 < dosing.intervals[1]){
@@ -3025,6 +3070,9 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       } else if(res$'combi.is.MTD.1' == TRUE){
 
         name.of.dose <- paste(res$'current.dose.1.combi.1', res$'current.dose.2.combi.1', sep = "+")
+        if(output.sim.detail){
+          trials.c1.mtd[i] <- name.of.dose
+        }
         curr.tox.combi <- res$'curr.tox.combi.1'
         # the MTD was found
         if(curr.tox.combi < dosing.intervals[1]){
@@ -3065,6 +3113,9 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
       } else if(res$'combi.is.MTD.2' == TRUE){
 
         name.of.dose <- paste(res$'current.dose.1.combi.2', res$'current.dose.2.combi.2', sep = "+")
+        if(output.sim.detail){
+          trials.c2.mtd[i] <- name.of.dose
+        }
         curr.tox.combi.2 <- res$'curr.tox.combi.2'
         # the MTD was found
         if(curr.tox.combi.2 < dosing.intervals[1]){
@@ -3987,6 +4038,61 @@ sim_jointBLRM <- function(active.mono1.a = FALSE,
                  colNames=TRUE, rowNames=TRUE, overwrite = TRUE)
     }
   }
+
+
+  if(output.sim.detail){
+    sim.detail <- list()
+
+    sim.detail[["n.all"]] <- trials.n.all
+    sim.detail[["n.target"]] <- trials.n.target
+    sim.detail[["n.under"]] <- trials.n.under
+    sim.detail[["n.over"]] <- trials.n.over
+    sim.detail[["dlt.all"]] <- trials.dlt.all
+    sim.detail[["dlt.target"]] <- trials.dlt.target
+    sim.detail[["dlt.under"]] <- trials.dlt.under
+    sim.detail[["dlt.over"]] <- trials.dlt.over
+    if(active.mono1.a){
+      sim.detail[["pat.dose.mono1.a"]] <- trials.p.dose.m1
+      sim.detail[["dlt.dose.mono1.a"]] <- trials.dlt.dose.m1
+      sim.detail[["mtds.mono1.a"]] <- trials.m1.mtd
+    }
+    if(active.mono2.a){
+      sim.detail[["pat.dose.mono2.a"]] <- trials.p.dose.m2
+      sim.detail[["dlt.dose.mono2.a"]] <- trials.dlt.dose.m2
+      sim.detail[["mtds.mono2.a"]] <- trials.m2.mtd
+    }
+    if(active.mono1.b){
+      sim.detail[["pat.dose.mono1.b"]] <- trials.p.dose.m4
+      sim.detail[["dlt.dose.mono1.b"]] <- trials.dlt.dose.m4
+      sim.detail[["mtds.mono1.b"]] <- trials.m4.mtd
+    }
+    if(active.mono2.b){
+      sim.detail[["pat.dose.mono2.b"]] <- trials.p.dose.m5
+      sim.detail[["dlt.dose.mono2.b"]] <- trials.dlt.dose.m5
+      sim.detail[["mtds.mono2.b"]] <- trials.m5.mtd
+    }
+    if(active.combi.a){
+      sim.detail[["pat.dose.combi.a"]] <- trials.p.dose.c1
+      sim.detail[["dlt.dose.combi.a"]] <- trials.dlt.dose.c1
+      sim.detail[["mtds.combi.a"]] <- trials.c1.mtd
+    }
+    if(active.combi.b){
+      sim.detail[["pat.dose.combi.b"]] <- trials.p.dose.c2
+      sim.detail[["dlt.dose.combi.b"]] <- trials.dlt.dose.c2
+      sim.detail[["mtds.combi.b"]] <- trials.c2.mtd
+    }
+
+    #write to excel
+    if(!is.null(path) & !is.null(file.name)){
+      if(dir.exists(file.path(path))){
+        write.xlsx(sim.detail,
+                   paste(file.path(path),"/",file.name,'_sim_detail.xlsx', sep=''),
+                   colNames=TRUE, rowNames=TRUE, overwrite = TRUE)
+      }
+    }
+  }
+
+
   #output returned
   return(simulation.results)
 }
