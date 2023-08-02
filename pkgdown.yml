@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   intro_jointBLRM: intro_jointBLRM.html
   parallelization_jointBLRM: parallelization_jointBLRM.html
-last_built: 2023-08-01T14:12Z
+last_built: 2023-08-02T07:04Z
 urls:
   reference: https://Boehringer-Ingelheim.github.io/decider/reference
   article: https://Boehringer-Ingelheim.github.io/decider/articles
