@@ -519,18 +519,22 @@ This is the so-called linear (on logit scale) interaction term.</p><div class="s
 
 
 <p>Another possibility for modeling the interaction is the so-called
-saturating interaction term, which performs additional scaling with the aim of
+saturating interaction term, which was proposed by the authors of the
+<code>OncoBayes2</code> package,
+cf. <code>OncoBayes2::blrm_formula_saturating()</code>.
+This interaction model involves an additional scaling factor in dependence of the dose, with the aim of
 addressing potentially problematic behavior of the linear interaction model in case
 of large dose levels. More specifically, if one has \(\eta&lt;0\) and considers the
-limit \(d_i\rightarrow \infty\) (for one or both \(i\)), it holds
+limit \(d_i\rightarrow \infty\), it holds
 $$
 g(\eta, d_1, d_2) \rightarrow -\infty
 $$
 and, consequently, \(\pi_j(d_1, d_2) \rightarrow 0\). Although this seems to
 be mostly affecting doses larger than the reference dose, this property may not
 be considered realistic, so that one may want to use modified models that
-do not show this behavior. For this aim, the function allows to use a
-saturating interaction term instead, which follows the ideas from <code>OncoBayes2::blrm_formula_saturating()</code>,
+do not show this behavior. For this aim, the functions in the <code>decider</code> package allow to use a
+saturating interaction term instead, which follows the ideas from
+<code>OncoBayes2::blrm_formula_saturating()</code>,
 to avoid the aforementioned phenomenon.</p>
 <p>The saturating interaction term is based on the usual interaction term, but
 includes an additional scaling factor in dependence of the dose level, which ensures
