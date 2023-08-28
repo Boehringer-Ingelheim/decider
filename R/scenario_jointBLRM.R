@@ -318,18 +318,22 @@
 #'
 #'### Saturating interaction term
 #'Another possibility for modeling the interaction is the so-called
-#'saturating interaction term, which performs additional scaling with the aim of
+#'saturating interaction term, which was proposed by the authors of the
+#'\code{\link[OncoBayes2:OncoBayes2-package]{OncoBayes2}} package,
+#'cf. \code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()}.
+#'This interaction model involves an additional scaling factor in dependence of the dose, with the aim of
 #'addressing potentially problematic behavior of the linear interaction model in case
 #'of large dose levels. More specifically, if one has \eqn{\eta<0} and considers the
-#'limit \eqn{d_i\rightarrow \infty} (for one or both \eqn{i}), it holds
+#'limit \eqn{d_i\rightarrow \infty}, it holds
 #'\deqn{
 #'g(\eta, d_1, d_2) \rightarrow -\infty
 #'}
 #'and, consequently, \eqn{\pi_j(d_1, d_2) \rightarrow 0}. Although this seems to
 #'be mostly affecting doses larger than the reference dose, this property may not
 #'be considered realistic, so that one may want to use modified models that
-#'do not show this behavior. For this aim, the function allows to use a
-#'saturating interaction term instead, which follows the ideas from \code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()},
+#'do not show this behavior. For this aim, the functions in the \code{decider} package allow to use a
+#'saturating interaction term instead, which follows the ideas from
+#'\code{\link[OncoBayes2:blrm_formula_saturating]{OncoBayes2::blrm_formula_saturating}()},
 #'to avoid the aforementioned phenomenon.
 #'
 #'The saturating interaction term is based on the usual interaction term, but
